@@ -19,4 +19,4 @@ for finding in results['results']:
 Path: {finding['path']}
 Line: {finding['start']['line']}
 Message: {finding['extra']['message']}"""
-    repo.create_issue(title=title, body=body)
+        repo.create_issue(title=title, body=body)
