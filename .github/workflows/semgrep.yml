@@ -1,5 +1,5 @@
 # Name of this GitHub Actions workflow.
-name: Semgrep Differential
+name: Semgrep Scan
 
 on:
   # Scan changed files in PRs (diff-aware scanning):
@@ -19,28 +19,20 @@ jobs:
       image: returntocorp/semgrep
 
     steps:
+      - name: Install dependencies
+        run: |
+          pip3 install PyGithub
       # step 1
-      - name: clone application source code
+      - name: Clone application source code
         uses: actions/checkout@v3
 
       # step 2
       - name: full scan
         run: |
-          semgrep \
-            --sarif --output report.sarif \
-            --metrics=off \
-            --config="p/default"
+          semgrep ci --config=auto -o results.json
 
-      # step 3
-      - name: save report as pipeline artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: report.sarif
-          path: report.sarif
-
-      # step 4
-      - name: publish code scanning alerts
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: report.sarif
-          category: semgrep
+      - name: Create GitHub Issue on Error
+        if: ${{ failure() }}
+        run: python3 .github/scripts/create_issue.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
