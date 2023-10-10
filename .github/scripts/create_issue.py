@@ -9,7 +9,11 @@ g = Github(GITHUB_TOKEN)
 repo = g.get_repo(REPO_NAME)
 
 with open('results.json', 'r') as f:
-    results = json.load(f)
+    try:
+        results = json.load(f)
+    except:
+        print(f.read())
+
 
 for finding in results['results']:
     if 'severity' in finding['extra'] and finding['extra']['severity'] == 'ERROR':
