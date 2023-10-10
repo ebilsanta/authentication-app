@@ -13,10 +13,12 @@ with open('results.json', 'r') as f:
 
 
 for finding in results['results']:
-    if 'severity' in finding['extra'] and finding['extra']['severity'] == 'ERROR':
+    if 'severity' in finding['extra'] and finding['extra']['is_ignored'] == False:
         title = f"Semgrep Error: {finding['check_id']}"
         body = f"""
+Severity: {finding['extra']['severity']}
 Path: {finding['path']}
 Line: {finding['start']['line']}
+Code: {finding['extra']['lines']}
 Message: {finding['extra']['message']}"""
         repo.create_issue(title=title, body=body)
