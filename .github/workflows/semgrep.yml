@@ -12,27 +12,35 @@ on:
     branches: ["master", "main"]
 
 jobs:
-  semgrep:
-    # User definable name of this GitHub Actions job.
-    name: semgrep/ci
-    # If you are self-hosting, change the following `runs-on` value:
+  semgrep-full:
+    name: Semgrep Full Scan
     runs-on: ubuntu-latest
-
     container:
-      # A Docker image with Semgrep installed. Do not change this.
       image: returntocorp/semgrep
 
-    # Skip any PR created by dependabot to avoid permission issues:
-    if: (github.actor != 'dependabot[bot]')
-
     steps:
-      # Fetch project source with GitHub Actions Checkout.
-      - uses: actions/checkout@v3
-      # Run the "semgrep ci" command on the command line of the docker image.
-      - run: semgrep ci --config=auto
+      # step 1
+      - name: clone application source code
+        uses: actions/checkout@v3
 
-        #env:
-        # Connect to Semgrep Cloud Platform through your SEMGREP_APP_TOKEN.
-        # Generate a token from Semgrep Cloud Platform > Settings
-        # and add it to your GitHub secrets.
-        #SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+      # step 2
+      - name: full scan
+        run: |
+          semgrep \
+            --sarif --output report.sarif \
+            --metrics=off \
+            --config="p/default"
+
+      # step 3
+      - name: save report as pipeline artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: report.sarif
+          path: report.sarif
+
+      # step 4
+      - name: publish code scanning alerts
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: report.sarif
+          category: semgrep
