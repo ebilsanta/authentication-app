@@ -29,7 +29,7 @@ jobs:
       # step 2
       - name: full scan
         run: |
-          semgrep ci --config=auto -o results.json
+          semgrep ci --config=auto --json --output results.json
 
       - name: Create GitHub Issue on Error
         if: ${{ failure() }}

@@ -9,10 +9,7 @@ g = Github(GITHUB_TOKEN)
 repo = g.get_repo(REPO_NAME)
 
 with open('results.json', 'r') as f:
-    try:
-        results = json.load(f)
-    except:
-        print(f.read())
+    results = json.load(f)
 
 
 for finding in results['results']:
