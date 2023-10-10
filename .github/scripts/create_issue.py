@@ -8,7 +8,7 @@ REPO_NAME = os.environ.get("GITHUB_REPOSITORY")
 g = Github(GITHUB_TOKEN)
 repo = g.get_repo(REPO_NAME)
 
-with open('semgrep-results.json', 'r') as f:
+with open('results.json', 'r') as f:
     results = json.load(f)
 
 for finding in results['results']:
