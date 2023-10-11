@@ -5,17 +5,23 @@ import (
 	otp "github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp/api/proto"
 	"google.golang.org/grpc"
 	"log"
-	"math/rand"
+	"crypto/rand"
 	"net"
+	"io"
 	// "net/smtp"
 	// "os"
 )
 
-func GenerateOTP(n int) string {
-	var numberRunes = []rune("0123456789")
-    b := make([]rune, n)
-    for i := range b {
-        b[i] = numberRunes[rand.Intn(len(numberRunes))]
+var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
+
+func GenerateOTP(max int) string {
+    b := make([]byte, max)
+    n, err := io.ReadAtLeast(rand.Reader, b, max)
+    if n != max {
+        panic(err)
+    }
+    for i := 0; i < len(b); i++ {
+        b[i] = table[int(b[i])%len(table)]
     }
     return string(b)
 }
