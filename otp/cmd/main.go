@@ -1,14 +1,14 @@
 package main
 
 import (
-	"context"
-	"github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp"
+	// "context"
+	otp "github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp/api/proto"
 	"google.golang.org/grpc"
 	"log"
 	"math/rand"
 	"net"
-	"net/smtp"
-	"os"
+	// "net/smtp"
+	// "os"
 )
 
 func GenerateOTP(n int) string {
