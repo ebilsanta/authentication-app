@@ -8,9 +8,16 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go v1.45.24 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.41 // indirect
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.22.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.15.6 // indirect
+	github.com/aws/smithy-go v1.15.0 // indirect
 	github.com/golang/glog v1.1.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
