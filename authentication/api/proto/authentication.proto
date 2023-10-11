@@ -1,6 +1,8 @@
 syntax = "proto3";
 option go_package = "github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/authentication";
 
+import "google/api/annotations.proto";
+
 message UserEnrolledRequest {
     string email = 1;
     string firstName = 2;
@@ -23,6 +25,16 @@ message RegistrationResponse {
 }
 
 service Authentication {
-    rpc Register(RegistrationRequest) returns (RegistrationResponse);
-    rpc CheckUserEnrolled(UserEnrolledRequest) returns (UserEnrolledResponse);
+    rpc Register(RegistrationRequest) returns (RegistrationResponse){
+        option (google.api.http) = {
+            post: "/v1/register"
+            body: "*"
+        };
+    }
+    rpc CheckUserEnrolled(UserEnrolledRequest) returns (UserEnrolledResponse) {
+        option (google.api.http) = {
+            post: "/v1/enrolled"
+            body: "*"
+        };
+    }
 }
