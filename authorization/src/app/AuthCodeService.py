@@ -24,7 +24,7 @@ class AuthCodeService:
     def verify_jwt(self, id_jwt):
         try:
             decoded = jwt.decode(id_jwt, self.pub_key ,algorithms=['RS256'], audience=self.audience)
-            if decoded.iss != self.allowed_issuer:
+            if decoded['iss'] != self.allowed_issuer:
                 return "Unknown Issuer"
         except jwt.ExpiredSignatureError:
             return "JWT has expired"
