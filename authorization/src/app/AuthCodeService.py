@@ -21,6 +21,11 @@ class AuthCodeService:
         req.prepare_url(url, {'error':err_msg})
         return RedirectResponse(url=req.url, status_code=302) 
     
+    def make_error_desc(self, url, err_msg, err_desc):
+        req = PreparedRequest()
+        req.prepare_url(url, {'error':err_msg, 'error_description':err_desc})
+        return RedirectResponse(url=req.url, status_code=302) 
+    
     def verify_jwt(self, id_jwt):
         try:
             decoded = jwt.decode(id_jwt, self.pub_key ,algorithms=['RS256'], audience=self.audience)
