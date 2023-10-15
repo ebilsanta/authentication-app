@@ -2,8 +2,8 @@
 from typing import Union
 from fastapi import FastAPI
 import uuid
-from app.AuthCodeService import AuthCodeService
-from app.Database import Database, AuthCodeRecord
+from app.authcode_service import AuthCodeService
+from app.database import Database, AuthCodeRecord
 
 app = FastAPI()
 ac = AuthCodeService()
