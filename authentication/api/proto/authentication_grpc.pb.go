@@ -19,16 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Authentication_Register_FullMethodName          = "/Authentication/Register"
-	Authentication_CheckUserEnrolled_FullMethodName = "/Authentication/CheckUserEnrolled"
+	Authentication_Register_FullMethodName = "/Authentication/Register"
 )
 
 // AuthenticationClient is the client API for Authentication service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthenticationClient interface {
-	Register(ctx context.Context, in *RegistrationRequest, opts ...grpc.CallOption) (*RegistrationResponse, error)
-	CheckUserEnrolled(ctx context.Context, in *UserEnrolledRequest, opts ...grpc.CallOption) (*UserEnrolledResponse, error)
+	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 }
 
 type authenticationClient struct {
@@ -39,18 +37,9 @@ func NewAuthenticationClient(cc grpc.ClientConnInterface) AuthenticationClient {
 	return &authenticationClient{cc}
 }
 
-func (c *authenticationClient) Register(ctx context.Context, in *RegistrationRequest, opts ...grpc.CallOption) (*RegistrationResponse, error) {
-	out := new(RegistrationResponse)
+func (c *authenticationClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+	out := new(RegisterResponse)
 	err := c.cc.Invoke(ctx, Authentication_Register_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authenticationClient) CheckUserEnrolled(ctx context.Context, in *UserEnrolledRequest, opts ...grpc.CallOption) (*UserEnrolledResponse, error) {
-	out := new(UserEnrolledResponse)
-	err := c.cc.Invoke(ctx, Authentication_CheckUserEnrolled_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +50,7 @@ func (c *authenticationClient) CheckUserEnrolled(ctx context.Context, in *UserEn
 // All implementations must embed UnimplementedAuthenticationServer
 // for forward compatibility
 type AuthenticationServer interface {
-	Register(context.Context, *RegistrationRequest) (*RegistrationResponse, error)
-	CheckUserEnrolled(context.Context, *UserEnrolledRequest) (*UserEnrolledResponse, error)
+	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	mustEmbedUnimplementedAuthenticationServer()
 }
 
@@ -70,11 +58,8 @@ type AuthenticationServer interface {
 type UnimplementedAuthenticationServer struct {
 }
 
-func (UnimplementedAuthenticationServer) Register(context.Context, *RegistrationRequest) (*RegistrationResponse, error) {
+func (UnimplementedAuthenticationServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
-}
-func (UnimplementedAuthenticationServer) CheckUserEnrolled(context.Context, *UserEnrolledRequest) (*UserEnrolledResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckUserEnrolled not implemented")
 }
 func (UnimplementedAuthenticationServer) mustEmbedUnimplementedAuthenticationServer() {}
 
@@ -90,7 +75,7 @@ func RegisterAuthenticationServer(s grpc.ServiceRegistrar, srv AuthenticationSer
 }
 
 func _Authentication_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegistrationRequest)
+	in := new(RegisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -102,25 +87,7 @@ func _Authentication_Register_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: Authentication_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthenticationServer).Register(ctx, req.(*RegistrationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Authentication_CheckUserEnrolled_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserEnrolledRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthenticationServer).CheckUserEnrolled(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Authentication_CheckUserEnrolled_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthenticationServer).CheckUserEnrolled(ctx, req.(*UserEnrolledRequest))
+		return srv.(AuthenticationServer).Register(ctx, req.(*RegisterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -135,10 +102,6 @@ var Authentication_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Register",
 			Handler:    _Authentication_Register_Handler,
-		},
-		{
-			MethodName: "CheckUserEnrolled",
-			Handler:    _Authentication_CheckUserEnrolled_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

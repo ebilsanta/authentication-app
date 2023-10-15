@@ -3,12 +3,13 @@ module github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/authentic
 go 1.21.1
 
 require (
+	github.com/aws/aws-sdk-go v1.45.24
+	golang.org/x/crypto v0.13.0
 	google.golang.org/grpc v1.58.3
 	google.golang.org/protobuf v1.31.0
 )
 
 require (
-	github.com/aws/aws-sdk-go v1.45.24 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.41 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.22.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.15.6 // indirect

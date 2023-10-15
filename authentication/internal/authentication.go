@@ -9,3 +9,9 @@ type User struct {
     Status   	string
 	Birthdate	string
 }
+
+type Credential struct {
+	Company		string	`json:"company"`
+	Email		string	`json:"email"`
+	Password	string	`json:"password"`
+}

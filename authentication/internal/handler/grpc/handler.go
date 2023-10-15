@@ -18,12 +18,7 @@ func NewAuthenticationServer(grpcServer *grpc.Server, usecase usecase.Authentica
 	authentication.RegisterAuthenticationServer(grpcServer, userGrpc)
 }
 
-func (srv *AuthenticationServer) CheckUserEnrolled(c context.Context, user *authentication.UserEnrolledRequest) (*authentication.UserEnrolledResponse, error) {
-	message, error := srv.useCase.CheckUserEnrolled(user.Company, user.Email, user.FirstName, user.LastName, user.Birthdate)
-	return &authentication.UserEnrolledResponse{Message: message}, error
-}
-
-func (srv *AuthenticationServer) Register(c context.Context, userCredentials *authentication.RegistrationRequest) (*authentication.RegistrationResponse, error) {
-	message, error := srv.useCase.Register(userCredentials.Email, userCredentials.Password)
-	return &authentication.RegistrationResponse{Message: message}, error
+func (srv *AuthenticationServer) Register(c context.Context, user *authentication.RegisterRequest) (*authentication.RegisterResponse, error) {
+	message, error := srv.useCase.Register(user.Company, user.Email, user.FirstName, user.LastName, user.Birthdate, user.Password)
+	return &authentication.RegisterResponse{Email: user.Email, Message: message}, error
 }
