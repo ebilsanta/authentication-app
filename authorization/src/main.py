@@ -1,11 +1,11 @@
-from typing import Union
 
-from fastapi import FastAPI, Response, status
-from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
-from requests.models import PreparedRequest
+from fastapi import FastAPI, Response
+
+from app.AuthCodeService import AuthCodeService
+
 
 app = FastAPI()
+ac = AuthCodeService()
 
 @app.get("/")
 def read_root():
@@ -20,10 +20,16 @@ def read_root():
 async def post_authcode(response_type: str, client_id: str, redirect_url: str, 
                         state: str, code_challenge: str, id_jwt: str, response: Response):
     if response_type != "code":
-        req = PreparedRequest()
-        req.prepare_url(redirect_url, {'error':'unsupported_response_type'})
-        print(req.url)
-        return RedirectResponse(url=req.url, status_code=302) 
+        return ac.make_error(redirect_url, 'unsupported_response_type')
+    
+    if not ac.is_client_allowed(client_id):
+        return ac.make_error(redirect_url, 'unauthorized_client')
+
+    if ac.verify_jwt(id_jwt):
+        return ac.make_error(redirect_url, 'access_denied')
+    
+    # Generate code
+    # Persist [Code, State, Challenge, expiry]
 
     return "ok"
 
