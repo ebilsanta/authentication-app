@@ -1,6 +1,5 @@
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel
 
 class AuthCodeRecord():
     authcode: str
@@ -16,7 +15,7 @@ class Database:
     def __init__(self):
         self.client = AsyncIOMotorClient(os.getenv('DB_URL'))
         self.db = self.client[os.getenv('DB_NAME')]
-        self.collection = self.db[os.getenv('DB_COLLECTION')]
+        self.collection = self.db[os.getenv('DB_COLLECTION_AUTHCODES')]
 
     async def insert_authcode_record(self, acr: AuthCodeRecord):
         return await self.collection.insert_one(acr.__dict__)

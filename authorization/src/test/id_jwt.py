@@ -9,7 +9,7 @@ private_key = rsa.generate_private_key(
 )
 
 iat = time.time()
-exp = iat + 3600
+exp = iat + 36000
 payload = {'iss': 'authn.gandalf',
            'sub': 'user1@gmail.com',
            'aud': 'authz.gandalf',

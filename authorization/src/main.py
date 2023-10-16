@@ -37,7 +37,9 @@ async def post_authcode(response_type: str, client_id: str, redirect_url: str,
 
     err_message = ac.verify_jwt(id_jwt)
     if err_message:
-        return ac.make_error(redirect_url, 'access_denied', err_message)
+        return ac.make_error_desc(redirect_url, 'access_denied', err_message)
+    
+    # Check if user is actually in our system first
     
     code = uuid.uuid4().hex
 
