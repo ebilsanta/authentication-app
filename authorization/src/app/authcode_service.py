@@ -9,12 +9,16 @@ class AuthCodeService:
         self.allowed_issuer = os.getenv('ALLOWED_ISSUER')
         self.pub_key = os.getenv('PUB_KEY').replace('\\n', '\n').replace('\\t', '\t')
         self.audience = os.getenv('AUDIENCE')
+        self.redirect = os.getenv('ALLOWED_REDIRECT')
 
     def is_client_allowed(self, client):
         return client == self.allowed_client
     
     def is_issuer_allowed(self, issuer):
         return issuer == self.allowed_issuer
+    
+    def is_redirect_valid(self, redir):
+        return redir == self.redirect
     
     def make_error(self, url, err_msg):
         req = PreparedRequest()
