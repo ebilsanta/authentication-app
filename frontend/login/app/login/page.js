@@ -1,3 +1,5 @@
+import Image from 'next/image'
+import LoginForm from '../components/loginForm'
 export default function Login() {
-  return <h1>Login</h1>;
+  return <LoginForm />
 }

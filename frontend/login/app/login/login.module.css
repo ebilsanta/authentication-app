@@ -1,0 +1,18 @@
+.gradientani {
+  background: rgb(16,30,92);
+  background: radial-gradient(circle, rgba(23,42,129,1) 30%, rgba(5,10,36,1) 100%);
+  animation: gradient ease 5s infinite;
+	height: 100vh;
+}
+
+@keyframes gradient {
+	0% {
+    opacity: 1;
+	}
+	50% {
+    opacity: 1;
+	}
+	100% {
+    opacity: 1;
+	}
+}
