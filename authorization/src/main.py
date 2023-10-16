@@ -1,6 +1,8 @@
 
 from typing import Union
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
+import urllib.parse
 import uuid
 from app.authcode_service import AuthCodeService
 from app.database import Database, AuthCodeRecord
@@ -44,5 +46,5 @@ async def post_authcode(response_type: str, client_id: str, redirect_url: str,
     code = uuid.uuid4().hex
 
     await db.insert_authcode_record(AuthCodeRecord(code, state, code_challenge))
-    return code
+    return RedirectResponse(url=redirect_url + '?code=' + code, status_code=302) 
 

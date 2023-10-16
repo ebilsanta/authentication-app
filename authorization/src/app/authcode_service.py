@@ -34,7 +34,7 @@ class AuthCodeService:
         except jwt.ExpiredSignatureError:
             return "JWT has expired"
         except jwt.InvalidTokenError:
-            return "Invalid JWT."
+            return "Invalid JWT"
         except Exception as e:
             return "An error occurred during JWT decoding:" + str(e)
     
