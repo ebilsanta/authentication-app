@@ -92,3 +92,6 @@ async def standard_validation_exception_handler(request: Request, exc: RequestVa
         content=jsonable_encoder({'error': 'invalid_request', 'error_description': 'The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.'}),
     )
 
+@app.post("/token")
+async def post_token(authcode: str, dpop: str, client_ass: str):
+    pass

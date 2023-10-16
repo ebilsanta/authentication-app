@@ -5,7 +5,7 @@ import jwt
 import time
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from app.pkce import generate_pkce_code_verifier, generate_pkce_code_challenge
 
 # Variables
@@ -49,7 +49,7 @@ os.environ['AUDIENCE'] = audience
 os.environ['DB_URL'] = 'mongodb://localhost:27017'
 os.environ['DB_NAME'] = 'authz'
 os.environ['DB_COLLECTION_AUTHCODES'] = 'authcodes'
-os.environ['DB_COLLECTION_ALLOWED'] = 'allowed'
+os.environ['DB_COLLECTION_USERS'] = 'credentials'
 
 from fastapi.testclient import TestClient
 from main import app
@@ -77,8 +77,10 @@ def test_hello_world():
     assert response.json() == {"Hello": "World"}
 
 @patch('main.db.insert_authcode_record')
-def test_authcode_ok(db_mock):
-    db_mock.return_value = 0
+@patch('main.db.exists_valid_user')
+def test_authcode_ok(method2, method1):
+    method1.return_value = 0
+    method2.return_value = True
     params = {'response_type': 'code',
               'client_id': allowed_client,
               'redirect_url': redirect_url,
@@ -94,8 +96,10 @@ def test_authcode_ok(db_mock):
     assert is_uuid(response.headers['location'].split('=')[1])
 
 @patch('main.db.insert_authcode_record')
-def test_authcode_no_redirect_ok(db_mock):
-    db_mock.return_value = 0
+@patch('main.db.exists_valid_user')
+def test_authcode_no_redirect_ok(method2, method1):
+    method1.return_value = 0
+    method2.return_value = True
     params = {'response_type': 'code',
               'client_id': allowed_client,
               'state': uuid.uuid4().hex,
