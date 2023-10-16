@@ -66,7 +66,7 @@ async def post_authcode(response_type: str, client_id: str,
     if len(state) < 16 or len(state) > 64:
         return respond(redirect_url, 'invalid_request', desc='invalid state')
 
-    err_message = ac.verify_jwt(id_jwt)
+    err_message, decoded = ac.verify_jwt(id_jwt)
     if err_message:
         return respond(redirect_url, 'access_denied', err_message)
     
@@ -74,7 +74,7 @@ async def post_authcode(response_type: str, client_id: str,
     
     code = uuid.uuid4().hex
 
-    await db.insert_authcode_record(AuthCodeRecord(code, state, code_challenge))
+    await db.insert_authcode_record(AuthCodeRecord(code, state, code_challenge, decoded['sub'], 600))
     if redirect_url:
         return RedirectResponse(url=redirect_url + '?code=' + code, status_code=302) 
     else:

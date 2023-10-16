@@ -34,11 +34,12 @@ class AuthCodeService:
         try:
             decoded = jwt.decode(id_jwt, self.pub_key ,algorithms=['RS256'], audience=self.audience)
             if decoded['iss'] != self.allowed_issuer:
-                return "Unknown Issuer"
+                return "Unknown Issuer", None
+            return None, decoded
         except jwt.ExpiredSignatureError:
-            return "JWT has expired"
+            return "JWT has expired", None
         except jwt.InvalidTokenError:
-            return "Invalid JWT"
+            return "Invalid JWT", None
         except Exception as e:
-            return "An error occurred during JWT decoding:" + str(e)
+            return "An error occurred during JWT decoding:" + str(e), None
     
