@@ -71,6 +71,8 @@ async def post_authcode(response_type: str, client_id: str,
         return respond(redirect_url, 'access_denied', err_message)
     
     # Check if user is actually in our system first
+    if not await db.exists_valid_user(decoded['sub']):
+        return respond(redirect_url, 'access_denied', 'unknown user')
     
     code = uuid.uuid4().hex
 
