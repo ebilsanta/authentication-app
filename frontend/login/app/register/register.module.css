@@ -1,0 +1,27 @@
+.bg {
+  background:
+    radial-gradient(
+      farthest-side at bottom left,
+      #3B3F54,
+      transparent 300px
+    ),
+    radial-gradient(
+      farthest-corner at top right,
+      #3B3F54,
+      transparent 500px
+    );
+    
+  animation: shimmer 10s ease infinite;
+}
+@keyframes shimmer {
+   0% {
+   background-size:100% 100%;
+}
+50% {
+   background-size:110% 110%;
+ }
+100% {
+   background-size:100% 100%;
+}
+}
+

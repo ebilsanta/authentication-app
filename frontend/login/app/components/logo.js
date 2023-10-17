@@ -2,7 +2,7 @@ import Image from 'next/image'
 export default function Logo() {
   return (
     <Image
-      className='pt-10 pl-10'
+      className='pt-10 pl-10 mb-10'
       src="/logo.svg"
       alt="Ascenda Loyalty"
       width={150}

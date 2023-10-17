@@ -1,18 +1,19 @@
 .gradientani {
   background: rgb(16,30,92);
-  background: radial-gradient(circle, rgba(23,42,129,1) 30%, rgba(5,10,36,1) 100%);
-  animation: gradient ease 5s infinite;
+  background: radial-gradient(circle, rgba(17,32,99,1) 20%, rgba(5,10,36,1) 100%);
+  animation: gradient ease 10s infinite;
 	height: 100vh;
+  background-position: center center;
 }
 
 @keyframes gradient {
 	0% {
-    opacity: 1;
+    background-size: 100% 100%
 	}
 	50% {
-    opacity: 1;
+    background-size: 120% 120%
 	}
 	100% {
-    opacity: 1;
+    background-size: 100% 100%
 	}
 }

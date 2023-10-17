@@ -1,6 +1,6 @@
 export default function LoginForm() {
-  return <div className="bg-white flex flex-col lg:w-1/2 w-4/5 mx-auto rounded-md shadow">
-    <h1 className="text-black font-bold p-5 text-center text-lg">Log in to your account</h1>
+  return <div className="bg-white flex flex-col lg:w-1/3 w-4/5 mx-auto rounded-md shadow">
+    <h1 className="text-black font-semibold p-5 text-center text-xl">Log in to your account</h1>
     <form className="px-8 pb-8 mb-4">
       <div className="mb-4">
         <label className="block text-gray-700 text-sm font-bold mb-2" for="username">
