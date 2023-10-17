@@ -13,7 +13,7 @@ on:
 
 jobs:
   semgrep-full:
-    name: Semgrep Full Scan
+    name: Semgrep Diff Scan
     runs-on: ubuntu-latest
     container:
       image: returntocorp/semgrep
@@ -25,11 +25,13 @@ jobs:
       # step 1
       - name: Clone application source code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # step 2
       - name: full scan
         run: |
-          semgrep ci --config=auto --json --output results.json
+          semgrep ci --config=auto --json --output results.json --baseline-commit $
 
       - name: Create GitHub Issue on Error
         if: ${{ failure() }}
