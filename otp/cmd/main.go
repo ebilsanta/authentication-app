@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"log"
-	"crypto/rand"
 	"net"
 	"net/http"
-	"io"
 	// "net/smtp"
 	// "os"
 
@@ -15,30 +13,21 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc"
 
+	utils "github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp/internal/utils"
 	otp "github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp/api/proto"
+	otpUsecase "github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp/internal/usecase"
+	otpRepo "github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp/internal/repository"
+	handler "github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp/internal/handler/grpc"
 )
-
-var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
-
-func GenerateOTP(max int) string {
-    b := make([]byte, max)
-    n, err := io.ReadAtLeast(rand.Reader, b, max)
-    if n != max {
-        panic(err)
-    }
-    for i := 0; i < len(b); i++ {
-        b[i] = table[int(b[i])%len(table)]
-    }
-    return string(b)
-}
-
-type myOTPServer struct {
-	otp.UnimplementedOTPServer
-}
 
 
 func main() {
 	defer glog.Flush()
+
+	db := utils.GetDB()
+	if db == nil {
+		log.Fatalf("cannot connect to DB")
+	}
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -50,8 +39,9 @@ func main() {
 	}
 
 	serverRegistrar := grpc.NewServer()
-	otpService := &myOTPServer{}
-	otp.RegisterOTPServer(serverRegistrar, otpService)
+	repo := otpRepo.NewDynamoDBOTPRepository(db)
+	usecase := otpUsecase.NewOTPUsecase(repo)
+	handler.NewOTPServer(serverRegistrar, usecase)
 
 	log.Println("Serving gRPC on 0.0.0.0:8089")
 	go func() {

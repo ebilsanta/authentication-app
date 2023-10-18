@@ -61,7 +61,38 @@ func (d *DynamoDBAuthenticationRepository) GetUserByFullInfo(company string, ema
 }
 
 func (d *DynamoDBAuthenticationRepository) UpdateUserByEmail(company string, email string) (*models.User, error) {
-	return nil, nil
+	input := &dynamodb.UpdateItemInput{
+		TableName: aws.String(os.Getenv("USER_TABLE")),
+		Key: map[string]*dynamodb.AttributeValue{
+			"company": {
+				S: aws.String(company),
+			},
+			"email": {
+				S: aws.String(email),
+			},
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":status": {
+				S: aws.String("Verified"),
+			},
+		},
+		ReturnValues:     aws.String("UPDATED_NEW"),
+		UpdateExpression: aws.String("set status = :status"),
+	}
+	
+	output, err := d.DB.UpdateItem(input)
+	if err != nil {
+		log.Fatalf("Got error calling UpdateItem: %s", err)
+	}
+
+	var updated models.User
+
+	err = dynamodbattribute.UnmarshalMap(output.Attributes, &updated)
+	if err != nil {
+		log.Printf("Couldn't unmarshall update response. Here's why: %v\n", err)
+	}
+
+	return &updated, nil
 }
 
 func (d *DynamoDBAuthenticationRepository) GetCredentialByEmail(company string, email string) (*models.Credential, error) {
