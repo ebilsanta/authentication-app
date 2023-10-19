@@ -1,12 +1,12 @@
 import uuid
-from dotenv import load_dotenv
 import os
 import jwt
 import time
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from app.pkce import generate_pkce_code_verifier, generate_pkce_code_challenge
+from app.setup_utils import build_url, is_uuid
 
 # Variables
 allowed_client = 'testing_client'
@@ -55,19 +55,6 @@ from fastapi.testclient import TestClient
 from main import app
 
 client = TestClient(app)
-
-def build_url(url, params):
-    ret = url + '?'
-    for k in params:
-        ret += k + '=' + params[k] + '&'
-    return ret[:-1]
-
-def is_uuid(test):
-    try:
-        uuid.UUID(str(test))
-        return True
-    except ValueError:
-        return False
 
 # Tests start here
 

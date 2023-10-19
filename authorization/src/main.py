@@ -7,10 +7,30 @@ from fastapi.responses import JSONResponse, RedirectResponse
 import uuid
 from app.authcode_service import AuthCodeService
 from app.database import Database, AuthCodeRecord
+from app.dpop_service import DpopService
+from app.pkce import generate_pkce_code_challenge
+
+ac = AuthCodeService()
+dps = DpopService()
+db = Database()
 
 app = FastAPI()
-ac = AuthCodeService()
-db = Database()
+
+def respond(redirect_url, message, desc = None):
+    if redirect_url and desc:
+        return ac.make_error_desc(redirect_url, message, desc)
+    elif redirect_url:
+        return ac.make_error(redirect_url, message)
+    elif desc:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=jsonable_encoder({'error': message, 'error_description': desc}),
+        )
+    else:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=jsonable_encoder({'error': message}),
+        )
 
 @app.get("/")
 def read_root():
@@ -27,22 +47,6 @@ async def post_authcode(response_type: str, client_id: str,
                         code_challenge: Union[str, None] = None, 
                         code_challenge_method:Union[str, None] = None,
                         redirect_url: Union[str, None] = None):
-    
-    def respond(redirect_url, message, desc = None):
-        if redirect_url and desc:
-            return ac.make_error_desc(redirect_url, message, desc)
-        elif redirect_url:
-            return ac.make_error(redirect_url, message)
-        elif desc:
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content=jsonable_encoder({'error': message, 'error_description': desc}),
-            )
-        else:
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content=jsonable_encoder({'error': message}),
-            )
     
     # Verify redirection url is registered
     # RFC 6749 10.6 check redirection url is same as get_auth_code
@@ -93,5 +97,18 @@ async def standard_validation_exception_handler(request: Request, exc: RequestVa
     )
 
 @app.post("/token")
-async def post_token(authcode: str, dpop: str, client_ass: str):
+async def post_token(authcode: str, dpop: str, client_assertion: str, redirect_url: str, code_verifier: str):
+    err = dps.verify_dpop(dpop)
+    if err:
+        return respond(redirect_url, err)
+    
+    ac = await db.get_authcode_record(authcode)
+    print(ac.__dict__)
+
+    print(generate_pkce_code_challenge(code_verifier))
+    if generate_pkce_code_challenge(code_verifier) != ac.code_challenge:
+        return respond(redirect_url, 'Invalid PKCE Code Verifier')
+
+    
+
     pass

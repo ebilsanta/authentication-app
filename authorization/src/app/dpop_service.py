@@ -3,8 +3,20 @@ import uuid
 import jwt
 import time
 import json
+import os
 
-def create_dpop_jwt(private_key, public_key, htu, ath=None, htm='POST'):
+class DpopService:
+    def __init__(self):
+        self.htu = os.getenv('DPOP_HTU')
+        self.htm = os.getenv('DPOP_HTM')
+    
+    def create_dpop(self, private_key, public_key, ath=None):
+        create_dpop_jwt(private_key, public_key, self.htu, self.htm, ath=ath)
+
+    def verify_dpop(self, dpop_jwt):
+        verify_dpop_jwt(dpop_jwt, self.htu, self.htm)
+
+def create_dpop_jwt(private_key, public_key, htu, htm, ath=None):
     header = {
         "alg": "RS256",
         "typ": "dpop+jwt",
@@ -13,10 +25,10 @@ def create_dpop_jwt(private_key, public_key, htu, ath=None, htm='POST'):
 
     now = int(time.time())
     payload = {
-        "iat": now,    # Creation time
-        "jti": str(uuid.uuid4()),   # Unique identifier
-        "htm": htm,                 # HTTP Method
-        "htu": htu,                 # HTTP Target site w/o ? and fragments
+        "iat": now,                     # Creation time
+        "jti": str(uuid.uuid4()),       # Unique identifier
+        "htm": htm,                # HTTP Method
+        "htu": htu,                # HTTP Target site w/o ? and fragments
         "exp": now + 120
     }
 
@@ -39,12 +51,12 @@ def verify_dpop_jwt(dpop_jwt, htu, htm):
     
         decoded = jwt.decode(dpop_jwt, jwk, algorithms=['RS256'])
 
-        if decoded['typ'] != 'dpop+jwt':
+        if uvh['typ'] != 'dpop+jwt':
             return 'Invalid token type'
         if decoded['htm'] != htm:
-            return 'Invalid HTTP Method'
+            return 'Invalid dPoP HTTP Method'
         if decoded['htu'] != htu:
-            return 'Invalid HTTP Method'
+            return 'Invalid dPoP URL'
 
     except jwt.ExpiredSignatureError:
         return "JWT has expired"

@@ -34,6 +34,14 @@ class Database:
     async def insert_authcode_record(self, acr: AuthCodeRecord):
         return self.ac_table.put_item(Item=acr.__dict__)
     
+    async def get_authcode_record(self, ac: str):
+        response = self.ac_table.get_item(
+            Key={
+                'authcode': ac
+            }
+        )
+        return response.get('Item')
+    
     async def exists_valid_user(self, email):
         key = {
             'company': 'ascenda', # TODO: Find way to change company
