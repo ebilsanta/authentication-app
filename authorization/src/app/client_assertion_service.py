@@ -1,13 +1,20 @@
-import os
+from functools import lru_cache
 import time
+from fastapi import Depends
 import jwt
+from config import Settings
+
+@lru_cache()
+def get_settings():
+    return Settings()
 
 class ClientAssertionService:
     def __init__(self) -> None:
-        self.client_id = os.getenv('ALLOWED_CLIENT')
-
-        self.client_pvt = os.getenv('ALLOWED_CLIENT_PVT_KEY')
-        self.audience = os.getenv('AUDIENCE')
+        sets = get_settings()
+        self.client_id = sets.allowed_client
+        self.client_pub = sets.allowed_client_pub_key
+        self.client_pvt = sets.allowed_client_pvk_key
+        self.audience = sets.audience
 
     def generate_client_assertion(self):
         current_time = int(time.time())
@@ -17,9 +24,8 @@ class ClientAssertionService:
     
     # RFC 7521
     def verify_client_assertion(self, assertion):
-        print(self.client_id, self.client_pvt, self.audience)
         try:
-            decoded_payload = jwt.decode(assertion, os.getenv('ALLOWED_CLIENT_PUB_KEY').replace('\\n', '\n').replace('\\t', '\t'), algorithms=["RS256"])
+            decoded_payload = jwt.decode(assertion, self.client_pub.replace('\\n', '\n').replace('\\t', '\t'), algorithms=["RS256"])
 
             if decoded_payload['iss'] != self.client_id:
                 return 'invalid_client', 'invalid_issuer'

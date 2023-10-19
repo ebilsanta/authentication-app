@@ -3,12 +3,18 @@ import uuid
 import jwt
 import time
 import json
-import os
+from functools import lru_cache
+from config import Settings
+
+@lru_cache()
+def get_settings():
+    return Settings()
 
 class DpopService:
     def __init__(self):
-        self.htu = os.getenv('DPOP_HTU')
-        self.htm = os.getenv('DPOP_HTM')
+        sets = get_settings()
+        self.htu = sets.dpop_htu
+        self.htm = sets.dpop_htm
     
     def create_dpop(self, private_key, public_key, ath=None):
         create_dpop_jwt(private_key, public_key, self.htu, self.htm, ath=ath)

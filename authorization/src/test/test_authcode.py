@@ -7,20 +7,16 @@ from cryptography.hazmat.primitives import serialization
 from unittest.mock import patch
 from app.pkce import generate_pkce_code_verifier, generate_pkce_code_challenge
 from app.setup_utils import build_url, is_uuid
-
-# Variables
-allowed_client = 'testing_client'
-issuer = 'authn.testing'
-subject = 'testing@test.com'
-audience = 'authz.testing'
-redirect_url = 'http://localhost:8000'
+from config import get_settings
 
 # Setup
+sets = get_settings()
 
-private_key = rsa.generate_private_key(
-    public_exponent=65537,
-    key_size=2048,
-)
+allowed_client = sets.allowed_client
+issuer = sets.allowed_issuer
+subject = 'testing@test.com'
+audience = sets.audience
+redirect_url = sets.allowed_redirect
 
 iat = time.time()
 exp = iat + 3600
@@ -30,26 +26,11 @@ payload = {'iss': issuer,
            'iat': iat,
            'exp': exp}
 additional_headers = {'kid': uuid.uuid4().hex}
-public_key = private_key.public_key()
+private_key = sets.pvt_key.replace('\\n', '\n').replace('\\t', '\t')
 testing_jwt = jwt.encode(payload, private_key, headers=additional_headers, algorithm="RS256")
 
 code_verifier = generate_pkce_code_verifier()
 code_challenge = generate_pkce_code_challenge(code_verifier)
-
-os.environ['ALLOWED_CLIENT'] = allowed_client
-os.environ['ALLOWED_ISSUER'] = issuer
-os.environ['ALLOWED_REDIRECT'] = redirect_url
-
-os.environ['PUB_KEY'] = str(public_key.public_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PublicFormat.SubjectPublicKeyInfo
-))[2:-1]
-
-os.environ['AUDIENCE'] = audience
-os.environ['DB_URL'] = 'mongodb://localhost:27017'
-os.environ['DB_NAME'] = 'authz'
-os.environ['DB_COLLECTION_AUTHCODES'] = 'authcodes'
-os.environ['DB_COLLECTION_USERS'] = 'credentials'
 
 from fastapi.testclient import TestClient
 from main import app

@@ -4,6 +4,12 @@ import time
 import boto3
 from boto3.resources.base import ServiceResource
 from boto3.dynamodb.conditions import Key
+from functools import lru_cache
+from config import Settings
+
+@lru_cache()
+def get_settings():
+    return Settings()
 
 class AuthCodeRecord():
     authcode: str
@@ -23,13 +29,14 @@ class AuthCodeRecord():
 
 class Database:
     def __init__(self):
+        sets=get_settings()
         ddb = boto3.resource('dynamodb',
-                            region_name=os.getenv('DB_REGION_NAME'),
-                            aws_access_key_id=os.getenv('DB_ACCESS_KEY_ID'),
-                            aws_secret_access_key=os.getenv('DB_SECRET_ACCESS_KEY'))
+                            region_name=sets.db_region_name,
+                            aws_access_key_id=sets.db_access_key_id,
+                            aws_secret_access_key=sets.db_secret_access_key)
 
-        self.ac_table = ddb.Table(os.getenv('DB_COLLECTION_AUTHCODES'))
-        self.users_table = ddb.Table(os.getenv('DB_COLLECTION_USERS'))
+        self.ac_table = ddb.Table(sets.db_collection_authcodes)
+        self.users_table = ddb.Table(sets.db_collection_users)
 
     async def insert_authcode_record(self, acr: AuthCodeRecord):
         return self.ac_table.put_item(Item=acr.__dict__)

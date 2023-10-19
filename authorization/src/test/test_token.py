@@ -1,7 +1,5 @@
 import uuid
-import os
 from dotenv import load_dotenv
-import jwt
 import time
 from unittest.mock import patch
 import pytest
@@ -26,13 +24,9 @@ from main import app
 _, _, ca_pvk, ca_pbk = gen_keypair()
 _, _, pvk, pbk = gen_keypair()
 
-@pytest.fixture(scope='session', autouse=True)
-def env_fixture() -> pytest.fixture():
-    load_dotenv('test.env')
-
 # Token Tests
 @patch('main.db.get_authcode_record')
-def test_token_ok(m1, env_fixture):
+def test_token_ok(m1):
     client = TestClient(app)
     code_verifier = generate_pkce_code_verifier()
     ac = '0123456789abcdef0123456789abcdef'

@@ -1,15 +1,23 @@
+from functools import lru_cache
 import os
 from requests.models import PreparedRequest
 from fastapi.responses import RedirectResponse
 import jwt
+from config import Settings
+
+@lru_cache()
+def get_settings():
+    return Settings()
 
 class AuthCodeService:
     def __init__(self):
-        self.allowed_client = os.getenv('ALLOWED_CLIENT')
-        self.allowed_issuer = os.getenv('ALLOWED_ISSUER')
-        self.pub_key = os.getenv('PUB_KEY').replace('\\n', '\n').replace('\\t', '\t')
-        self.audience = os.getenv('AUDIENCE')
-        self.redirect = os.getenv('ALLOWED_REDIRECT')
+        sets = get_settings()
+
+        self.allowed_client = sets.allowed_client
+        self.allowed_issuer = sets.allowed_issuer
+        self.pub_key = sets.pub_key.replace('\\n', '\n').replace('\\t', '\t')
+        self.audience = sets.audience
+        self.redirect = sets.allowed_redirect
 
     def is_client_allowed(self, client):
         return client == self.allowed_client
