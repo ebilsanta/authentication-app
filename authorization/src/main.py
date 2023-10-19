@@ -9,10 +9,12 @@ from app.authcode_service import AuthCodeService
 from app.database import Database, AuthCodeRecord
 from app.dpop_service import DpopService
 from app.pkce import generate_pkce_code_challenge
+from app.client_assertion_service import ClientAssertionService
 
 ac = AuthCodeService()
 dps = DpopService()
 db = Database()
+cas = ClientAssertionService()
 
 app = FastAPI()
 
@@ -98,6 +100,10 @@ async def standard_validation_exception_handler(request: Request, exc: RequestVa
 
 @app.post("/token")
 async def post_token(authcode: str, dpop: str, client_assertion: str, redirect_url: str, code_verifier: str):
+    err, err_desc = cas.verify_client_assertion(client_assertion)
+    if err:
+        return respond(redirect_url, err, err_desc)
+
     err = dps.verify_dpop(dpop)
     if err:
         return respond(redirect_url, err)
