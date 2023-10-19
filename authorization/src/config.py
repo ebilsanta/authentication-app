@@ -15,6 +15,9 @@ class Settings(BaseSettings):
 
     audience: str
     authz_url: str
+    authz_client_id: str
+    authz_pvt_key: str
+    authz_pub_key: str
 
     db_name: str
     db_collection_authcodes: str

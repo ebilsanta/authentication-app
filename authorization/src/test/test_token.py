@@ -45,3 +45,4 @@ def test_token_ok(m1):
     response = client.post('/token', json=params, follow_redirects=False)
     print(response)
     print(response.headers)
+    print(response.content)

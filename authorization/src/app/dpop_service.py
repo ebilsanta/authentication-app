@@ -20,7 +20,7 @@ class DpopService:
         create_dpop_jwt(private_key, public_key, self.htu, self.htm, ath=ath)
 
     def verify_dpop(self, dpop_jwt):
-        verify_dpop_jwt(dpop_jwt, self.htu, self.htm)
+        return verify_dpop_jwt(dpop_jwt, self.htu, self.htm)
 
 def create_dpop_jwt(private_key, public_key, htu, htm, ath=None):
     header = {
@@ -52,22 +52,25 @@ def verify_dpop_jwt(dpop_jwt, htu, htm):
     try:
         uvh = jwt.get_unverified_header(dpop_jwt)
         if uvh['alg'] != 'RS256':
-            return "Invalid algorithm"
+            return None, "Invalid algorithm"
         jwk = base64.b64decode(uvh['jwk'])
     
         decoded = jwt.decode(dpop_jwt, jwk, algorithms=['RS256'])
 
         if uvh['typ'] != 'dpop+jwt':
-            return 'Invalid token type'
+            return None, 'Invalid token type'
         if decoded['htm'] != htm:
-            return 'Invalid dPoP HTTP Method'
+            return None, 'Invalid dPoP HTTP Method'
+
         if decoded['htu'] != htu:
-            return 'Invalid dPoP URL'
+            return None, 'Invalid dPoP URL'
+        
+        return jwk, None
 
     except jwt.ExpiredSignatureError:
-        return "JWT has expired"
+        return None, "JWT has expired"
     except jwt.InvalidTokenError:
-        return "Invalid JWT"
+        return None, "Invalid JWT"
     except Exception as e:
-        return "An error occurred during JWT decoding:" + str(e)
+        return None, "An error occurred during JWT decoding:" + str(e)
 

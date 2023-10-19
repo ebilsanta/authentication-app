@@ -1,11 +1,15 @@
 
+import base64
 from functools import lru_cache
+import hashlib
 from typing import Union
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 import uuid
+import time
+import jwt
 
 from pydantic import BaseModel
 from app.authcode_service import AuthCodeService
@@ -13,6 +17,11 @@ from app.database import Database, AuthCodeRecord
 from app.dpop_service import DpopService
 from app.pkce import generate_pkce_code_challenge
 from app.client_assertion_service import ClientAssertionService
+from config import Settings
+
+@lru_cache()
+def get_settings():
+    return Settings()
 
 ac = AuthCodeService()
 dps = DpopService()
@@ -118,7 +127,7 @@ async def post_token(token_req: TokenRequest):
     if err:
         return respond(token_req.redirect_url, err, err_desc)
 
-    err = dps.verify_dpop(token_req.dpop)
+    jwk, err = dps.verify_dpop(token_req.dpop)
     if err:
         return respond(token_req.redirect_url, err)
     
@@ -128,8 +137,22 @@ async def post_token(token_req: TokenRequest):
     print(generate_pkce_code_challenge(token_req.code_verifier))
     if generate_pkce_code_challenge(token_req.code_verifier) != ac.code_challenge:
         return respond(token_req.redirect_url, 'Invalid PKCE Code Verifier')
+    
+    now = int(time.time())
+    payload = {
+        "sub": ac.user,        # Subject (user ID)
+        "iss": "your_client_id",     # Issuer (your client ID)
+        "aud": "https://api.example.com",  # Audience (the API server)
+        "exp": now + 3600,  # Expiration time
+        "iat": now,
+        "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
+        "typ": "dpop"
+    }
+    access_token = jwt.encode(payload, get_settings().authz_pvt_key.replace('\\n', '\n').replace('\\t', '\t'), algorithm="RS256")
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content=jsonable_encoder({"access_token: "})
+        content=jsonable_encoder({"access_token": access_token,
+                                  "token_type": "DPoP",
+                                  "expires_in": 3600})
     )
