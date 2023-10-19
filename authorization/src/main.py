@@ -6,6 +6,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 import uuid
+
+from pydantic import BaseModel
 from app.authcode_service import AuthCodeService
 from app.database import Database, AuthCodeRecord
 from app.dpop_service import DpopService
@@ -99,23 +101,35 @@ async def standard_validation_exception_handler(request: Request, exc: RequestVa
         content=jsonable_encoder({'error': 'invalid_request', 'error_description': 'The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.'}),
     )
 
-@app.post("/token")
-async def post_token(authcode: str, dpop: str, client_assertion: str, redirect_url: str, code_verifier: str):
-    err, err_desc = cas.verify_client_assertion(client_assertion)
-    if err:
-        return respond(redirect_url, err, err_desc)
+class TokenRequest(BaseModel):
+    grant_type: str
+    authcode: str
+    dpop: str
+    client_assertion: str
+    redirect_url: str
+    code_verifier: str
 
-    err = dps.verify_dpop(dpop)
+@app.post("/token")
+async def post_token(token_req: TokenRequest):
+    if token_req.grant_type != "authorization_code":
+        return respond(token_req.redirect_url, 'Invalid Grant Type')
+
+    err, err_desc = cas.verify_client_assertion(token_req.client_assertion)
     if err:
-        return respond(redirect_url, err)
+        return respond(token_req.redirect_url, err, err_desc)
+
+    err = dps.verify_dpop(token_req.dpop)
+    if err:
+        return respond(token_req.redirect_url, err)
     
-    ac = await db.get_authcode_record(authcode)
+    ac = await db.get_authcode_record(token_req.authcode)
     print(ac.__dict__)
 
-    print(generate_pkce_code_challenge(code_verifier))
-    if generate_pkce_code_challenge(code_verifier) != ac.code_challenge:
-        return respond(redirect_url, 'Invalid PKCE Code Verifier')
+    print(generate_pkce_code_challenge(token_req.code_verifier))
+    if generate_pkce_code_challenge(token_req.code_verifier) != ac.code_challenge:
+        return respond(token_req.redirect_url, 'Invalid PKCE Code Verifier')
 
-    
-
-    pass
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=jsonable_encoder({"access_token: "})
+    )
