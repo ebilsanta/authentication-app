@@ -22,10 +22,12 @@ print()
 
 public_key = private_key.public_key()
 
-encoded = jwt.encode(payload, private_key, headers=additional_headers, algorithm="RS256")
+encoded = jwt.encode(payload, private_key,
+                     headers=additional_headers, algorithm="RS256")
 print(encoded)
 
-decoded = jwt.decode(encoded, public_key, algorithms=["RS256"], audience='authz.gandalf')
+decoded = jwt.decode(encoded, public_key, algorithms=[
+                     "RS256"], audience='authz.gandalf')
 {'some': 'payload'}
 
 pbk = public_key.public_bytes(
@@ -34,9 +36,9 @@ pbk = public_key.public_bytes(
 )
 
 pvk = private_key.private_bytes(
-   encoding=serialization.Encoding.PEM,
-   format=serialization.PrivateFormat.TraditionalOpenSSL,
-   encryption_algorithm=serialization.NoEncryption()
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.TraditionalOpenSSL,
+    encryption_algorithm=serialization.NoEncryption()
 )
 
 f = open("pvk.pem", "a")
