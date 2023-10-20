@@ -33,24 +33,6 @@ cas = ClientAssertionService()
 app = FastAPI()
 
 
-def respond(redirect_url, message, desc=None):
-    if redirect_url and desc:
-        return ac.make_error_desc(redirect_url, message, desc)
-    elif redirect_url:
-        return ac.make_error(redirect_url, message)
-    elif desc:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content=jsonable_encoder(
-                {'error': message, 'error_description': desc}),
-        )
-    else:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content=jsonable_encoder({'error': message}),
-        )
-
-
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -68,6 +50,22 @@ async def post_authcode(response_type: str, client_id: str,
                         code_challenge: Union[str, None] = None,
                         code_challenge_method: Union[str, None] = None,
                         redirect_url: Union[str, None] = None):
+    def respond(redirect_url, message, desc=None):
+        if redirect_url and desc:
+            return ac.make_error_desc(redirect_url, message, desc)
+        elif redirect_url:
+            return ac.make_error(redirect_url, message)
+        elif desc:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=jsonable_encoder(
+                    {'error': message, 'error_description': desc}),
+            )
+        else:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=jsonable_encoder({'error': message}),
+            )
 
     # Verify redirection url is registered
     # RFC 6749 10.6 check redirection url is same as get_auth_code
@@ -136,23 +134,36 @@ class RefreshRequest(BaseModel):
 
 @app.post("/token")
 async def post_token(token_req: TokenRequest):
+    def respond(message, desc=None):
+        if desc:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=jsonable_encoder(
+                    {'error': message, 'error_description': desc}),
+            )
+        else:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=jsonable_encoder({'error': message}),
+            )
+
     if token_req.grant_type != "authorization_code":
-        return respond(token_req.redirect_url, 'unsupported grant type')
+        return respond('unsupported grant type')
 
     err, err_desc = cas.verify_client_assertion(token_req.client_assertion)
     if err:
-        return respond(token_req.redirect_url, err, err_desc)
+        return respond(err, err_desc)
 
     jwk, err = dps.verify_dpop(token_req.dpop)
     if err:
-        return respond(token_req.redirect_url, err)
+        return respond(err)
 
     ac = await db.get_authcode_record(token_req.authcode)
     print(ac.__dict__)
 
     print(generate_pkce_code_challenge(token_req.code_verifier))
     if generate_pkce_code_challenge(token_req.code_verifier) != ac.code_challenge:
-        return respond(token_req.redirect_url, 'Invalid PKCE Code Verifier')
+        return respond('Invalid PKCE Code Verifier')
 
     sets = get_settings()
 
@@ -190,8 +201,21 @@ async def post_token(token_req: TokenRequest):
 
 @app.post("/refresh")
 async def post_refresh(refresh_req: RefreshRequest):
+    def respond(message, desc=None):
+        if desc:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=jsonable_encoder(
+                    {'error': message, 'error_description': desc}),
+            )
+        else:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content=jsonable_encoder({'error': message}),
+            )
+        
     if refresh_req.grant_type != "authorization_code":
-        return respond(None, 'unsupported grant type')
+        return respond('unsupported grant type')
     
     jwk, err = dps.verify_dpop(refresh_req.dpop, at=refresh_req.refresh_token)
 

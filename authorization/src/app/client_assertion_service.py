@@ -37,13 +37,13 @@ class ClientAssertionService:
                 return 'invalid_client', 'invalid_issuer'
             if decoded_payload['sub'] != self.client_id:
                 return 'invalid_client', 'invalid_subject'
-            if decoded_payload['aud'] != self.audience:
-                return 'invalid_client', 'invalid_audience'
 
             return None, None
 
         except jwt.ExpiredSignatureError:
             return 'invalid_client', 'assertion has expired'
+        except jwt.InvalidAudienceError:
+            return 'invalid_client', 'invalid_audience'
         except jwt.InvalidTokenError as e:
             return 'invalid_client', 'Error verifying Client Assertion: ' + str(e)
 

@@ -60,7 +60,6 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
         if uvh['alg'] != 'RS256':
             return None, "Invalid algorithm"
         jwk = base64.b64decode(uvh['jwk'])
-
         decoded = jwt.decode(dpop_jwt, jwk, algorithms=['RS256'])
 
         if uvh['typ'] != 'dpop+jwt':
@@ -71,13 +70,14 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
         if decoded['htu'] != htu:
             return None, 'Invalid dPoP URL'
         
-        if decoded['ath'] and decoded['ath'] != base64.b64encode(hashlib.sha256(at).digest()).decode():
+        if 'ath' in decoded and decoded['ath'] != base64.b64encode(hashlib.sha256(at).digest()).decode():
             return None, 'Invalid access token hash'
         
-        decoded_at = jwt.decode(at, get_settings().authz_pub_key.replace(
+        if at:
+            decoded_at = jwt.decode(at, get_settings().authz_pub_key.replace(
             '\\n', '\n').replace('\\t', '\t'), algorithms=['RS256'])
-        if decoded_at['cnf.jkt'] != base64.b64encode(hashlib.sha256(jwk).digest()).decode():
-            return None, 'dPoP and JWT mismatch'
+            if decoded_at['cnf.jkt'] != base64.b64encode(hashlib.sha256(jwk).digest()).decode():
+                return None, 'dPoP and JWT mismatch'
 
         return jwk, None
 
