@@ -45,13 +45,12 @@ def create_dpop_jwt(private_key, public_key, htu, htm, ath=None):
     if ath:
         # Base64 encoded SHA256 of associated access token's ASCII
         # Needed if access token also presented
-        payload.update("ath", ath)  # Access Token's Hash
+        payload.update({"ath": ath})  # Access Token's Hash
 
     token = jwt.encode(payload, private_key, algorithm='RS256', headers=header)
 
     return json.dumps(token)
 
-# cnf.jkt holds the hash of the public key in the access token
 
 
 def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
@@ -70,13 +69,14 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
         if decoded['htu'] != htu:
             return None, 'Invalid dPoP URL'
         
-        if 'ath' in decoded and decoded['ath'] != base64.b64encode(hashlib.sha256(at).digest()).decode():
+        if 'ath' in decoded and decoded['ath'] != base64.b64encode(hashlib.sha256(at.encode('utf-8')).digest()).decode():
             return None, 'Invalid access token hash'
         
         if at:
             decoded_at = jwt.decode(at, get_settings().authz_pub_key.replace(
             '\\n', '\n').replace('\\t', '\t'), algorithms=['RS256'])
-            if decoded_at['cnf.jkt'] != base64.b64encode(hashlib.sha256(jwk).digest()).decode():
+            if decoded_at['cnf.jkt'] != base64.b64encode(hashlib.sha256
+                                                         (jwk).digest()).decode():
                 return None, 'dPoP and JWT mismatch'
 
         return jwk, None

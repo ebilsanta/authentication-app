@@ -158,18 +158,18 @@ async def post_token(token_req: TokenRequest):
     if err:
         return respond(err)
 
-    ac = await db.get_authcode_record(token_req.authcode)
-    print(ac.__dict__)
+    authc = await db.get_authcode_record(token_req.authcode)
+    print(authc.__dict__)
 
     print(generate_pkce_code_challenge(token_req.code_verifier))
-    if generate_pkce_code_challenge(token_req.code_verifier) != ac.code_challenge:
+    if generate_pkce_code_challenge(token_req.code_verifier) != authc.code_challenge:
         return respond('Invalid PKCE Code Verifier')
 
     sets = get_settings()
 
     now = int(time.time())
     payload = {
-        "sub": ac.user,                                                  
+        "sub": authc.user,                                                  
         "iss": sets.audience,                                            
         "exp": now + 3600,                                                 
         "iat": now,
@@ -180,7 +180,7 @@ async def post_token(token_req: TokenRequest):
         '\\n', '\n').replace('\\t', '\t'), algorithm="RS256")
     
     payload = {
-        "sub": ac.user,                                                  
+        "sub": authc.user,                                                  
         "iss": sets.audience,                                            
         "exp": now + 86400,                                                 
         "iat": now,
@@ -217,21 +217,28 @@ async def post_refresh(refresh_req: RefreshRequest):
     if refresh_req.grant_type != "authorization_code":
         return respond('unsupported grant type')
     
-    jwk, err = dps.verify_dpop(refresh_req.dpop, at=refresh_req.refresh_token)
+    err, jwk = dps.verify_dpop(refresh_req.dpop, at=refresh_req.refresh_token)
+
+    if err:
+        print(err)
+        return respond(err)
+
+    decoded_ref = jwt.decode(refresh_req.refresh_token, get_settings().authz_pub_key
+               .replace('\\n', '\n').replace('\\t', '\t'), algorithms=['RS256'])
 
     sets = get_settings()
 
     now = int(time.time())
     payload = {
-        "sub": ac.user,                                                  
+        "sub": decoded_ref['sub'],                                                  
         "iss": sets.audience,                                            
         "exp": now + 3600,                                                 
         "iat": now,
-        "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
+        "cnf.jkt": base64.b64encode(hashlib.sha256(jwk.encode('utf-8')).digest()).decode(),
         "typ": "dpop"
     }
-    access_token = jwt.encode(payload, get_settings().authz_pvt_key.replace(
-        '\\n', '\n').replace('\\t', '\t'), algorithm="RS256")
+    access_token = jwt.encode(payload, bytes(get_settings().authz_pvt_key.replace(
+        '\\n', '\n').replace('\\t', '\t'), 'utf-8'), algorithm="RS256")
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
