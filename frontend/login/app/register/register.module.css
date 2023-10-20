@@ -2,12 +2,12 @@
   background:
     radial-gradient(
       farthest-side at bottom left,
-      #3B3F54,
-      transparent 300px
+      #3c4055,
+      transparent 500px
     ),
     radial-gradient(
       farthest-corner at top right,
-      #3B3F54,
+      #3c4055,
       transparent 500px
     );
     
@@ -18,7 +18,7 @@
    background-size:100% 100%;
 }
 50% {
-   background-size:110% 110%;
+   background-size:120% 120%;
  }
 100% {
    background-size:100% 100%;
