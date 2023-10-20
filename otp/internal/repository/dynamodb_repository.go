@@ -3,9 +3,9 @@ package repository
 import (
 	"os"
 	"log"
-	"time"
-	"strconv"
-	"fmt"
+	// "time"
+	// "strconv"
+	// "fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -22,9 +22,8 @@ func NewDynamoDBOTPRepository(DB *dynamodb.DynamoDB) OTPRepository {
 	return &DynamoDBOTPRepository{DB}
 }
 
-func (d *DynamoDBOTPRepository) CreateOTP(otp string, expiration_date time.Time) (*models.OTP, error) {
-	otp_num, _ := strconv.Atoi(otp)
-	OTP := &models.OTP{otp_num, expiration_date, false}
+func (d *DynamoDBOTPRepository) CreateOTP(otp string, expiration_date string) (*models.OTP, error) {
+	OTP := &models.OTP{otp, expiration_date, false}
 
 	av, err := dynamodbattribute.MarshalMap(OTP)
 	if err != nil {
@@ -36,8 +35,6 @@ func (d *DynamoDBOTPRepository) CreateOTP(otp string, expiration_date time.Time)
 		Item:      av,
 		TableName: aws.String(os.Getenv("OTP_TABLE")),
 	}
-
-	fmt.Println(input)
 	
 	_, err = d.DB.PutItem(input)
 	if err != nil {
@@ -48,16 +45,16 @@ func (d *DynamoDBOTPRepository) CreateOTP(otp string, expiration_date time.Time)
 	return OTP, nil
 }
 
-func (d *DynamoDBOTPRepository) GetOTP(otp string, expiration_date time.Time) (*models.OTP, error) {
+func (d *DynamoDBOTPRepository) GetOTP(otp string, expiration_date string) (*models.OTP, error) {
 	result, err := d.DB.Query(&dynamodb.QueryInput{
 		TableName: aws.String(os.Getenv("OTP_TABLE")),
 		KeyConditionExpression: aws.String("expiration_date = :expiration_date AND otp = :otp"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":expiration_date": {
-				S: aws.String(expiration_date.String()),
+				S: aws.String(expiration_date),
 			},
 			":otp": {
-				N: aws.String(string(otp)),
+				S: aws.String(otp),
 			},
 		},
 	})
@@ -78,7 +75,7 @@ func (d *DynamoDBOTPRepository) GetOTP(otp string, expiration_date time.Time) (*
 	return &OTP, nil
 }
 
-func (d *DynamoDBOTPRepository) UpdateOTP(otp string, expiration_date time.Time) (*models.OTP, error) {
+func (d *DynamoDBOTPRepository) UpdateOTP(otp string, expiration_date string) (*models.OTP, error) {
 
 	verified := true
 
@@ -86,10 +83,10 @@ func (d *DynamoDBOTPRepository) UpdateOTP(otp string, expiration_date time.Time)
 		TableName: aws.String(os.Getenv("OTP_TABLE")),
 		Key: map[string]*dynamodb.AttributeValue{
 			"otp": {
-				N: aws.String(string(otp)),
+				S: aws.String(otp),
 			},
 			"expiration_date": {
-				S: aws.String(expiration_date.String()),
+				S: aws.String(expiration_date),
 			},
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
