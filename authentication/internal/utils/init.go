@@ -1,8 +1,12 @@
 package utils
 
 import (
+	"context"
     "log"
     "os"
+
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc"
 
     "github.com/joho/godotenv"
 	"github.com/aws/aws-sdk-go/aws"
@@ -28,4 +32,24 @@ var ddb *dynamodb.DynamoDB = ConnectDB()
 
 func GetDB() (db *dynamodb.DynamoDB) {
 	return ddb
+}
+
+func ConnectOTPServer() (*grpc.ClientConn, error) {
+	err := godotenv.Load("infrastructure/.env")
+    if err != nil {
+        log.Fatal("Error loading .env file")
+		return nil, err
+    }
+
+	conn, err := grpc.DialContext(
+		context.Background(),
+		os.Getenv("OTP_URL"),
+		grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalln("Failed to dial server:", err)
+	}
+
+	return conn, err
 }

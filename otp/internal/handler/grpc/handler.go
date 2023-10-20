@@ -19,11 +19,11 @@ func NewOTPServer(grpcServer *grpc.Server, usecase usecase.OTPUsecase){
 }
 
 func (srv *OTPServer) GetOTP(c context.Context, receipient *otp.OTPRequest) (*otp.OTPResponse, error) {
-	verificationKey, message, error := srv.useCase.GetOTP(receipient.Email)
+	verificationKey, message, error := srv.useCase.GetOTP(receipient.Company, receipient.Email)
 	return &otp.OTPResponse{VerificationKey: verificationKey, Message: message}, error
 }
 
 func (srv *OTPServer) VerifyOTP(c context.Context, receipient *otp.VerifyOTPRequest) (*otp.VerifyOTPResponse, error) {
-	status, details, email, error := srv.useCase.VerifyOTP(receipient.VerificationKey, receipient.Otp, receipient.Email)
-	return &otp.VerifyOTPResponse{Status: status, Details: details, Email: email}, error
+	status, details, company, email, error := srv.useCase.VerifyOTP(receipient.VerificationKey, receipient.Otp, receipient.Email)
+	return &otp.VerifyOTPResponse{Status: status, Details: details, Company: company, Email: email}, error
 }

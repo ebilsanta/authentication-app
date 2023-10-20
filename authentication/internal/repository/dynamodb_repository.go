@@ -61,6 +61,8 @@ func (d *DynamoDBAuthenticationRepository) GetUserByFullInfo(company string, ema
 }
 
 func (d *DynamoDBAuthenticationRepository) UpdateUserByEmail(company string, email string) (*models.User, error) {
+	status := "status"
+	
 	input := &dynamodb.UpdateItemInput{
 		TableName: aws.String(os.Getenv("USER_TABLE")),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -76,8 +78,11 @@ func (d *DynamoDBAuthenticationRepository) UpdateUserByEmail(company string, ema
 				S: aws.String("Verified"),
 			},
 		},
+		ExpressionAttributeNames: map[string]*string{
+			"#status": &status,
+		},
 		ReturnValues:     aws.String("UPDATED_NEW"),
-		UpdateExpression: aws.String("set status = :status"),
+		UpdateExpression: aws.String("set #status = :status"),
 	}
 	
 	output, err := d.DB.UpdateItem(input)

@@ -19,6 +19,11 @@ func NewAuthenticationServer(grpcServer *grpc.Server, usecase usecase.Authentica
 }
 
 func (srv *AuthenticationServer) Register(c context.Context, user *authentication.RegisterRequest) (*authentication.RegisterResponse, error) {
-	message, error := srv.useCase.Register(user.Company, user.Email, user.FirstName, user.LastName, user.Birthdate, user.Password)
-	return &authentication.RegisterResponse{Email: user.Email, Message: message}, error
+	message, verification_key, error := srv.useCase.Register(user.Company, user.Email, user.FirstName, user.LastName, user.Birthdate, user.Password)
+	return &authentication.RegisterResponse{Email: user.Email, Message: message, VerificationKey: verification_key}, error
+}
+
+func (srv *AuthenticationServer) VerifyEmail(c context.Context, verification *authentication.VerifyEmailRequest) (*authentication.VerifyEmailResponse, error) {
+	status, details, _, error := srv.useCase.VerifyEmail(verification.VerificationKey, verification.Otp, verification.Email)
+	return &authentication.VerifyEmailResponse{Status: status, Details: details, Email: verification.Email}, error
 }

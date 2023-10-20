@@ -38,7 +38,7 @@ func GenerateOTP(max int) string {
 
 func Encode(details map[string]string) (string, error) {
 	crypt_password := os.Getenv("CRYPT_PASSWORD")
-	secret_string := details["expiration_date"] + "\n" + details["email"] + "\n" + details["otp"]
+	secret_string := details["company"] + "\n" + details["expiration_date"] + "\n" + details["email"] + "\n" + details["otp"]
 	block, err := aes.NewCipher([]byte(crypt_password))
 	if err != nil {
 		return "", err
@@ -66,7 +66,7 @@ func Decode(verification_key string) (map[string]string, error) {
 	plainText := make([]byte, len(cipherText))
 	cfb.XORKeyStream(plainText, cipherText)
 	details := strings.Split(string(plainText), "\n")
-	return map[string]string{"expiration_date": details[0], "email": details[1], "otp": details[2]}, nil
+	return map[string]string{"company": details[0], "expiration_date": details[1], "email": details[2], "otp": details[3]}, nil
 }
 
 func SendOTPEmail(email string, otp string) error {
@@ -113,20 +113,20 @@ func SendOTPEmail(email string, otp string) error {
 }
 
 type OTPUsecase interface {
-	GetOTP(email string) (string, string, error) 
-	VerifyOTP(verificationKey string, otp string, email string) (string, string, string, error)
+	GetOTP(company string, email string) (string, string, error) 
+	VerifyOTP(verificationKey string, otp string, email string) (string, string, string, string, error)
 }
 
 type otpUsecase struct {
 	otpRepos repository.OTPRepository
 }
 
-func (o *otpUsecase) GetOTP(email string) (string, string, error) {
+func (o *otpUsecase) GetOTP(company string, email string) (string, string, error) {
 	otp := GenerateOTP(6)
 	expiration_delay_minutes := 2
 	expiration_date := time.Now().Local().Add(time.Minute * time.Duration(expiration_delay_minutes))
 	
-	details := map[string]string{"expiration_date": expiration_date.String(), "email": email, "otp": string(otp)}
+	details := map[string]string{"company": company, "expiration_date": expiration_date.String(), "email": email, "otp": string(otp)}
 
 	_, err := o.otpRepos.CreateOTP(otp, expiration_date.String())
 	if err != nil {
@@ -148,28 +148,28 @@ func (o *otpUsecase) GetOTP(email string) (string, string, error) {
 	return verification_key, "Success", nil
 }
 
-func (o *otpUsecase) VerifyOTP(verification_key string, otp string, email string) (string, string, string, error) {
+func (o *otpUsecase) VerifyOTP(verification_key string, otp string, email string) (string, string, string, string, error) {
 	details, err := Decode(verification_key)
 	if err != nil {
-		return "Failure", "Error processing verification key", email, err
+		return "Failure", "Error processing verification key", "", email, err
 	}
 	now := time.Now()
 	expiration_date, _ := time.Parse(now.String(), details["expiration_date"])
 	if details["otp"] == otp && details["email"] == email && expiration_date.Before(now) {
 		OTP, err := o.otpRepos.GetOTP(otp, details["expiration_date"])
 		if err != nil || OTP == nil {
-			return "Failure", "Invalid OTP", email, err
+			return "Failure", "Invalid OTP", "", email, err
 		}
 		if OTP.Verified {
-			return "Failure", "OTP has already been used", email, nil
+			return "Failure", "OTP has already been used", "", email, nil
 		}
 		_, err = o.otpRepos.UpdateOTP(otp, details["expiration_date"])
 		if err != nil {
-			return "Failure", "Something went wrong while verifying the OTP", email, err
+			return "Failure", "Something went wrong while verifying the OTP", "", email, err
 		}
-		return "Success", "OTP Verified", email, nil
+		return "Success", "OTP Verified", details["company"], email, nil
 	}
-	return "Failure", "Some details did not match", email, nil
+	return "Failure", "Some details did not match", "", email, nil
 }
 
 func NewOTPUsecase(o repository.OTPRepository) OTPUsecase {
