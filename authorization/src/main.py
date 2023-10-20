@@ -128,11 +128,16 @@ class TokenRequest(BaseModel):
     redirect_url: str
     code_verifier: str
 
+class RefreshRequest(BaseModel):
+    grant_type: str
+    dpop: str
+    refresh_token: str
+
 
 @app.post("/token")
 async def post_token(token_req: TokenRequest):
     if token_req.grant_type != "authorization_code":
-        return respond(token_req.redirect_url, 'Invalid Grant Type')
+        return respond(token_req.redirect_url, 'unsupported grant type')
 
     err, err_desc = cas.verify_client_assertion(token_req.client_assertion)
     if err:
@@ -149,12 +154,54 @@ async def post_token(token_req: TokenRequest):
     if generate_pkce_code_challenge(token_req.code_verifier) != ac.code_challenge:
         return respond(token_req.redirect_url, 'Invalid PKCE Code Verifier')
 
+    sets = get_settings()
+
     now = int(time.time())
     payload = {
-        "sub": ac.user,        # Subject (user ID)
-        "iss": "your_client_id",     # Issuer (your client ID)
-        "aud": "https://api.example.com",  # Audience (the API server)
-        "exp": now + 3600,  # Expiration time
+        "sub": ac.user,                                                  
+        "iss": sets.audience,                                            
+        "exp": now + 3600,                                                 
+        "iat": now,
+        "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
+        "typ": "dpop"
+    }
+    access_token = jwt.encode(payload, get_settings().authz_pvt_key.replace(
+        '\\n', '\n').replace('\\t', '\t'), algorithm="RS256")
+    
+    payload = {
+        "sub": ac.user,                                                  
+        "iss": sets.audience,                                            
+        "exp": now + 86400,                                                 
+        "iat": now,
+        "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
+        "typ": "dpop+refresh"
+    }
+
+    refresh_token = jwt.encode(payload, get_settings().authz_pvt_key.replace(
+        '\\n', '\n').replace('\\t', '\t'), algorithm="RS256")
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=jsonable_encoder({"access_token": access_token,
+                                  "token_type": "DPoP",
+                                  "expires_in": 3600,
+                                  "refresh_token": refresh_token}) 
+    )
+
+@app.post("/refresh")
+async def post_refresh(refresh_req: RefreshRequest):
+    if refresh_req.grant_type != "authorization_code":
+        return respond(None, 'unsupported grant type')
+    
+    jwk, err = dps.verify_dpop(refresh_req.dpop, at=refresh_req.refresh_token)
+
+    sets = get_settings()
+
+    now = int(time.time())
+    payload = {
+        "sub": ac.user,                                                  
+        "iss": sets.audience,                                            
+        "exp": now + 3600,                                                 
         "iat": now,
         "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
         "typ": "dpop"
@@ -166,5 +213,5 @@ async def post_token(token_req: TokenRequest):
         status_code=status.HTTP_200_OK,
         content=jsonable_encoder({"access_token": access_token,
                                   "token_type": "DPoP",
-                                  "expires_in": 3600})  # TODO: Refresh
+                                  "expires_in": 3600}) 
     )

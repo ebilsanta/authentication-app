@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import uuid
 import jwt
 import time
@@ -21,8 +22,8 @@ class DpopService:
     def create_dpop(self, private_key, public_key, ath=None):
         create_dpop_jwt(private_key, public_key, self.htu, self.htm, ath=ath)
 
-    def verify_dpop(self, dpop_jwt):
-        return verify_dpop_jwt(dpop_jwt, self.htu, self.htm)
+    def verify_dpop(self, dpop_jwt, at=None):
+        return verify_dpop_jwt(dpop_jwt, self.htu, self.htm, at=at)
 
 
 def create_dpop_jwt(private_key, public_key, htu, htm, ath=None):
@@ -53,7 +54,7 @@ def create_dpop_jwt(private_key, public_key, htu, htm, ath=None):
 # cnf.jkt holds the hash of the public key in the access token
 
 
-def verify_dpop_jwt(dpop_jwt, htu, htm):
+def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
     try:
         uvh = jwt.get_unverified_header(dpop_jwt)
         if uvh['alg'] != 'RS256':
@@ -69,6 +70,14 @@ def verify_dpop_jwt(dpop_jwt, htu, htm):
 
         if decoded['htu'] != htu:
             return None, 'Invalid dPoP URL'
+        
+        if decoded['ath'] and decoded['ath'] != base64.b64encode(hashlib.sha256(at).digest()).decode():
+            return None, 'Invalid access token hash'
+        
+        decoded_at = jwt.decode(at, get_settings().authz_pub_key.replace(
+            '\\n', '\n').replace('\\t', '\t'), algorithms=['RS256'])
+        if decoded_at['cnf.jkt'] != base64.b64encode(hashlib.sha256(jwk).digest()).decode():
+            return None, 'dPoP and JWT mismatch'
 
         return jwk, None
 
