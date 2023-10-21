@@ -23,8 +23,8 @@ func NewDynamoDBAuthenticationRepository(DB *dynamodb.DynamoDB) AuthenticationRe
 func (d *DynamoDBAuthenticationRepository) GetUserByFullInfo(company string, email string, first_name string, last_name string, birthdate string) (*models.User, error) {
 	result, err := d.DB.Query(&dynamodb.QueryInput{
 		TableName: aws.String(os.Getenv("USER_TABLE")),
-		KeyConditionExpression: aws.String("company = :company"),
-		FilterExpression: aws.String("email = :email AND first_name = :first_name AND last_name = :last_name AND birthdate = :birthdate"),
+		KeyConditionExpression: aws.String("company = :company AND email = :email"),
+		FilterExpression: aws.String("first_name = :first_name AND last_name = :last_name AND birthdate = :birthdate"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":company": {
 				S: aws.String(company),
