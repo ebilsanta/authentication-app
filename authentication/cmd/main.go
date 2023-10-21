@@ -32,8 +32,7 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// lis, err := net.Listen("tcp", ":8089")
-	lis, err := net.Listen("tcp", ":8088")
+	lis, err := net.Listen("tcp", ":8089")
 	if err != nil {
 		log.Fatalf("cannot create listener: %s", err)
 	}
@@ -45,8 +44,7 @@ func main() {
 	serverRegistrar := grpc.NewServer()
 	handler.NewAuthenticationServer(serverRegistrar, usecase)
 
-	// log.Println("Serving gRPC on 0.0.0.0:8089")
-	log.Println("Serving gRPC on 0.0.0.0:8088")
+	log.Println("Serving gRPC on 0.0.0.0:8089")
 	go func() {
 		log.Fatalln(serverRegistrar.Serve(lis))
 	}()
@@ -68,17 +66,11 @@ func main() {
 		log.Fatalln("Failed to register gateway:", err)
 	}
 
-	// gwServer := &http.Server{
-	// 	Addr:    ":8080",
-	// 	Handler: gwmux,
-	// }
-
 	gwServer := &http.Server{
-		Addr:    ":8081",
+		Addr:    ":8080",
 		Handler: gwmux,
 	}
 
-	// log.Println("Serving gRPC-Gateway on http://0.0.0.0:8080")
-	log.Println("Serving gRPC-Gateway on http://0.0.0.0:8081")
+	log.Println("Serving gRPC-Gateway on http://0.0.0.0:8080")
 	log.Fatalln(gwServer.ListenAndServe())
 }
