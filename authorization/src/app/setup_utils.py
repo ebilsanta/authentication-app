@@ -2,9 +2,9 @@ import uuid
 
 
 def build_url(url, params):
-    ret = url + '?'
+    ret = url + "?"
     for k in params:
-        ret += k + '=' + params[k] + '&'
+        ret += k + "=" + params[k] + "&"
     return ret[:-1]
 
 

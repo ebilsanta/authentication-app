@@ -1,4 +1,3 @@
-
 import base64
 from functools import lru_cache
 import hashlib
@@ -37,6 +36,7 @@ app = FastAPI()
 def read_root():
     return {"Hello": "World"}
 
+
 # response_type: str              RFC 6749 4.1.1. Value MUST be set to "code"
 # client_id: str                  RFC 6749 4.1.1
 # redirect_url: str               RFC 6749 4.1.1
@@ -45,11 +45,15 @@ def read_root():
 
 
 @app.post("/authcode")
-async def post_authcode(response_type: str, client_id: str,
-                        state: str, id_jwt: str,
-                        code_challenge: Union[str, None] = None,
-                        code_challenge_method: Union[str, None] = None,
-                        redirect_url: Union[str, None] = None):
+async def post_authcode(
+    response_type: str,
+    client_id: str,
+    state: str,
+    id_jwt: str,
+    code_challenge: Union[str, None] = None,
+    code_challenge_method: Union[str, None] = None,
+    redirect_url: Union[str, None] = None,
+):
     def respond(redirect_url, message, desc=None):
         if redirect_url and desc:
             return ac.make_error_desc(redirect_url, message, desc)
@@ -58,63 +62,72 @@ async def post_authcode(response_type: str, client_id: str,
         elif desc:
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                content=jsonable_encoder(
-                    {'error': message, 'error_description': desc}),
+                content=jsonable_encoder({"error": message, "error_description": desc}),
             )
         else:
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                content=jsonable_encoder({'error': message}),
+                content=jsonable_encoder({"error": message}),
             )
 
     # Verify redirection url is registered
     # RFC 6749 10.6 check redirection url is same as get_auth_code
     if redirect_url and not ac.is_redirect_valid(redirect_url):
-        return respond(redirect_url, 'access_denied', 'invalid_redirect')
+        return respond(redirect_url, "access_denied", "invalid_redirect")
 
     if response_type != "code":
-        return respond(redirect_url, 'unsupported_response_type')
+        return respond(redirect_url, "unsupported_response_type")
 
     if not ac.is_client_allowed(client_id):
-        return respond(redirect_url, 'unauthorized_client')
+        return respond(redirect_url, "unauthorized_client")
 
     if not code_challenge:
-        return respond(redirect_url, 'invalid_request', desc='code challenge required')
+        return respond(redirect_url, "invalid_request", desc="code challenge required")
     elif len(code_challenge) != 44:
-        return respond(redirect_url, 'invalid_request', desc='invalid code challenge')
+        return respond(redirect_url, "invalid_request", desc="invalid code challenge")
 
     if code_challenge_method != "S256":
-        return respond(redirect_url, 'invalid_request', desc='transform algorithm not supported')
+        return respond(
+            redirect_url, "invalid_request", desc="transform algorithm not supported"
+        )
 
     if len(state) < 16 or len(state) > 64:
-        return respond(redirect_url, 'invalid_request', desc='invalid state')
+        return respond(redirect_url, "invalid_request", desc="invalid state")
 
     err_message, decoded = ac.verify_jwt(id_jwt)
     if err_message:
-        return respond(redirect_url, 'access_denied', err_message)
+        return respond(redirect_url, "access_denied", err_message)
 
     # Check if user is actually in our system first
-    if not await db.exists_valid_user(decoded['sub']):
-        return respond(redirect_url, 'access_denied', 'unknown user')
+    if not await db.exists_valid_user(decoded["sub"]):
+        return respond(redirect_url, "access_denied", "unknown user")
 
     code = uuid.uuid4().hex
 
-    await db.insert_authcode_record(AuthCodeRecord(code, state, code_challenge, decoded['sub'], 600))
+    await db.insert_authcode_record(
+        AuthCodeRecord(code, state, code_challenge, decoded["sub"], 600)
+    )
     if redirect_url:
-        return RedirectResponse(url=redirect_url + '?code=' + code, status_code=302)
+        return RedirectResponse(url=redirect_url + "?code=" + code, status_code=302)
     else:
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content=jsonable_encoder({'code': code}),
+            content=jsonable_encoder({"code": code}),
         )
 
 
 @app.exception_handler(RequestValidationError)
-async def standard_validation_exception_handler(request: Request, exc: RequestValidationError):
+async def standard_validation_exception_handler(
+    request: Request, exc: RequestValidationError
+):
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder(
-            {'error': 'invalid_request', 'error_description': 'The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.'}),
+            {
+                "error": "invalid_request",
+                "error_description": "The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.",
+            }
+        ),
     )
 
 
@@ -125,6 +138,7 @@ class TokenRequest(BaseModel):
     client_assertion: str
     redirect_url: str
     code_verifier: str
+
 
 class RefreshRequest(BaseModel):
     grant_type: str
@@ -138,17 +152,16 @@ async def post_token(token_req: TokenRequest):
         if desc:
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                content=jsonable_encoder(
-                    {'error': message, 'error_description': desc}),
+                content=jsonable_encoder({"error": message, "error_description": desc}),
             )
         else:
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                content=jsonable_encoder({'error': message}),
+                content=jsonable_encoder({"error": message}),
             )
 
     if token_req.grant_type != "authorization_code":
-        return respond('unsupported grant type')
+        return respond("unsupported grant type")
 
     err, err_desc = cas.verify_client_assertion(token_req.client_assertion)
     if err:
@@ -163,41 +176,52 @@ async def post_token(token_req: TokenRequest):
 
     print(generate_pkce_code_challenge(token_req.code_verifier))
     if generate_pkce_code_challenge(token_req.code_verifier) != authc.code_challenge:
-        return respond('Invalid PKCE Code Verifier')
+        return respond("Invalid PKCE Code Verifier")
 
     sets = get_settings()
 
     now = int(time.time())
     payload = {
-        "sub": authc.user,                                                  
-        "iss": sets.audience,                                            
-        "exp": now + 3600,                                                 
+        "sub": authc.user,
+        "iss": sets.audience,
+        "exp": now + 3600,
         "iat": now,
         "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
-        "typ": "dpop"
+        "typ": "dpop",
     }
-    access_token = jwt.encode(payload, get_settings().authz_pvt_key.replace(
-        '\\n', '\n').replace('\\t', '\t'), algorithm="RS256")
-    
+    access_token = jwt.encode(
+        payload,
+        get_settings().authz_pvt_key.replace("\\n", "\n").replace("\\t", "\t"),
+        algorithm="RS256",
+    )
+
     payload = {
-        "sub": authc.user,                                                  
-        "iss": sets.audience,                                            
-        "exp": now + 86400,                                                 
+        "sub": authc.user,
+        "iss": sets.audience,
+        "exp": now + 86400,
         "iat": now,
         "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
-        "typ": "dpop+refresh"
+        "typ": "dpop+refresh",
     }
 
-    refresh_token = jwt.encode(payload, get_settings().authz_pvt_key.replace(
-        '\\n', '\n').replace('\\t', '\t'), algorithm="RS256")
+    refresh_token = jwt.encode(
+        payload,
+        get_settings().authz_pvt_key.replace("\\n", "\n").replace("\\t", "\t"),
+        algorithm="RS256",
+    )
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content=jsonable_encoder({"access_token": access_token,
-                                  "token_type": "DPoP",
-                                  "expires_in": 3600,
-                                  "refresh_token": refresh_token}) 
+        content=jsonable_encoder(
+            {
+                "access_token": access_token,
+                "token_type": "DPoP",
+                "expires_in": 3600,
+                "refresh_token": refresh_token,
+            }
+        ),
     )
+
 
 @app.post("/refresh")
 async def post_refresh(refresh_req: RefreshRequest):
@@ -205,44 +229,54 @@ async def post_refresh(refresh_req: RefreshRequest):
         if desc:
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                content=jsonable_encoder(
-                    {'error': message, 'error_description': desc}),
+                content=jsonable_encoder({"error": message, "error_description": desc}),
             )
         else:
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                content=jsonable_encoder({'error': message}),
+                content=jsonable_encoder({"error": message}),
             )
-        
+
     if refresh_req.grant_type != "authorization_code":
-        return respond('unsupported grant type')
-    
+        return respond("unsupported grant type")
+
     err, jwk = dps.verify_dpop(refresh_req.dpop, at=refresh_req.refresh_token)
 
     if err:
         print(err)
         return respond(err)
 
-    decoded_ref = jwt.decode(refresh_req.refresh_token, get_settings().authz_pub_key
-               .replace('\\n', '\n').replace('\\t', '\t'), algorithms=['RS256'])
+    decoded_ref = jwt.decode(
+        refresh_req.refresh_token,
+        get_settings().authz_pub_key.replace("\\n", "\n").replace("\\t", "\t"),
+        algorithms=["RS256"],
+    )
 
     sets = get_settings()
 
     now = int(time.time())
     payload = {
-        "sub": decoded_ref['sub'],                                                  
-        "iss": sets.audience,                                            
-        "exp": now + 3600,                                                 
+        "sub": decoded_ref["sub"],
+        "iss": sets.audience,
+        "exp": now + 3600,
         "iat": now,
-        "cnf.jkt": base64.b64encode(hashlib.sha256(jwk.encode('utf-8')).digest()).decode(),
-        "typ": "dpop"
+        "cnf.jkt": base64.b64encode(
+            hashlib.sha256(jwk.encode("utf-8")).digest()
+        ).decode(),
+        "typ": "dpop",
     }
-    access_token = jwt.encode(payload, bytes(get_settings().authz_pvt_key.replace(
-        '\\n', '\n').replace('\\t', '\t'), 'utf-8'), algorithm="RS256")
+    access_token = jwt.encode(
+        payload,
+        bytes(
+            get_settings().authz_pvt_key.replace("\\n", "\n").replace("\\t", "\t"),
+            "utf-8",
+        ),
+        algorithm="RS256",
+    )
 
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content=jsonable_encoder({"access_token": access_token,
-                                  "token_type": "DPoP",
-                                  "expires_in": 3600}) 
+        content=jsonable_encoder(
+            {"access_token": access_token, "token_type": "DPoP", "expires_in": 3600}
+        ),
     )
