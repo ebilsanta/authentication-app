@@ -15,7 +15,7 @@ export default function OtpForm() {
       renderInput={(props) => <input {...props} />}
       inputStyle="border border-black rounded-md m-2 text-3xl w-full block"
     />
-    <button className="transition duration-300 bg-[#1e244d] shadow hover:bg-blue-700 w-full text-white font-semibold py-2 px-5 rounded focus:outline-none focus:shadow-outline" type="button">
+    <button className="transition duration-300 bg-[#1e244d] mt-3 shadow hover:bg-blue-700 w-full text-white font-semibold py-2 px-5 rounded focus:outline-none focus:shadow-outline" type="button">
       Register Account
     </button>
   </div>
