@@ -19,6 +19,28 @@ async function generateEphemeralKeys() {
   return ephemeralKeyPair;
 }
 
+async function generateJKTThumbprint(publicKey) {
+  const jwk = {
+    kty: 'EC',
+    crv: 'P-256',
+    x: ephemeralKeyPair.publicKey.export({ format: 'jwk' }).x,
+    y: ephemeralKeyPair.publicKey.export({ format: 'jwk' }).y
+  };
+
+  // Calculate the SHA-256 thumbprint
+  const sha256Thumbprint = crypto.createHash('sha256')
+    .update(JSON.stringify(jwk))
+    .digest('base64');
+
+  // Base64url encode the thumbprint
+  const base64UrlThumbprint = sha256Thumbprint
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+
+  return base64UrlThumbprint;
+}
+
 // ath: Base64urlencoded Hash of the access_token
 async function generateDpop(url, ath, method, ephemeralKeyPair) {
   let now = Math.floor(Date.now() / 1000);
@@ -73,5 +95,6 @@ async function generateClientAssertion(url, clientId, privateSigningKey, jktThum
 module.exports = {
   generateEphemeralKeys,
   generateDpop,
+  generateJKTThumbprint,
   generateClientAssertion
 }

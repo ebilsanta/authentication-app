@@ -4,6 +4,6 @@ const hostedLoginController = require('../controllers/hostedLoginController');
 
 router.get('/login', hostedLoginController.login);
 
-router.get('/authcode', hostedLoginController.authCodeCallback);
+router.get('/authorize', hostedLoginController.authorize);
 
 module.exports = router;
