@@ -1,34 +1,41 @@
-const session = require("express-session");
-const { generateCodeChallenge, generateCodeVerifier } = require("../utils/pkceUtils");
-const { generateDPoPAndClientAssertion } = require("../services/hostedLoginServices");
-const { v4: uuidv4 } = require('uuid');
-
-// mock storage of client id to code verifier
-var idToCodeVerifier = {};
-
-var idToAuthCode = {};
+const HostedTokenStore = require("../services/hostedTokenStore");
 
 async function login(req, res, next) {
-  // redirect to authentication server here
-  res.redirect(process.env.AUTHORISATION_SERVER_URL);
+  res.send({ login_url: process.env.AUTHORISATION_SERVER_URL });
 }
 
 async function authorize(req, res, next) {
-  const codeVerifier = generateCodeVerifier();
-  const codeChallenge = generateCodeChallenge(codeVerifier);
-  const uuid = uuidv4();
-  idToCodeVerifier[uuid] = codeVerifier;
-  // call to Authorization server here and receive auth code
+  const identityJwt = req.body.identity_jwt;
+  const sessionId = req.sessionId;
 
-  const { dPoPProof, clientAssertion } = generateDPoPAndClientAssertion(codeVerifier, uuid);
+  try {
+    // const authCode = await requestForAuthCode(identityJwt);
 
-  // call to Authorization server here and receive ID Token, Access Token, Refresh Token
+    // const { access_token, refresh_token, id_token } =
+    //   await requestForAccessToken(authCode);
+    const access_token = '123';
+    const refresh_token = '123';
+    const id_token = 'abc';
+    const hostedTokenStore = new HostedTokenStore();
+    hostedTokenStore.setTokens(sessionId, access_token, refresh_token, id_token);
+    
+    res.send({ access_token, refresh_token, id_token });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+}
 
-  // res.redirect("https://www.google.com");
-  res.send('OK');
+async function user(req, res, next) {
+  try {
+    console.log(req.session);
+    res.send('ok');
+  } catch (error) {
+
+  }
 }
 
 module.exports = {
   login,
   authorize,
-}
+  user
+};

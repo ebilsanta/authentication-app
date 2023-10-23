@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const jose = require('jose');
+const jose = require('node-jose');
 
 async function generateEphemeralKeys() {
   let options = {
@@ -20,11 +20,12 @@ async function generateEphemeralKeys() {
 }
 
 async function generateJKTThumbprint(publicKey) {
+  const publicKeyObj = crypto.createPublicKey(publicKey);
   const jwk = {
     kty: 'EC',
     crv: 'P-256',
-    x: ephemeralKeyPair.publicKey.export({ format: 'jwk' }).x,
-    y: ephemeralKeyPair.publicKey.export({ format: 'jwk' }).y
+    x: publicKeyObj.export({ format: 'jwk' }).x,
+    y: publicKeyObj.export({ format: 'jwk' }).y
   };
 
   // Calculate the SHA-256 thumbprint
@@ -68,6 +69,18 @@ async function generateDpop(url, ath, method, ephemeralKeyPair) {
     .final();
 
   return DPoP;
+}
+
+function generateRandomString(length) {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    result += characters.charAt(randomIndex);
+  }
+  console.log("random string:", result)
+  return result;
 }
 
 // jktThumbprint: base64url encoding of the JWK SHA-256 Thumbprint of the client's ephemeral public signing key used to sign the DPoP Proof JWT
