@@ -384,3 +384,7 @@ pyrightconfig.json
 /.pants.workdir.file_lock*
 
 *.env
+
+.DS_Store
+
+*.pem

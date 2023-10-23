@@ -1,54 +1,73 @@
 require('dotenv').config();
+const BankTokenStore = require('../services/bankTokenStore');
 const axios = require('axios');
-const { v4: uuidv4 } = require('uuid');
-
-var idToAuthCode = {};
 
 async function login(req, res, next) {
-    const uuid = uuidv4();
-    req.session.uuid = uuid;
     const params = new URLSearchParams({
         client_id: process.env.CLIENT_ID,
-        // TODO: change callback uri
-        redirect_uri: 'http://localhost:3000/bankSSO/callback',
+        redirect_uri: process.env.REDIRECT_URI,
         response_type: 'code',
         scope: 'openid profile'
     });
     const stringParams = params.toString();
-    const bankLoginUrl = `https://smurnauth-production.fly.dev/oauth/authorize?${stringParams}`;
+    const bankLoginUrl = `${process.env.BANKSSO_URI}/authorize?${stringParams}`;
     res.redirect(bankLoginUrl);
 }
 
 async function authCodeCallback(req, res, next) {
+    const sessionId = req.sessionID;
     const authCode = req.query.code;
-    const uuid = req.session.uuid
-    idToAuthCode[uuid] = authCode;
     try {
         const { data } = await axios({
-            url: 'https://smurnauth-production.fly.dev/oauth/token',
+            url: process.env.BANKSSO_URI + '/token',
             method: 'post',
             data: {
             client_id: process.env.CLIENT_ID,
             client_secret: process.env.CLIENT_SECRET,
-            // TODO: change callback uri
-            redirect_uri: 'http://localhost:3000/bankSSO/callback',
+            redirect_uri: process.env.REDIRECT_URI,
             grant_type: 'authorization_code',
             code: authCode,
             },
         });
-        const access_token = data.access_token;
-        const expiry = data.expires_in;
-        const id_token = data.id_token;
-        console.log(access_token, id_token, expiry);
-        // TODO: change where to redirect to , e.g. dashboard/homepage?
-        res.redirect('https://www.google.com');
+        const accessToken = data.access_token;
+        const idToken = data.id_token;
+        const bankTokenStore = new BankTokenStore();
+        bankTokenStore.setTokens(sessionId, accessToken, idToken);
+        req.session.save((err) => {
+            if (err) {
+                return res.send("err while saving session information");
+            }
+            // TODO: decide whether there's a placeholder dashboard page to redirect to, or to redirect straight to profile page (aka userinfo page)
+            res.redirect('userInfo');
+        });
     } catch(error) {
         console.error('Error exchanging authorization code for access token with bank SSO:', error.message);
         res.status(500).send('Error exchanging authorization code for access token with bank SSO.');
     }
 }
 
+async function userInfo(req, res, next) {
+    const sessionId = req.sessionID;
+    const bankTokenStore = new BankTokenStore();
+    const { accessToken } = bankTokenStore.getTokens(sessionId);
+    try {
+        const { data } = await axios({
+            method: 'get',
+            url: process.env.BANKSSO_URI + '/userinfo',
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        });
+        console.log(data);
+        res.send(data);
+    } catch (error) {
+        console.error('Error retrieving user info from bank SSO:', error.message);
+        res.status(500).send('Error retrieving user info from bank SSO');
+    }
+}
+
 module.exports = {
     login,
-    authCodeCallback
+    authCodeCallback,
+    userInfo
 }
