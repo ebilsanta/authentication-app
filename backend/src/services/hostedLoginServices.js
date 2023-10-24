@@ -47,7 +47,7 @@ async function requestForAccessToken(authCode) {
       }
     });
     const { access_token, refresh_token, id_token } = data;
-    return { access_token, refresh_token, id_token };
+    return { access_token, refresh_token, id_token, ephemeral_keypair: ephemeralKeyPair };
   } catch (error) {
     throw new Error('Error requesting for access token from auth server: ' + error.message);
   }

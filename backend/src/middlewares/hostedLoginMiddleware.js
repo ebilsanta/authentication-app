@@ -1,5 +1,3 @@
-const HostedTokenStore = require('../services/hostedTokenStore');
-
 async function validateAuthorizeRequest(req, res, next) {
   if (!req.body.identity_jwt) {
     res.status(400).send('Missing identity_jwt in request body.');
@@ -8,21 +6,19 @@ async function validateAuthorizeRequest(req, res, next) {
 }
 
 async function getAuthHeaders(req, res, next) {
-  // console.log(req.sessionID)
-  console.log(req.session.cookie)
   if (!req.sessionID) {
-    res.status(400).send('Missing session ID.');
-    return;
+    return res.status(400).send('Missing session ID.');
   }
-  const sessionId = req.sessionId;
-  const hostedTokenStore = new HostedTokenStore();
-  if (!hostedTokenStore.hasSession(sessionId)) {
-    res.status(400).send('Invalid session ID.');
-    return;
+  if (!req.session.access_token || !req.session.refresh_token || !req.session.ephemeral_keypair) {
+    return res.status(401).send('Not authorized.');
   }
-  const { accessToken, refreshToken, dpopToken } = hostedTokenStore.getTokens(sessionId);
-  req.headers['Authorization'] = 'Bearer ' + accessToken;
-  req.headers['DPoP'] = dpopToken;
+
+  const { access_token, refresh_token, ephemeral_keypair } = req.session;
+  // check that access_token is valid, if not refresh it.
+
+  // create dpop and attach to request
+  req.headers['Authorization'] = 'Bearer ' + access_token;
+  
   next();
 }
 

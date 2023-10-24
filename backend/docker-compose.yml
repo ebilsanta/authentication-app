@@ -1,0 +1,15 @@
+services:
+  redis:
+    image: redis
+    container_name: cache
+    ports:
+      - 6379:6379
+  app:
+    build: ./
+    restart: always
+    volumes:
+      - ./:/var/www/app
+    links:
+      - redis
+    ports:
+      - 3000:3000

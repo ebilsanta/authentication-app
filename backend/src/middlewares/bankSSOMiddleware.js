@@ -1,6 +1,6 @@
 require('dotenv').config();
 const BankTokenStore = require('../services/bankTokenStore')
-const jose = require('jose')
+const jose = require('node-jose')
 
 async function introspectToken (req, res, next) {
     // TODO: get bankSSO JWK from JWKS server
