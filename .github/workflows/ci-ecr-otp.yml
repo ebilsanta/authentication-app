@@ -36,5 +36,6 @@ jobs:
         ECR_REPOSITORY: cs301-otp
         IMAGE_TAG: cs301-otp
       run: |
+        cd otp
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
