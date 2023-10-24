@@ -187,7 +187,7 @@ async def post_token(token_req: TokenRequest):
         "exp": now + 3600,
         "iat": now,
         "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
-        "typ": "dpop",
+        "typ": "dpop", # Move this to the header.
     }
     access_token = jwt.encode(
         payload,
@@ -201,7 +201,7 @@ async def post_token(token_req: TokenRequest):
         "exp": now + 86400,
         "iat": now,
         "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
-        "typ": "dpop+refresh",
+        "typ": "dpop+refresh", # Move this to the header. Enforce a check
     }
 
     refresh_token = jwt.encode(
@@ -261,15 +261,15 @@ async def post_refresh(refresh_req: RefreshRequest):
         "exp": now + 3600,
         "iat": now,
         "cnf.jkt": base64.b64encode(
-            hashlib.sha256(jwk.encode("utf-8")).digest()
+            hashlib.sha256(jwk.encode("ascii")).digest() # Confirm this is ok, compared to access token's impl
         ).decode(),
-        "typ": "dpop",
+        "typ": "dpop", # Change this field to the header
     }
     access_token = jwt.encode(
         payload,
         bytes(
             get_settings().authz_pvt_key.replace("\\n", "\n").replace("\\t", "\t"),
-            "utf-8",
+            "ascii",
         ),
         algorithm="RS256",
     )

@@ -72,7 +72,7 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
         if (
             "ath" in decoded
             and decoded["ath"]
-            != base64.b64encode(hashlib.sha256(at.encode("utf-8")).digest()).decode()
+            != base64.b64encode(hashlib.sha256(at.encode("ascii")).digest()).decode() #Same, verify output is same
         ):
             return None, "Invalid access token hash"
 
