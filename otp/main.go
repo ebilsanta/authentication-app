@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	// "net/smtp"
 	// "os"
 
 	"github.com/golang/glog"
