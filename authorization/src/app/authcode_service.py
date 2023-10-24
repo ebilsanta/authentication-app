@@ -1,9 +1,9 @@
 from functools import lru_cache
-import os
-from requests.models import PreparedRequest
-from fastapi.responses import RedirectResponse
+
 import jwt
 from config import Settings
+from fastapi.responses import RedirectResponse
+from requests.models import PreparedRequest
 
 
 @lru_cache()

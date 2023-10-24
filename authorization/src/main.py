@@ -1,22 +1,22 @@
 import base64
-from functools import lru_cache
 import hashlib
+import time
+import uuid
+from functools import lru_cache
 from typing import Union
+
+import jwt
+from app.authcode_service import AuthCodeService
+from app.client_assertion_service import ClientAssertionService
+from app.database import AuthCodeRecord, Database
+from app.dpop_service import DpopService
+from app.pkce import generate_pkce_code_challenge
+from config import Settings
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
-import uuid
-import time
-import jwt
-
 from pydantic import BaseModel
-from app.authcode_service import AuthCodeService
-from app.database import Database, AuthCodeRecord
-from app.dpop_service import DpopService
-from app.pkce import generate_pkce_code_challenge
-from app.client_assertion_service import ClientAssertionService
-from config import Settings
 
 
 @lru_cache()

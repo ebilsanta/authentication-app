@@ -1,11 +1,9 @@
-import os
-from motor.motor_asyncio import AsyncIOMotorClient
 import time
-import boto3
-from boto3.resources.base import ServiceResource
-from boto3.dynamodb.conditions import Key
 from functools import lru_cache
+
+import boto3
 from config import Settings
+from motor.motor_asyncio import AsyncIOMotorClient
 
 
 @lru_cache()

@@ -1,19 +1,17 @@
 import base64
 import hashlib
-import jwt
-from main import app
-from fastapi.testclient import TestClient
-import uuid
-from dotenv import load_dotenv
 import time
+import uuid
 from unittest.mock import patch
-from app.pkce import generate_pkce_code_verifier, generate_pkce_code_challenge
-from app.database import AuthCodeRecord
-from app.dpop_service import create_dpop_jwt
-from app.keypair_gen import gen_keypair
+
+import jwt
 from app.client_assertion_service import do_generate_client_assertion
+from app.database import AuthCodeRecord
+from app.dpop_service import create_dpop_jwt, verify_dpop_jwt
+from app.pkce import generate_pkce_code_challenge, generate_pkce_code_verifier
 from config import get_settings
-from app.dpop_service import verify_dpop_jwt
+from fastapi.testclient import TestClient
+from main import app
 
 # Variables
 subject = "testing@test.com"

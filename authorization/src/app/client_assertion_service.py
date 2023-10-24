@@ -1,7 +1,6 @@
-from cryptography.hazmat.primitives.asymmetric import rsa
-from functools import lru_cache
 import time
-from fastapi import Depends
+from functools import lru_cache
+
 import jwt
 from config import Settings
 
