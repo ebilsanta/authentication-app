@@ -1,8 +1,6 @@
 syntax = "proto3";
 option go_package = "github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp";
 
-import "google/api/annotations.proto";
-
 message OTPRequest {
     string company = 1;
     string email = 2;
@@ -27,16 +25,6 @@ message VerifyOTPResponse {
 }
 
 service OTP {
-    rpc GetOTP(OTPRequest) returns (OTPResponse) {
-        option (google.api.http) = {
-            post: "/v1/email/otp"
-            body: "*"
-        };
-    }
-    rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse) {
-        option (google.api.http) = {
-            post: "/v1/email/verify"
-            body: "*"
-        };
-    }
+    rpc GetOTP(OTPRequest) returns (OTPResponse);
+    rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse);
 }
