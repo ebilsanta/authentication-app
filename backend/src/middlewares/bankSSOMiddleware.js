@@ -1,42 +1,47 @@
-require('dotenv').config();
-const BankTokenStore = require('../services/bankTokenStore')
-const jose = require('node-jose')
+require("dotenv").config();
+const jose = require("node-jose");
+const fs = require("fs");
 
-async function introspectToken (req, res, next) {
-    // TODO: get bankSSO JWK from JWKS server
-    var alg;
-    var jwk;
-    const publicKey = await jose.importJWK(jwk, alg);
-
+async function introspectToken(req, res, next) {
+    // TODO: whether to get bankSSO JWK from JWKS server
     if (!req.sessionID) {
-        res.status(400).send('Missing session ID.');
-        return;
+        return res.status(400).send("Missing session ID.");
     }
 
-    const sessionId = req.sessionID;
-    const bankTokenStore = new BankTokenStore();
-    if (!bankTokenStore.hasSession(sessionId)) {
-        res.status(400).send('Invalid session ID.');
-        return;
+    if (!req.session.access_token || !req.session.id_token) {
+        return res.status(401).send("Not authorized by Bank SSO.");
     }
 
-    const { accessToken } = bankTokenStore.getTokens(sessionId);
-    try {
-        const { payload } = await jose.jwtVerify(accessToken, publicKey, {
-            issuer: 'Bank App',
+    const publicKey = fs.readFileSync(process.env.BANKSSO_KEY, "utf-8");
+    const pubKey = publicKey.replace(/\\n/g, "\n");
+
+    let keystore = jose.JWK.createKeyStore();
+    keystore
+        .add(pubKey, "pem")
+        .then((jwkKey) => {
+            return jose.JWS.createVerify(jwkKey).verify(req.session.access_token);
+        })
+        .then((result) => {
+            var payload = JSON.parse(Buffer.from(result.payload).toString());
+            console.log(payload);
+
+            var currentTimestamp = new Date().getTime() / 1000;
+            var tokenExpired = payload.exp <= currentTimestamp;
+
+            if (payload.iss != 'Bank App') {
+                throw new Error("Not issued by Bank SSO");
+            } else if (tokenExpired) {
+                throw new Error("Access token expired");
+            }
+            next();
+        })
+        .catch((error) => {
+            console.log("Error");
+            console.error(error.message);
+            return res.status(403).end("Access denied to the resource!");
         });
-        next();
-    } catch (error) {
-        console.log('Error')
-        console.error(error.message);
-        // general message of 'Access denied to the resource'
-        res.status(403).json({
-            success: false,
-            message: 'Access denied to the resource'
-        });
-    }
 }
 
 module.exports = {
-    introspectToken
-}
+    introspectToken,
+};

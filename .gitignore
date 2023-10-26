@@ -388,3 +388,5 @@ pyrightconfig.json
 .DS_Store
 
 *.pem
+
+*.rdb

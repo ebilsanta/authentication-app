@@ -1,5 +1,4 @@
 require('dotenv').config();
-const BankTokenStore = require('../services/bankTokenStore');
 const axios = require('axios');
 
 async function login(req, res, next) {
@@ -15,7 +14,6 @@ async function login(req, res, next) {
 }
 
 async function authCodeCallback(req, res, next) {
-    const sessionId = req.sessionID;
     const authCode = req.query.code;
     try {
         const { data } = await axios({
@@ -29,13 +27,11 @@ async function authCodeCallback(req, res, next) {
             code: authCode,
             },
         });
-        const accessToken = data.access_token;
-        const idToken = data.id_token;
-        const bankTokenStore = new BankTokenStore();
-        bankTokenStore.setTokens(sessionId, accessToken, idToken);
+        req.session.access_token = data.access_token;
+        req.session.id_token = data.id_token;
         req.session.save((err) => {
             if (err) {
-                return res.send("err while saving session information");
+                return res.send("error while saving session information");
             }
             // TODO: decide whether there's a placeholder dashboard page to redirect to, or to redirect straight to profile page (aka userinfo page)
             res.redirect('userInfo');
@@ -47,15 +43,12 @@ async function authCodeCallback(req, res, next) {
 }
 
 async function userInfo(req, res, next) {
-    const sessionId = req.sessionID;
-    const bankTokenStore = new BankTokenStore();
-    const { accessToken } = bankTokenStore.getTokens(sessionId);
     try {
         const { data } = await axios({
             method: 'get',
             url: process.env.BANKSSO_URI + '/userinfo',
             headers: {
-                Authorization: `Bearer ${accessToken}`
+                Authorization: `Bearer ${req.session.access_token}`
             }
         });
         console.log(data);
