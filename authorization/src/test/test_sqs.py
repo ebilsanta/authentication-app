@@ -37,13 +37,17 @@ code_challenge = generate_pkce_code_challenge(code_verifier)
 
 client = TestClient(app)
 
+
 @pytest.mark.asyncio
 async def test_poll_sqs_ok():
     sqss = SQS_Service()
-    with patch.object(sqss, "receive_sqs_msg", new=mock.AsyncMock()) as m1, \
-        patch.object(sqss, "handle_message", new=mock.AsyncMock()) as m2, \
-            patch.object(sqss.sqs, "delete_message") as m3:
-
+    with patch.object(
+        sqss, "receive_sqs_msg", new=mock.AsyncMock()
+    ) as m1, patch.object(
+        sqss, "handle_message", new=mock.AsyncMock()
+    ) as m2, patch.object(
+        sqss.sqs, "delete_message"
+    ) as m3:
         body = {
             "response_type": "code",
             "client_id": allowed_client,
@@ -54,22 +58,33 @@ async def test_poll_sqs_ok():
             "code_challenge_method": "S256",
         }
 
-        to_return = [{"Body": json.dumps({'operation': 'authcode', 'callback': 'http://api-gateway/callback', 'body': body}),
-        "ReceiptHandle": 'handle'}]
+        to_return = [
+            {
+                "Body": json.dumps(
+                    {
+                        "operation": "authcode",
+                        "callback": "http://api-gateway/callback",
+                        "body": body,
+                    }
+                ),
+                "ReceiptHandle": "handle",
+            }
+        ]
 
         m1.return_value = to_return
 
         await sqss.poll_sqs()
         m1.assert_called_once()
-        m2.assert_called_once_with('authcode', 'http://api-gateway/callback', body)
-        m3.assert_called_once_with(QueueUrl=ANY, ReceiptHandle='handle')
+        m2.assert_called_once_with("authcode", "http://api-gateway/callback", body)
+        m3.assert_called_once_with(QueueUrl=ANY, ReceiptHandle="handle")
+
 
 @pytest.mark.asyncio
-@patch('app.sqs_service.process_authcode')
+@patch("app.sqs_service.process_authcode")
 async def test_handle_authcode_message_ok(m1):
     sqss = SQS_Service()
     with patch.object(sqss, "use_callback", new=mock.AsyncMock()) as m2:
-        callback = 'http://callback.url'
+        callback = "http://callback.url"
 
         m1.return_value = callback
 
@@ -83,63 +98,66 @@ async def test_handle_authcode_message_ok(m1):
             "code_challenge_method": "S256",
         }
 
-        await sqss.handle_message('authcode', callback, body)
+        await sqss.handle_message("authcode", callback, body)
 
         m1.assert_called_once()
         m2.assert_called_once()
 
+
 @pytest.mark.asyncio
-@patch('app.sqs_service.process_token')
+@patch("app.sqs_service.process_token")
 async def test_handle_token_message_ok(m1):
     sqss = SQS_Service()
     with patch.object(sqss, "use_callback", new=mock.AsyncMock()) as m2:
-        callback = 'http://callback.url'
+        callback = "http://callback.url"
 
         m1.return_value = callback
 
         now = int(time.time())
         sets = get_settings()
         pvk = bytes(
-            sets.allowed_client_pvt_key.replace("\\n", "\n").replace("\\t", "\t"), "utf-8"
+            sets.allowed_client_pvt_key.replace("\\n", "\n").replace("\\t", "\t"),
+            "utf-8",
         )
         pbk = bytes(
-            sets.allowed_client_pub_key.replace("\\n", "\n").replace("\\t", "\t"), "utf-8"
+            sets.allowed_client_pub_key.replace("\\n", "\n").replace("\\t", "\t"),
+            "utf-8",
         )
         ac = "0123456789abcdef0123456789abcdef"
-
 
         body = {
             "grant_type": "authorization_code",
             "authcode": ac,
             "dpop": create_dpop_jwt(pvk, pbk, sets.authz_url, "POST")[1:-1],
             "client_assertion": do_generate_client_assertion(
-            sets.allowed_client, sets.audience, now + 300, now, pvk
-        ),
+                sets.allowed_client, sets.audience, now + 300, now, pvk
+            ),
             "redirect_url": sets.allowed_redirect,
             "code_verifier": code_verifier,
         }
 
-        await sqss.handle_message('token', callback, body)
+        await sqss.handle_message("token", callback, body)
 
         m1.assert_called_once()
         m2.assert_called_once()
 
+
 @pytest.mark.asyncio
-@patch('app.sqs_service.process_refresh')
+@patch("app.sqs_service.process_refresh")
 async def test_handle_refresh_message_ok(m1):
     sqss = SQS_Service()
     with patch.object(sqss, "use_callback", new=mock.AsyncMock()) as m2:
-        callback = 'http://callback.url'
+        callback = "http://callback.url"
 
         m1.return_value = callback
 
         body = {
             "grant_type": "authorization_code",
-            "dpop": 'dpop',
-            "refresh_token": 'refresh_token',
+            "dpop": "dpop",
+            "refresh_token": "refresh_token",
         }
 
-        await sqss.handle_message('refresh', callback, body)
+        await sqss.handle_message("refresh", callback, body)
 
         m1.assert_called_once()
         m2.assert_called_once()

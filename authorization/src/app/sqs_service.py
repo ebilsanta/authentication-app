@@ -37,7 +37,7 @@ class SQS_Service:
 
         if not messages:
             return {"message": "No messages in the queue"}
-        
+
         print(len(messages))
 
         # Process the received messages
@@ -58,15 +58,15 @@ class SQS_Service:
 
             except Exception as e:
                 print(e)
-    
+
     async def receive_sqs_msg(self):
         try:
             return self.sqs.receive_message(
-                    QueueUrl=self.queue_url,
-                    AttributeNames=["All"],
-                    MaxNumberOfMessages=10, 
-                    MessageAttributeNames=["All"],
-                ).get("Messages", [])
+                QueueUrl=self.queue_url,
+                AttributeNames=["All"],
+                MaxNumberOfMessages=10,
+                MessageAttributeNames=["All"],
+            ).get("Messages", [])
         except Exception as e:
             print(e)
             return None
@@ -99,13 +99,13 @@ class SQS_Service:
     async def handle_token(self, rq):
         try:
             return await process_token(
-                    rq["grant_type"],
-                    rq["authcode"],
-                    rq["dpop"],
-                    rq["client_assertion"],
-                    rq["redirect_url"],
-                    rq["code_verifier"],
-                )   
+                rq["grant_type"],
+                rq["authcode"],
+                rq["dpop"],
+                rq["client_assertion"],
+                rq["redirect_url"],
+                rq["code_verifier"],
+            )
         except Exception as e:
             print(e)
             return invalid_response
@@ -122,4 +122,3 @@ class SQS_Service:
     async def use_callback(self, callback: str, body):
         async with httpx.AsyncClient() as client:
             await client.post(callback, json={"response": body})
-
