@@ -1,6 +1,10 @@
+import asyncio
 from functools import lru_cache
 import json
 import boto3
+from fastapi import status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from config import Settings
 from app.models import TokenRequest, RefreshRequest
 from app.process_reqs import process_authcode, process_token, process_refresh
@@ -9,6 +13,17 @@ from app.process_reqs import process_authcode, process_token, process_refresh
 @lru_cache()
 def get_settings():
     return Settings()
+
+
+invalid_response = JSONResponse(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    content=jsonable_encoder(
+        {
+            "error": "invalid_request",
+            "error_description": "The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed.",
+        }
+    ),
+)
 
 
 class SQS_Service:
@@ -37,14 +52,14 @@ class SQS_Service:
             for message in messages:
                 try:
                     message_body = message["Body"]
-                    # You can process the message here
 
                     payload = json.loads(message_body)
-                    self.process_message(
-                        payload["operation"], payload["callback"], payload["body"]
+                    asyncio.ensure_future(
+                        self.handle_message(
+                            payload["operation"], payload["callback"], payload["body"]
+                        )
                     )
 
-                    # Delete the message from the queue once processed
                     receipt_handle = message["ReceiptHandle"]
                     self.sqs.delete_message(
                         QueueUrl=self.queue_url, ReceiptHandle=receipt_handle
@@ -55,16 +70,17 @@ class SQS_Service:
         except Exception as e:
             print(e)
 
-    async def process_message(self, op: str, callback: str, req_body):
-        print(op, callback, req_body)
+    async def handle_message(self, op: str, callback: str, req_body):
         if op == "authcode":
-            return await self.process_authcode(req_body)
+            response = await self.handle_authcode(req_body)
         elif op == "token":
-            return await self.process_token(req_body)
+            response = await self.handle_token(req_body)
         elif op == "refresh":
-            return await self.process_refresh(req_body)
+            response = await self.handle_refresh(req_body)
 
-    async def process_authcode(self, rq):
+        print(response.__dict__)
+
+    async def handle_authcode(self, rq):
         try:
             return await process_authcode(
                 rq["response_type"],
@@ -73,24 +89,33 @@ class SQS_Service:
                 rq["id_jwt"],
                 rq["code_challenge"],
                 rq["code_challenge_method"],
-                rq["redirect_url"]
+                rq["redirect_url"],
             )
         except Exception as e:
             print(e)
+            return invalid_response
 
-    async def process_token(self, rq):
+    async def handle_token(self, rq):
         try:
-            return await process_authcode(TokenRequest(
-                rq["response_type"],
-                rq["client_id"],
-                rq["state"],
-                rq["id_jwt"],
-                rq["code_challenge"],
-                rq["code_challenge_method"],
-                rq["redirect_url"])
+            return await process_authcode(
+                TokenRequest(
+                    rq["grant_type"],
+                    rq["authcode"],
+                    rq["dpop"],
+                    rq["client_assertion"],
+                    rq["redirect_url"],
+                    rq["code_verifier"],
+                )
             )
         except Exception as e:
             print(e)
+            return invalid_response
 
-    async def process_refresh(self, rq):
-        pass
+    async def handle_refresh(self, rq):
+        try:
+            return await process_authcode(
+                RefreshRequest(rq["grant_type"], rq["dpop"], rq["refresh_token"])
+            )
+        except Exception as e:
+            print(e)
+            return invalid_response

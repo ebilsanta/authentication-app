@@ -139,12 +139,12 @@ async def process_token(token_req):
         "exp": now + 3600,
         "iat": now,
         "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
-        "typ": "dpop",  # Move this to the header.
     }
     access_token = jwt.encode(
         payload,
         get_settings().authz_pvt_key.replace("\\n", "\n").replace("\\t", "\t"),
         algorithm="RS256",
+        headers={"typ": "dpop"},
     )
 
     payload = {
@@ -153,13 +153,13 @@ async def process_token(token_req):
         "exp": now + 86400,
         "iat": now,
         "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
-        "typ": "dpop+refresh",  # Move this to the header. Enforce a check
     }
 
     refresh_token = jwt.encode(
         payload,
         get_settings().authz_pvt_key.replace("\\n", "\n").replace("\\t", "\t"),
         algorithm="RS256",
+        headers={"typ": "dpop+refresh"},  # Enforce a check
     )
 
     return JSONResponse(
@@ -216,7 +216,6 @@ async def process_refresh(refresh_req):
                 jwk.encode("ascii")
             ).digest()  # Confirm this is ok, compared to access token's impl
         ).decode(),
-        "typ": "dpop",  # Change this field to the header
     }
     access_token = jwt.encode(
         payload,
@@ -225,6 +224,7 @@ async def process_refresh(refresh_req):
             "ascii",
         ),
         algorithm="RS256",
+        headers={"typ": "dpop"},
     )
 
     return JSONResponse(
