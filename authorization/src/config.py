@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     dpop_htm: str
     dpop_htu: str
 
+    sqs_url: str
+
     model_config = SettingsConfigDict(
         env_file=os.getenv("env_file") if os.getenv("env_file") else ".env"
     )

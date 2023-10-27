@@ -3,7 +3,6 @@ from functools import lru_cache
 
 import boto3
 from config import Settings
-from motor.motor_asyncio import AsyncIOMotorClient
 
 
 @lru_cache()

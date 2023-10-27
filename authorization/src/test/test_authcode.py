@@ -1,8 +1,10 @@
 import time
 import uuid
 from unittest.mock import patch
+from unittest import mock
 
 import jwt
+import pytest
 from app.pkce import generate_pkce_code_challenge, generate_pkce_code_verifier
 from app.setup_utils import build_url, is_uuid
 from config import get_settings
@@ -43,45 +45,49 @@ def test_hello_world():
     assert response.json() == {"Hello": "World"}
 
 
-@patch("main.db.insert_authcode_record")
-@patch("main.db.exists_valid_user")
-def test_authcode_ok(method2, method1):
-    method1.return_value = 0
-    method2.return_value = True
-    params = {
-        "response_type": "code",
-        "client_id": allowed_client,
-        "redirect_url": redirect_url,
-        "state": uuid.uuid4().hex,
-        "code_challenge": code_challenge,
-        "id_jwt": testing_jwt,
-        "code_challenge_method": "S256",
-    }
+@pytest.mark.asyncio
+async def test_authcode_ok():
+    with patch(
+        "app.process_reqs.db.insert_authcode_record", new=mock.AsyncMock()
+    ) as m1, patch("app.process_reqs.db.exists_valid_user", new=mock.AsyncMock()) as m2:
+        m1.return_value = 0
+        m2.return_value = True
+        params = {
+            "response_type": "code",
+            "client_id": allowed_client,
+            "redirect_url": redirect_url,
+            "state": uuid.uuid4().hex,
+            "code_challenge": code_challenge,
+            "id_jwt": testing_jwt,
+            "code_challenge_method": "S256",
+        }
 
-    response = client.post(build_url("/authcode", params), follow_redirects=False)
+        response = client.post(build_url("/authcode", params), follow_redirects=False)
 
-    assert response.status_code == 302
-    assert response.headers["location"].split("=")[0] == redirect_url + "?code"
-    assert is_uuid(response.headers["location"].split("=")[1])
+        assert response.status_code == 302
+        assert response.headers["location"].split("=")[0] == redirect_url + "?code"
+        assert is_uuid(response.headers["location"].split("=")[1])
 
 
-@patch("main.db.insert_authcode_record")
-@patch("main.db.exists_valid_user")
-def test_authcode_no_redirect_ok(method2, method1):
-    method1.return_value = 0
-    method2.return_value = True
-    params = {
-        "response_type": "code",
-        "client_id": allowed_client,
-        "state": uuid.uuid4().hex,
-        "code_challenge": code_challenge,
-        "id_jwt": testing_jwt,
-        "code_challenge_method": "S256",
-    }
+@pytest.mark.asyncio
+async def test_authcode_no_redirect_ok():
+    with patch(
+        "app.process_reqs.db.insert_authcode_record", new=mock.AsyncMock()
+    ) as m1, patch("app.process_reqs.db.exists_valid_user", new=mock.AsyncMock()) as m2:
+        m1.return_value = 0
+        m2.return_value = True
+        params = {
+            "response_type": "code",
+            "client_id": allowed_client,
+            "state": uuid.uuid4().hex,
+            "code_challenge": code_challenge,
+            "id_jwt": testing_jwt,
+            "code_challenge_method": "S256",
+        }
 
-    response = client.post(build_url("/authcode", params), follow_redirects=False)
-    assert response.status_code == 200
-    assert is_uuid(response.json()["code"])
+        response = client.post(build_url("/authcode", params), follow_redirects=False)
+        assert response.status_code == 200
+        assert is_uuid(response.json()["code"])
 
 
 def test_response_type_fail():
