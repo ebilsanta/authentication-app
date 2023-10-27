@@ -5,6 +5,7 @@ import boto3
 from fastapi import status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+import httpx
 from config import Settings
 from app.models import TokenRequest, RefreshRequest
 from app.process_reqs import process_authcode, process_token, process_refresh
@@ -78,9 +79,7 @@ class SQS_Service:
         elif op == "refresh":
             response = await self.handle_refresh(req_body)
 
-        print(response.__dict__)
-
-        self.use_callback(callback, response)
+        await self.use_callback(callback, response)
 
     async def handle_authcode(self, rq):
         try:
@@ -100,15 +99,13 @@ class SQS_Service:
     async def handle_token(self, rq):
         try:
             return await process_token(
-                TokenRequest(
                     rq["grant_type"],
                     rq["authcode"],
                     rq["dpop"],
                     rq["client_assertion"],
                     rq["redirect_url"],
                     rq["code_verifier"],
-                )
-            )
+                )   
         except Exception as e:
             print(e)
             return invalid_response
@@ -116,11 +113,13 @@ class SQS_Service:
     async def handle_refresh(self, rq):
         try:
             return await process_refresh(
-                RefreshRequest(rq["grant_type"], rq["dpop"], rq["refresh_token"])
+                rq["grant_type"], rq["dpop"], rq["refresh_token"]
             )
         except Exception as e:
             print(e)
             return invalid_response
 
     async def use_callback(self, callback: str, body):
-        print(callback, body)
+        async with httpx.AsyncClient() as client:
+            await client.post(callback, json={"response": body})
+

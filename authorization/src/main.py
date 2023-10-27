@@ -63,12 +63,12 @@ async def standard_validation_exception_handler(
 
 @app.post("/token")
 async def post_token(token_req: TokenRequest):
-    return await process_token(token_req)
+    return await process_token(token_req.grant_type, token_req.authcode, token_req.dpop, token_req.client_assertion, token_req.code_verifier)
 
 
 @app.post("/refresh")
 async def post_refresh(refresh_req: RefreshRequest):
-    return await process_refresh(refresh_req)
+    return await process_refresh(refresh_req.grant_type, refresh_req.dpop, refresh_req.refresh_token)
 
 
 @app.on_event("startup")

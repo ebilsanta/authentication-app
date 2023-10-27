@@ -99,7 +99,7 @@ async def process_authcode(
         )
 
 
-async def process_token(token_req):
+async def process_token(grant_type, authcode, dpop, client_assertion, code_verifier):
     def respond(message, desc=None):
         if desc:
             return JSONResponse(
@@ -112,22 +112,22 @@ async def process_token(token_req):
                 content=jsonable_encoder({"error": message}),
             )
 
-    if token_req.grant_type != "authorization_code":
+    if grant_type != "authorization_code":
         return respond("unsupported grant type")
 
-    err, err_desc = cas.verify_client_assertion(token_req.client_assertion)
+    err, err_desc = cas.verify_client_assertion(client_assertion)
     if err:
         return respond(err, err_desc)
 
-    jwk, err = dps.verify_dpop(token_req.dpop)
+    jwk, err = dps.verify_dpop(dpop)
     if err:
         return respond(err)
 
-    authc = await db.get_authcode_record(token_req.authcode)
+    authc = await db.get_authcode_record(authcode)
     print(authc.__dict__)
 
-    print(generate_pkce_code_challenge(token_req.code_verifier))
-    if generate_pkce_code_challenge(token_req.code_verifier) != authc.code_challenge:
+    print(generate_pkce_code_challenge(code_verifier))
+    if generate_pkce_code_challenge(code_verifier) != authc.code_challenge:
         return respond("Invalid PKCE Code Verifier")
 
     sets = get_settings()
@@ -175,7 +175,7 @@ async def process_token(token_req):
     )
 
 
-async def process_refresh(refresh_req):
+async def process_refresh(grant_type, dpop, refresh_token):
     def respond(message, desc=None):
         if desc:
             return JSONResponse(
@@ -188,17 +188,17 @@ async def process_refresh(refresh_req):
                 content=jsonable_encoder({"error": message}),
             )
 
-    if refresh_req.grant_type != "authorization_code":
+    if grant_type != "authorization_code":
         return respond("unsupported grant type")
 
-    err, jwk = dps.verify_dpop(refresh_req.dpop, at=refresh_req.refresh_token)
+    err, jwk = dps.verify_dpop(dpop, at=refresh_token)
 
     if err:
         print(err)
         return respond(err)
 
     decoded_ref = jwt.decode(
-        refresh_req.refresh_token,
+        refresh_token,
         get_settings().authz_pub_key.replace("\\n", "\n").replace("\\t", "\t"),
         algorithms=["RS256"],
     )
