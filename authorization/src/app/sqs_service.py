@@ -2,6 +2,7 @@ from functools import lru_cache
 import json
 import boto3
 from config import Settings
+from app.models import TokenRequest, RefreshRequest
 from app.process_reqs import process_authcode, process_token, process_refresh
 
 
@@ -65,20 +66,31 @@ class SQS_Service:
 
     async def process_authcode(self, rq):
         try:
-            return await post_authcode(
+            return await process_authcode(
                 rq["response_type"],
                 rq["client_id"],
                 rq["state"],
                 rq["id_jwt"],
                 rq["code_challenge"],
                 rq["code_challenge_method"],
-                rq["redirect_url"],
+                rq["redirect_url"]
             )
         except Exception as e:
             print(e)
 
-    async def process_token(self):
-        pass
+    async def process_token(self, rq):
+        try:
+            return await process_authcode(TokenRequest(
+                rq["response_type"],
+                rq["client_id"],
+                rq["state"],
+                rq["id_jwt"],
+                rq["code_challenge"],
+                rq["code_challenge_method"],
+                rq["redirect_url"])
+            )
+        except Exception as e:
+            print(e)
 
-    async def process_refresh(self):
+    async def process_refresh(self, rq):
         pass

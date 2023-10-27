@@ -1,6 +1,6 @@
-from functools import lru_cache
 from typing import Union
 
+from app.models import TokenRequest, RefreshRequest
 from app.process_reqs import process_authcode, process_token, process_refresh
 from app.sqs_service import SQS_Service
 from fastapi import FastAPI, Request, status
@@ -8,25 +8,9 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi_restful.tasks import repeat_every
-from pydantic import BaseModel
 
 sqss = SQS_Service()
 app = FastAPI()
-
-
-class TokenRequest(BaseModel):
-    grant_type: str
-    authcode: str
-    dpop: str
-    client_assertion: str
-    redirect_url: str
-    code_verifier: str
-
-
-class RefreshRequest(BaseModel):
-    grant_type: str
-    dpop: str
-    refresh_token: str
 
 
 @app.get("/")
