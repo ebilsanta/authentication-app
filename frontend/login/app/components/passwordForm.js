@@ -1,9 +1,9 @@
 export default function PasswordForm() {
   return <div className="bg-white m-auto rounded-md p-5">
-    <h1 className="text-black font-semibold text-center text-2xl">Email Verified!</h1>
-    <p className="text-black text-gray-700">Your email has been  verified. Please set your password below</p>
+    <h1 className="text-black font-semibold text-left text-2xl">Email Verified!</h1>
+    <p className="text-black text-gray-700 py-3">Your email has been  verified. Please set your password below</p>
 
-    <h2 className="text-black font-semibold text-center text-xl py-3">Set Password</h2>
+    <h2 className="text-black font-semibold text-left text-xl py-3">Set Password</h2>
     <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
       Password
     </label>
