@@ -8,7 +8,6 @@ import pytest
 from app.pkce import generate_pkce_code_challenge, generate_pkce_code_verifier
 from app.setup_utils import build_url, is_uuid
 from config import get_settings
-from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 from main import app
 

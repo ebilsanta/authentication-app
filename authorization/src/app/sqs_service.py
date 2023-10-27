@@ -32,43 +32,43 @@ class SQS_Service:
         self.queue_url = get_settings().sqs_url
 
     async def poll_sqs(self):
-        print("POLLING!")
+        messages = await self.receive_sqs_msg()
+
+        if not messages:
+            return {"message": "No messages in the queue"}
+        
+        print(len(messages))
+
+        # Process the received messages
+        for message in messages:
+            try:
+                message_body = message["Body"]
+
+                payload = json.loads(message_body)
+                asyncio.ensure_future(
+                    self.handle_message(
+                        payload["operation"], payload["callback"], payload["body"]
+                    )
+                )
+
+                self.sqs.delete_message(
+                    QueueUrl=self.queue_url, ReceiptHandle=message["ReceiptHandle"]
+                )
+
+            except Exception as e:
+                print(e)
+    
+    async def receive_sqs_msg(self):
         try:
-            response = self.sqs.receive_message(
-                QueueUrl=self.queue_url,
-                AttributeNames=["All"],
-                MaxNumberOfMessages=10,  # Maximum number of messages to receive
-                MessageAttributeNames=["All"],
-            )
-
-            messages = response.get("Messages", [])
-
-            print(len(messages))
-
-            if not messages:
-                return {"message": "No messages in the queue"}
-
-            # Process the received messages
-            for message in messages:
-                try:
-                    message_body = message["Body"]
-
-                    payload = json.loads(message_body)
-                    asyncio.ensure_future(
-                        self.handle_message(
-                            payload["operation"], payload["callback"], payload["body"]
-                        )
-                    )
-
-                    receipt_handle = message["ReceiptHandle"]
-                    self.sqs.delete_message(
-                        QueueUrl=self.queue_url, ReceiptHandle=receipt_handle
-                    )
-
-                except Exception as e:
-                    print(e)
+            return self.sqs.receive_message(
+                    QueueUrl=self.queue_url,
+                    AttributeNames=["All"],
+                    MaxNumberOfMessages=10, 
+                    MessageAttributeNames=["All"],
+                ).get("Messages", [])
         except Exception as e:
             print(e)
+            return None
 
     async def handle_message(self, op: str, callback: str, req_body):
         if op == "authcode":
@@ -79,6 +79,8 @@ class SQS_Service:
             response = await self.handle_refresh(req_body)
 
         print(response.__dict__)
+
+        self.use_callback(callback, response)
 
     async def handle_authcode(self, rq):
         try:
@@ -97,7 +99,7 @@ class SQS_Service:
 
     async def handle_token(self, rq):
         try:
-            return await process_authcode(
+            return await process_token(
                 TokenRequest(
                     rq["grant_type"],
                     rq["authcode"],
@@ -113,9 +115,12 @@ class SQS_Service:
 
     async def handle_refresh(self, rq):
         try:
-            return await process_authcode(
+            return await process_refresh(
                 RefreshRequest(rq["grant_type"], rq["dpop"], rq["refresh_token"])
             )
         except Exception as e:
             print(e)
             return invalid_response
+
+    async def use_callback(self, callback: str, body):
+        print(callback, body)
