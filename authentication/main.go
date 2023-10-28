@@ -24,6 +24,12 @@ import (
 	handler "github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/authentication/internal/handler/grpc"
 )
 
+func processMessageBody(body string) map[string]string {
+	data := map[string]string{}
+	json.Unmarshal([]byte(body), &data)
+	return data
+}
+
 func pollSQS() {
 	queue := utils.ConnectSQS()
     for {
@@ -49,8 +55,9 @@ func pollSQS() {
 
 func handleMessage(message *sqs.Message) {
     // Extract data from message
-    path := *message.Body
-	callback := *message.MessageAttributes["Callback"].StringValue
+	path := *message.MessageAttributes["Path"].StringValue
+	data := processMessageBody(*message.Body)
+	callback := data["callback"]
 
     // Create gRPC client
     conn, err := grpc.Dial("localhost:8089", grpc.WithInsecure())
@@ -65,12 +72,12 @@ func handleMessage(message *sqs.Message) {
 
 	if path == "/register" {
 		response, err := client.Register(context.Background(), &authentication.RegisterRequest{
-			Company: *message.MessageAttributes["Company"].StringValue,
-			Email: *message.MessageAttributes["Email"].StringValue,
-			FirstName: *message.MessageAttributes["FirstName"].StringValue,
-			LastName: *message.MessageAttributes["LastName"].StringValue,
-			Birthdate: *message.MessageAttributes["Birthdate"].StringValue,
-			Password: *message.MessageAttributes["Password"].StringValue,
+			Company: data["company"],
+			Email: data["email"],
+			FirstName: data["firstName"],
+			LastName: data["lastName"],
+			Birthdate: data["birthdate"],
+			Password: data["password"],
 		})
 		if err != nil {
 			log.Println("Error making gRPC request:", err)
@@ -89,9 +96,9 @@ func handleMessage(message *sqs.Message) {
 		return
 	} else if path == "/verify" {
 		response, err := client.VerifyEmail(context.Background(), &authentication.VerifyEmailRequest{
-			VerificationKey: *message.Attributes["VerificationKey"],
-			Otp: *message.Attributes["OTP"],
-			Email: *message.Attributes["Email"],
+			VerificationKey: data["verificationKey"],
+			Otp: data["otp"],
+			Email: data["email"],
 		})
 		if err != nil {
 			log.Println("Error making gRPC request:", err)
