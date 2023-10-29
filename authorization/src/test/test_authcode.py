@@ -38,8 +38,8 @@ client = TestClient(app)
 # Tests start here
 
 
-def test_hello_world():
-    response = client.get("/")
+def test_health():
+    response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"Hello": "World"}
 

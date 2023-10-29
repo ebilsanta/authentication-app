@@ -13,7 +13,7 @@ sqss = SQS_Service()
 app = FastAPI()
 
 
-@app.get("/")
+@app.get("/health")
 def read_root():
     return {"Hello": "World"}
 
