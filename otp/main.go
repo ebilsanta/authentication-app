@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net"
-	// "os"
 
 	"github.com/golang/glog"
 	"google.golang.org/grpc"
