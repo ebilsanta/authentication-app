@@ -39,7 +39,7 @@ func ConnectSES() (s *ses.SES) {
 
 	return ses.New(session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
-		Credentials: credentials.NewStaticCredentials(os.Getenv("SES_AWS_ACCESS_KEY_ID"), os.Getenv("SES_AWS_SECRET_ACCESS_KEY"), ""),
+		Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
 	})))
 }
 
