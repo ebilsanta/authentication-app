@@ -39,7 +39,7 @@ client = TestClient(app)
 
 
 @pytest.mark.asyncio
-async def test_poll_sqs_ok():
+async def test_poll_sqs_authcode_302_ok():
     sqss = SQS_Service()
     with patch.object(
         sqss, "receive_sqs_msg", new=mock.AsyncMock()
@@ -71,12 +71,96 @@ async def test_poll_sqs_ok():
             }
         ]
 
+        print(json.dumps(to_return))
+
         m1.return_value = to_return
 
         await sqss.poll_sqs()
         m1.assert_called_once()
         m2.assert_called_once_with("authcode", "http://api-gateway/callback", body)
         m3.assert_called_once_with(QueueUrl=ANY, ReceiptHandle="handle")
+
+@pytest.mark.asyncio
+async def test_poll_sqs_authcode_200_ok():
+    sqss = SQS_Service()
+    with patch.object(
+        sqss, "receive_sqs_msg", new=mock.AsyncMock()
+    ) as m1, patch.object(
+        sqss, "handle_message", new=mock.AsyncMock()
+    ) as m2, patch.object(
+        sqss.sqs, "delete_message"
+    ) as m3:
+        body = {
+            "response_type": "code",
+            "client_id": allowed_client,
+            "state": uuid.uuid4().hex,
+            "code_challenge": code_challenge,
+            "id_jwt": testing_jwt,
+            "code_challenge_method": "S256",
+        }
+
+        to_return = [
+            {
+                "Body": json.dumps(
+                    {
+                        "operation": "authcode",
+                        "callback": "http://api-gateway/callback",
+                        "body": body,
+                    }
+                ),
+                "ReceiptHandle": "handle",
+            }
+        ]
+
+        print(json.dumps(to_return))
+
+        m1.return_value = to_return
+
+        await sqss.poll_sqs()
+        m1.assert_called_once()
+        m2.assert_called_once_with("authcode", "http://api-gateway/callback", body)
+        m3.assert_called_once_with(QueueUrl=ANY, ReceiptHandle="handle")
+
+@pytest.mark.asyncio
+async def test_poll_sqs_authcode_400_failure():
+    sqss = SQS_Service()
+    with patch.object(
+        sqss, "receive_sqs_msg", new=mock.AsyncMock()
+    ) as m1, patch.object(
+        sqss, "handle_message", new=mock.AsyncMock()
+    ) as m2, patch.object(
+        sqss.sqs, "delete_message"
+    ) as m3:
+        body = {
+            "client_id": allowed_client,
+            "state": uuid.uuid4().hex,
+            "code_challenge": code_challenge,
+            "id_jwt": testing_jwt,
+            "code_challenge_method": "S256",
+        }
+
+        to_return = [
+            {
+                "Body": json.dumps(
+                    {
+                        "operation": "authcode",
+                        "callback": "http://api-gateway/callback",
+                        "body": body,
+                    }
+                ),
+                "ReceiptHandle": "handle",
+            }
+        ]
+
+        print(json.dumps(to_return))
+
+        m1.return_value = to_return
+
+        await sqss.poll_sqs()
+        m1.assert_called_once()
+        m2.assert_called_once_with("authcode", "http://api-gateway/callback", body)
+        m3.assert_called_once_with(QueueUrl=ANY, ReceiptHandle="handle")
+
 
 
 @pytest.mark.asyncio

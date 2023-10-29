@@ -7,7 +7,6 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 import httpx
 from config import Settings
-from app.models import TokenRequest, RefreshRequest
 from app.process_reqs import process_authcode, process_token, process_refresh
 
 
@@ -88,9 +87,9 @@ class SQS_Service:
                 rq["client_id"],
                 rq["state"],
                 rq["id_jwt"],
-                rq["code_challenge"],
-                rq["code_challenge_method"],
-                rq["redirect_url"],
+                rq["code_challenge"] if "code_challenge" in rq else None,
+                rq["code_challenge_method"] if "code_challenge_method" in rq else None,
+                rq["redirect_url"] if "redirect_url" in rq else None,
             )
         except Exception as e:
             print(e)
@@ -103,7 +102,7 @@ class SQS_Service:
                 rq["authcode"],
                 rq["dpop"],
                 rq["client_assertion"],
-                rq["redirect_url"],
+                rq["redirect_url"] if "redirect_url" in rq else None,
                 rq["code_verifier"],
             )
         except Exception as e:
@@ -121,4 +120,17 @@ class SQS_Service:
 
     async def use_callback(self, callback: str, body):
         async with httpx.AsyncClient() as client:
-            await client.post(callback, json={"response": body})
+            response = {
+                "status_code": body.__dict__['status_code'],
+                "headers": dict((x.decode("utf-8"), y.decode("utf-8")) for x, y in body.__dict__['raw_headers']),
+            }
+            if 'body' in body.__dict__ and body.__dict__['body'] != b'':
+                response.update({"body": json.loads(body.__dict__['body'])})
+
+            # print(response)
+            # print(json.dumps(response))
+            
+            try:
+                await client.post(callback, json={"response": json.dumps(response)})
+            except Exception as e:
+                print(e)
