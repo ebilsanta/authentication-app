@@ -94,7 +94,7 @@ func handleMessage(message *sqs.Message) {
 			return
 		}
 		return
-	} else if path == "/verify" {
+	} else if path == "/verify-email" {
 		response, err := client.VerifyEmail(context.Background(), &authentication.VerifyEmailRequest{
 			VerificationKey: data["verificationKey"],
 			Otp: data["otp"],
