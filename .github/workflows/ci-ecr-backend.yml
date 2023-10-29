@@ -10,7 +10,7 @@ jobs:
     name: Build Image
     runs-on: ubuntu-latest
     defaults:
-      runs:
+      run:
         working-directory: backend
     steps:
     - name: Check out code
