@@ -9,9 +9,6 @@ jobs:
   build:
     name: Build Image
     runs-on: ubuntu-latest
-    # defaults:
-    #   run:
-    #     working-directory: backend
     steps:
     - name: Check out code
       uses: actions/checkout@v2
@@ -30,5 +27,6 @@ jobs:
         ECR_REPOSITORY: cs301-backend
         IMAGE_TAG: cs301-backend
       run: |
+        cd backend
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
