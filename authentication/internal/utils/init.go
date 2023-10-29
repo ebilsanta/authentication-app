@@ -36,7 +36,7 @@ func GetDB() (db *dynamodb.DynamoDB) {
 }
 
 func ConnectOTPServer() (*grpc.ClientConn, error) {
-	err := godotenv.Load("infrastructure/.env")
+	err := godotenv.Load("authentication.env")
     if err != nil {
         log.Fatal("Error loading .env file")
 		return nil, err

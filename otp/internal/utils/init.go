@@ -14,7 +14,7 @@ import (
 )
 
 func ConnectDB() (db *dynamodb.DynamoDB) {
-    err := godotenv.Load("infrastructure/.env")
+    err := godotenv.Load("otp.env")
     if err != nil {
         log.Fatal("Error loading .env file")
     }
