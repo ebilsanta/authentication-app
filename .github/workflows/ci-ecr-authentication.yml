@@ -2,10 +2,10 @@ name: Push Authentication to ECR
 
 on:
   push:
+    paths:
+      - authentication/**
     branches:
       - master
-    # paths:
-    # - authentication
 
 jobs:
   build:

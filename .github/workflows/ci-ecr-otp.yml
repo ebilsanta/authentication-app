@@ -2,10 +2,10 @@ name: Push OTP to ECR
 
 on:
   push:
+    paths:
+      - otp/**
     branches:
       - master
-    # paths:
-    #   - otp
 
 jobs:
   build:
