@@ -99,7 +99,7 @@ async def process_authcode(
         )
 
 
-async def process_token(grant_type, authcode, dpop, client_assertion, code_verifier):
+async def process_token(grant_type, authcode, dpop, client_assertion, redirect_url, code_verifier):
     def respond(message, desc=None):
         if desc:
             return JSONResponse(
@@ -161,18 +161,29 @@ async def process_token(grant_type, authcode, dpop, client_assertion, code_verif
         algorithm="RS256",
         headers={"typ": "dpop+refresh"},  # Enforce a check
     )
-
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content=jsonable_encoder(
-            {
-                "access_token": access_token,
-                "token_type": "DPoP",
-                "expires_in": 3600,
-                "refresh_token": refresh_token,
-            }
-        ),
-    )
+    if redirect_url:
+        return JSONResponse(content=jsonable_encoder(
+                {
+                    "access_token": access_token,
+                    "token_type": "DPoP",
+                    "expires_in": 3600,
+                    "refresh_token": refresh_token,
+                }
+            ), 
+            headers={'Location': redirect_url}, 
+            status_code=status.HTTP_302_FOUND)
+    else:
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=jsonable_encoder(
+                {
+                    "access_token": access_token,
+                    "token_type": "DPoP",
+                    "expires_in": 3600,
+                    "refresh_token": refresh_token,
+                }
+            ),
+        )
 
 
 async def process_refresh(grant_type, dpop, refresh_token):

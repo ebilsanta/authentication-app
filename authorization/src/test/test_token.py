@@ -1,3 +1,4 @@
+import json
 from unittest import mock
 import base64
 import hashlib
@@ -58,6 +59,42 @@ async def test_token_ok():
             "redirect_url": sets.allowed_redirect,
             "code_verifier": code_verifier,
         }
+
+        print(json.dumps(params))
+
+        response = client.post("/token", json=params, follow_redirects=False)
+        assert response.status_code == 302
+        assert response.json()["token_type"] == "DPoP"
+        assert response.json()["access_token"]
+        assert response.json()["refresh_token"]
+
+@pytest.mark.asyncio
+async def test_token_no_redirect_ok():
+    with patch("app.process_reqs.db.get_authcode_record", new=mock.AsyncMock()) as m1:
+        m1.return_value = AuthCodeRecord(
+            ac,
+            uuid.uuid4().hex,
+            generate_pkce_code_challenge(code_verifier),
+            subject,
+            300,
+        )
+
+        dpop = create_dpop_jwt(pvk, pbk, sets.authz_url, "POST")[1:-1]
+
+        now = int(time.time())
+        ca = do_generate_client_assertion(
+            sets.allowed_client, sets.audience, now + 300, now, pvk
+        )
+
+        params = {
+            "grant_type": "authorization_code",
+            "authcode": ac,
+            "dpop": dpop,
+            "client_assertion": ca,
+            "code_verifier": code_verifier,
+        }
+
+
 
         response = client.post("/token", json=params, follow_redirects=False)
         assert response.status_code == 200

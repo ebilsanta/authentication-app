@@ -68,6 +68,7 @@ async def post_token(token_req: TokenRequest):
         token_req.authcode,
         token_req.dpop,
         token_req.client_assertion,
+        token_req.redirect_url,
         token_req.code_verifier,
     )
 

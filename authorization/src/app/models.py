@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 
@@ -6,8 +7,8 @@ class TokenRequest(BaseModel):
     authcode: str
     dpop: str
     client_assertion: str
-    redirect_url: str
     code_verifier: str
+    redirect_url: Optional[str] = None
 
 
 class RefreshRequest(BaseModel):
