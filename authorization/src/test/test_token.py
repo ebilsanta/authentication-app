@@ -42,7 +42,7 @@ async def test_token_ok():
             generate_pkce_code_challenge(code_verifier),
             subject,
             300,
-        )
+        ).__dict__
 
         dpop = create_dpop_jwt(pvk, pbk, sets.authz_url, "POST")[1:-1]
 
@@ -77,7 +77,7 @@ async def test_token_no_redirect_ok():
             generate_pkce_code_challenge(code_verifier),
             subject,
             300,
-        )
+        ).__dict__
 
         dpop = create_dpop_jwt(pvk, pbk, sets.authz_url, "POST")[1:-1]
 

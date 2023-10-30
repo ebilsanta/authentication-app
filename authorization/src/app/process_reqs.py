@@ -124,17 +124,16 @@ async def process_token(grant_type, authcode, dpop, client_assertion, redirect_u
         return respond(err)
 
     authc = await db.get_authcode_record(authcode)
-    print(authc.__dict__)
 
     print(generate_pkce_code_challenge(code_verifier))
-    if generate_pkce_code_challenge(code_verifier) != authc.code_challenge:
+    if generate_pkce_code_challenge(code_verifier) != authc['code_challenge']:
         return respond("Invalid PKCE Code Verifier")
 
     sets = get_settings()
 
     now = int(time.time())
     payload = {
-        "sub": authc.user,
+        "sub": authc['user'],
         "iss": sets.audience,
         "exp": now + 3600,
         "iat": now,
@@ -148,7 +147,7 @@ async def process_token(grant_type, authcode, dpop, client_assertion, redirect_u
     )
 
     payload = {
-        "sub": authc.user,
+        "sub": authc['user'],
         "iss": sets.audience,
         "exp": now + 86400,
         "iat": now,
