@@ -33,13 +33,15 @@ class Database:
         sets = get_settings()
 
         if sets.db_access_key_id != "" and sets.db_secret_access_key != "":
+            print("Using Credentials")
             ddb = boto3.resource(
                 "dynamodb",
                 region_name=sets.db_region_name,
                 aws_access_key_id=sets.db_access_key_id,
                 aws_secret_access_key=sets.db_secret_access_key,
             )
-        else:
+        elif sets.role_arn != "":
+            print('Using Role')
             sts_client = boto3.client("sts")
             assumed_role_object = sts_client.assume_role(
                 RoleArn=sets.role_arn, RoleSessionName="RoleSession1"
@@ -52,6 +54,8 @@ class Database:
                 aws_session_token=credentials["SessionToken"],
             )
             ddb = session.resource("dynamodb")
+        else:
+            print("No DynamoDB login method")
 
         self.ac_table = ddb.Table(sets.db_collection_authcodes)
         self.users_table = ddb.Table(sets.db_collection_users)
