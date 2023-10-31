@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
     "log"
     "os"
 
@@ -10,12 +11,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/aws/aws-sdk-go-v2/config"
 )
 
 func ConnectDB() (db *dynamodb.DynamoDB) {
     err := godotenv.Load("otp.env")
     if err != nil {
 		log.Print("Development env file not found, trying production env")
+		config.LoadDefaultConfig(context.TODO())
 		// err = godotenv.Load()
 		// if err != nil {
 		// 	log.Fatal("Error loading .env file")
