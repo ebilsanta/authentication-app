@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     sqs_url: str
 
-    role_arn: str
+    role_arn: str = ""
 
     model_config = SettingsConfigDict(
         env_file=os.getenv("env_file") if os.getenv("env_file") else ".env"
