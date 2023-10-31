@@ -41,7 +41,7 @@ class Database:
                 aws_secret_access_key=sets.db_secret_access_key,
             )
         elif sets.role_arn != "":
-            print('Using Role')
+            print("Using Role")
             sts_client = boto3.client("sts")
             assumed_role_object = sts_client.assume_role(
                 RoleArn=sets.role_arn, RoleSessionName="RoleSession1"
@@ -49,6 +49,7 @@ class Database:
 
             credentials = assumed_role_object["Credentials"]
             session = Session(
+                region_name=sets.db_region_name,
                 aws_access_key_id=credentials["AccessKeyId"],
                 aws_secret_access_key=credentials["SecretAccessKey"],
                 aws_session_token=credentials["SessionToken"],
