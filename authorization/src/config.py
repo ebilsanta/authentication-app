@@ -24,13 +24,15 @@ class Settings(BaseSettings):
     db_collection_authcodes: str
     db_collection_users: str
     db_region_name: str
-    db_access_key_id: str = ''
-    db_secret_access_key: str = ''
+    db_access_key_id: str = ""
+    db_secret_access_key: str = ""
 
     dpop_htm: str
     dpop_htu: str
 
     sqs_url: str
+
+    role_arn: str
 
     model_config = SettingsConfigDict(
         env_file=os.getenv("env_file") if os.getenv("env_file") else ".env"

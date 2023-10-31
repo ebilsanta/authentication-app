@@ -68,6 +68,7 @@ async def test_token_ok():
         assert response.json()["access_token"]
         assert response.json()["refresh_token"]
 
+
 @pytest.mark.asyncio
 async def test_token_no_redirect_ok():
     with patch("app.process_reqs.db.get_authcode_record", new=mock.AsyncMock()) as m1:
@@ -93,8 +94,6 @@ async def test_token_no_redirect_ok():
             "client_assertion": ca,
             "code_verifier": code_verifier,
         }
-
-
 
         response = client.post("/token", json=params, follow_redirects=False)
         assert response.status_code == 200

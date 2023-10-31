@@ -121,15 +121,18 @@ class SQS_Service:
     async def use_callback(self, callback: str, body):
         async with httpx.AsyncClient() as client:
             response = {
-                "status_code": body.__dict__['status_code'],
-                "headers": dict((x.decode("utf-8"), y.decode("utf-8")) for x, y in body.__dict__['raw_headers']),
+                "status_code": body.__dict__["status_code"],
+                "headers": dict(
+                    (x.decode("utf-8"), y.decode("utf-8"))
+                    for x, y in body.__dict__["raw_headers"]
+                ),
             }
-            if 'body' in body.__dict__ and body.__dict__['body'] != b'':
-                response.update({"body": json.loads(body.__dict__['body'])})
+            if "body" in body.__dict__ and body.__dict__["body"] != b"":
+                response.update({"body": json.loads(body.__dict__["body"])})
 
             # print(response)
             # print(json.dumps(response))
-            
+
             try:
                 await client.post(callback, json={"response": json.dumps(response)})
             except Exception as e:

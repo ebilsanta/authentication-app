@@ -80,6 +80,7 @@ async def test_poll_sqs_authcode_302_ok():
         m2.assert_called_once_with("authcode", "http://api-gateway/callback", body)
         m3.assert_called_once_with(QueueUrl=ANY, ReceiptHandle="handle")
 
+
 @pytest.mark.asyncio
 async def test_poll_sqs_authcode_200_ok():
     sqss = SQS_Service()
@@ -121,6 +122,7 @@ async def test_poll_sqs_authcode_200_ok():
         m2.assert_called_once_with("authcode", "http://api-gateway/callback", body)
         m3.assert_called_once_with(QueueUrl=ANY, ReceiptHandle="handle")
 
+
 @pytest.mark.asyncio
 async def test_poll_sqs_authcode_400_failure():
     sqss = SQS_Service()
@@ -160,7 +162,6 @@ async def test_poll_sqs_authcode_400_failure():
         m1.assert_called_once()
         m2.assert_called_once_with("authcode", "http://api-gateway/callback", body)
         m3.assert_called_once_with(QueueUrl=ANY, ReceiptHandle="handle")
-
 
 
 @pytest.mark.asyncio

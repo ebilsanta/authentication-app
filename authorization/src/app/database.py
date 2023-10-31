@@ -2,6 +2,7 @@ import time
 from functools import lru_cache
 
 import boto3
+from boto3.session import Session
 from config import Settings
 
 
@@ -30,12 +31,27 @@ class AuthCodeRecord:
 class Database:
     def __init__(self):
         sets = get_settings()
-        ddb = boto3.resource(
-            "dynamodb",
-            region_name=sets.db_region_name,
-            aws_access_key_id=sets.db_access_key_id,
-            aws_secret_access_key=sets.db_secret_access_key,
-        )
+
+        if sets.db_access_key_id != "" and sets.db_secret_access_key != "":
+            ddb = boto3.resource(
+                "dynamodb",
+                region_name=sets.db_region_name,
+                aws_access_key_id=sets.db_access_key_id,
+                aws_secret_access_key=sets.db_secret_access_key,
+            )
+        else:
+            sts_client = boto3.client("sts")
+            assumed_role_object = sts_client.assume_role(
+                RoleArn=sets.role_arn, RoleSessionName="RoleSession1"
+            )
+
+            credentials = assumed_role_object["Credentials"]
+            session = Session(
+                aws_access_key_id=credentials["AccessKeyId"],
+                aws_secret_access_key=credentials["SecretAccessKey"],
+                aws_session_token=credentials["SessionToken"],
+            )
+            ddb = session.resource("dynamodb")
 
         self.ac_table = ddb.Table(sets.db_collection_authcodes)
         self.users_table = ddb.Table(sets.db_collection_users)
