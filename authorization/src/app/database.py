@@ -42,7 +42,6 @@ class Database:
             )
         elif sets.role_arn != "":
             print("Using Role")
-            print(sets.allowed_client_pub_key)
             sts_client = boto3.client("sts")
             assumed_role_object = sts_client.assume_role(
                 RoleArn=sets.role_arn, RoleSessionName="RoleSession1"
