@@ -32,7 +32,7 @@ func ConnectDB() (db *dynamodb.DynamoDB) {
 		stsResp, err := stsClient.AssumeRole(params)
 
 		if err != nil {
-			log.Print("Error getting role credentials")
+			log.Println("Error getting role credentials: ", err)
 			return nil
 		}
 
