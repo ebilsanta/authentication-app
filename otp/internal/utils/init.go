@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"context"
     "log"
     "os"
 
@@ -11,23 +10,39 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/ses"
-	"github.com/aws/aws-sdk-go-v2/config"
+	// "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go/service/sts"
 )
 
 func ConnectDB() (db *dynamodb.DynamoDB) {
+	aws_session := ""
     err := godotenv.Load("otp.env")
     if err != nil {
 		log.Print("Development env file not found, trying production env")
-		config.LoadDefaultConfig(context.TODO())
-		// err = godotenv.Load()
-		// if err != nil {
-		// 	log.Fatal("Error loading .env file")
-		// }     
+		role := os.Getenv("ROLE_ARN")
+		stsClient := sts.New(session.Must(session.NewSession()))
+		params := &sts.AssumeRoleInput{
+			RoleArn:         aws.String(role),
+			RoleSessionName: aws.String("RoleSession0"),
+		}
+		stsResp, err := stsClient.AssumeRole(params)
+
+		if err != nil {
+			log.Print("Error getting role credentials")
+			return nil
+		}
+
+		os.Setenv("AWS_ACCESS_KEY_ID", *stsResp.Credentials.AccessKeyId)
+		os.Setenv("AWS_SECRET_ACCESS_KEY", *stsResp.Credentials.SecretAccessKey)
+		os.Setenv("AWS_SESSION_TOKEN", *stsResp.Credentials.SessionToken)
+
+		aws_session = *stsResp.Credentials.SessionToken
     }
+	log.Print("Using dev credentials")
 
 	return dynamodb.New(session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
-		Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
+		Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), aws_session),
 	})))
 }
 
@@ -38,18 +53,16 @@ func GetDB() (db *dynamodb.DynamoDB) {
 }
 
 func ConnectSES() (s *ses.SES) {
-    // err := godotenv.Load("otp.env")
-    // if err != nil {
-	// 	log.Print("Development env file not found, trying production env")
-	// 	err = godotenv.Load()
-	// 	if err != nil {
-	// 		log.Fatal("Error loading .env file")
-	// 	}     
-    // }
+
+	aws_session := ""
+
+	if len(os.Getenv("AWS_SESSION_TOKEN")) == 0 {
+		aws_session = os.Getenv("AWS_SESSION_TOKEN")
+	}
 
 	return ses.New(session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
-		Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
+		Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), aws_session),
 	})))
 }
 
