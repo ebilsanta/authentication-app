@@ -15,7 +15,11 @@ import (
 func ConnectDB() (db *dynamodb.DynamoDB) {
     err := godotenv.Load("otp.env")
     if err != nil {
-        log.Fatal("Error loading .env file")
+		log.Print("Development env file not found, trying production env")
+		err = godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}     
     }
 
 	return dynamodb.New(session.Must(session.NewSession(&aws.Config{
@@ -31,9 +35,13 @@ func GetDB() (db *dynamodb.DynamoDB) {
 }
 
 func ConnectSES() (s *ses.SES) {
-    err := godotenv.Load("infrastructure/.env")
+    err := godotenv.Load("otp.env")
     if err != nil {
-        log.Fatal("Error loading .env file")
+		log.Print("Development env file not found, trying production env")
+		err = godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}     
     }
 
 	return ses.New(session.Must(session.NewSession(&aws.Config{

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 
 	"github.com/golang/glog"
@@ -47,6 +48,7 @@ func pollSQS() {
 
         // Process received messages
         for _, message := range messages.Messages {
+			log.Print(message)
             // Forward message as gRPC request
             handleMessage(message)
         }
@@ -70,7 +72,7 @@ func handleMessage(message *sqs.Message) {
     // Create gRPC client
     client := authentication.NewAuthenticationClient(conn)
 
-	if path == "/register" {
+	if path == "register" {
 		response, err := client.Register(context.Background(), &authentication.RegisterRequest{
 			Company: data["company"],
 			Email: data["email"],
@@ -94,7 +96,7 @@ func handleMessage(message *sqs.Message) {
 			return
 		}
 		return
-	} else if path == "/verify-email" {
+	} else if path == "verify-email" {
 		response, err := client.VerifyEmail(context.Background(), &authentication.VerifyEmailRequest{
 			VerificationKey: data["verificationKey"],
 			Otp: data["otp"],
@@ -125,15 +127,20 @@ func ResponseMessage(input map[string]string, callback string, message sqs.Messa
 	queue := utils.ConnectSQS()
 	postBody, _ := json.Marshal(input)
 	responseBody := bytes.NewBuffer(postBody)
+	_, err := url.ParseRequestURI(callback)
+	if err != nil {
+		log.Println("Error with callback URL: ", err)
+		return err
+	}
 	resp, err := http.Post(callback, "application/json", responseBody)
 	if err != nil {
-		log.Fatalf("An Error Occured %v", err)
+		log.Println("An Error Occured: ", err)
 		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 		return err
 	}
 	sb := string(body)

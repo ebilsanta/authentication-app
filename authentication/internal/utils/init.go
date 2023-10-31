@@ -18,9 +18,13 @@ import (
 )
 
 func ConnectDB() (db *dynamodb.DynamoDB) {
-    err := godotenv.Load("infrastructure/.env")
+    err := godotenv.Load("authentication.env")
     if err != nil {
-        log.Fatal("Error loading .env file")
+		log.Print("Development env file not found, trying production env")
+		err = godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}     
     }
 
 	return dynamodb.New(session.Must(session.NewSession(&aws.Config{
@@ -38,8 +42,11 @@ func GetDB() (db *dynamodb.DynamoDB) {
 func ConnectOTPServer() (*grpc.ClientConn, error) {
 	err := godotenv.Load("authentication.env")
     if err != nil {
-        log.Fatal("Error loading .env file")
-		return nil, err
+		log.Print("Development env file not found, trying production env")
+		err = godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}     
     }
 
 	conn, err := grpc.DialContext(
@@ -56,9 +63,13 @@ func ConnectOTPServer() (*grpc.ClientConn, error) {
 }
 
 func ConnectSQS() (queue *sqs.SQS) {
-    err := godotenv.Load("infrastructure/.env")
+    err := godotenv.Load("authentication.env")
     if err != nil {
-        log.Fatal("Error loading .env file")
+		log.Print("Development env file not found, trying production env")
+		err = godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}     
     }
 
 	return sqs.New(session.Must(session.NewSession(&aws.Config{
