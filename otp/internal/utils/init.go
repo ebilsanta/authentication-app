@@ -55,10 +55,28 @@ func GetDB() (db *dynamodb.DynamoDB) {
 func ConnectSES() (s *ses.SES) {
 
 	aws_session := ""
+	err := godotenv.Load("otp.env")
+    if err != nil {
+		log.Print("Development env file not found, trying production env")
+		role := os.Getenv("ROLE_ARN")
+		stsClient := sts.New(session.Must(session.NewSession()))
+		params := &sts.AssumeRoleInput{
+			RoleArn:         aws.String(role),
+			RoleSessionName: aws.String("RoleSession0"),
+		}
+		stsResp, err := stsClient.AssumeRole(params)
 
-	if len(os.Getenv("AWS_SESSION_TOKEN")) == 0 {
-		aws_session = os.Getenv("AWS_SESSION_TOKEN")
-	}
+		if err != nil {
+			log.Println("Error getting role credentials: ", err)
+			return nil
+		}
+
+		os.Setenv("AWS_ACCESS_KEY_ID", *stsResp.Credentials.AccessKeyId)
+		os.Setenv("AWS_SECRET_ACCESS_KEY", *stsResp.Credentials.SecretAccessKey)
+		os.Setenv("AWS_SESSION_TOKEN", *stsResp.Credentials.SessionToken)
+
+		aws_session = *stsResp.Credentials.SessionToken  
+    }
 
 	return ses.New(session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
