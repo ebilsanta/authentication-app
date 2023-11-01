@@ -3,8 +3,8 @@ const axios = require('axios');
 
 async function login(req, res, next) {
     const params = new URLSearchParams({
-        client_id: process.env.CLIENT_ID,
-        redirect_uri: process.env.REDIRECT_URI,
+        client_id: process.env.BANKSSO_CLIENT_ID,
+        redirect_uri: process.env.BANKSSO_REDIRECT_URI,
         response_type: 'code',
         scope: 'openid profile'
     });
@@ -20,9 +20,9 @@ async function authCodeCallback(req, res, next) {
             url: process.env.BANKSSO_URI + '/token',
             method: 'post',
             data: {
-            client_id: process.env.CLIENT_ID,
-            client_secret: process.env.CLIENT_SECRET,
-            redirect_uri: process.env.REDIRECT_URI,
+            client_id: process.env.BANKSSO_CLIENT_ID,
+            client_secret: process.env.BANKSSO_CLIENT_SECRET,
+            redirect_uri: process.env.BANKSSO_REDIRECT_URI,
             grant_type: 'authorization_code',
             code: authCode,
             },

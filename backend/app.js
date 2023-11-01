@@ -34,7 +34,7 @@ app.use(cookieParser(secret = process.env.SESSION_SECRET));
 app.use(express.json());
 
 app.use("/api/hosted", hostedLoginRouter);
-app.use("/bankSSO", bankSSORouter);
+app.use("/api/bankSSO", bankSSORouter);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

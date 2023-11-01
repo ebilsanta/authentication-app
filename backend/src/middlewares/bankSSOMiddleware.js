@@ -1,9 +1,7 @@
 require("dotenv").config();
 const jose = require("node-jose");
-const fs = require("fs");
 
 async function introspectToken(req, res, next) {
-    // TODO: whether to get bankSSO JWK from JWKS server
     if (!req.sessionID) {
         return res.status(400).send("Missing session ID.");
     }
@@ -12,7 +10,7 @@ async function introspectToken(req, res, next) {
         return res.status(401).send("Not authorized by Bank SSO.");
     }
 
-    const publicKey = fs.readFileSync(process.env.BANKSSO_KEY, "utf-8");
+    const publicKey = process.env.BANKSSO_KEY;
     const pubKey = publicKey.replace(/\\n/g, "\n");
 
     let keystore = jose.JWK.createKeyStore();
