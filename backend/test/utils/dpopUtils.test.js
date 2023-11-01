@@ -1,5 +1,5 @@
 const { generateEphemeralKeys, generateDpop, generateJKTThumbprint, generateClientAssertion } = require("../../src/utils/dpopUtils");
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 
 describe('generateEphemeralKeys', () => {
   test('should return an object with public and private keys', async () => {
@@ -92,7 +92,6 @@ describe('generateClientAssertion', () => {
     });
 
     const clientAssertion = await generateClientAssertion(url, clientId, privateSigningKey, jktThumbprint);
-    console.log(clientAssertion);
 
     const expectedClientAssertion = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImlrVmw4OG90RE9rUW55UDdINE9kNE1sM3dDa0Q3Q3d1S2xvRlF1eTFjdGMifQ.eyJzdWIiOiJjbGllbnQxMjMiLCJqdGkiOiJacW96N0dvYU0xS0d5VGVQZFl0M08xOTF0ZHNmc2VLaHg5Q2FiWmRSIiwiYXVkIjoiaHR0cHM6Ly9leGFtcGxlLmNvbSIsImlzcyI6ImNsaWVudDEyMyIsImlhdCI6MTY5NzkxMzUzMiwiZXhwIjoxNjk3OTEzODMyLCJjbmYiOnsiamt0IjoieUd0TEdwRHNja2hObUZWTmtNdTFhQXFMM0R6QkEyQXJHd213SVBVU0lBSSJ9fQ.i8IxaajeqeuRrIdEPcM3sHcHbz1Nt50kwBNj4UzcHfOTchEN_fTRjDxnLPDWbugnTxsrn1brGpismyocRLRN_g";
 

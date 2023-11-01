@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const jose = require('node-jose');
 
 async function generateEphemeralKeys() {
@@ -79,7 +79,6 @@ function generateRandomString(length) {
     const randomIndex = Math.floor(Math.random() * characters.length);
     result += characters.charAt(randomIndex);
   }
-  console.log("random string:", result)
   return result;
 }
 

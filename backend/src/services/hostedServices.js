@@ -3,22 +3,31 @@ const { generateCodeVerifier, generateCodeChallenge } = require("../utils/pkceUt
 const axios = require('axios');
 
 async function requestForAuthCode(identityJwt) {
-  const codeVerifier = generateCodeVerifier();
-  const codeChallenge = generateCodeChallenge(codeVerifier);
   try {
+    const codeVerifier = generateCodeVerifier();
+    const codeChallenge = generateCodeChallenge(codeVerifier);
+    console.log("code verifier", codeVerifier)
+    console.log("code challenge", codeChallenge, codeChallenge.length)
+    const queryParams = {
+      response_type: "code",
+      state: codeChallenge,
+      id_jwt: identityJwt,
+      client_id: process.env.ALLOWED_CLIENT,
+      code_challenge: codeChallenge,
+      code_challenge_method: "S256",
+      redirect_url: "http://localhost:8000",
+      callback_url: "http://52.77.251.19/authcode"
+    }
     const { data } = await axios({
-      url: process.env.AUTHORISATION_SERVER_URL + '/oauth/authorize',
+      url: process.env.AUTHZ_URL + 'authcode',
       method: 'post',
-      data: {
-        client_id: process.env.CLIENT_ID,
-        code_challenge: codeChallenge,
-        identityJwt: identityJwt,
-      }
+      params: queryParams
     });
     const authCode = data.authCode;
-    return authCode;
+    console.log(data)
+    return {authCode, codeVerifier};
   } catch (error) {
-    console.error('Error requesting for auth code from auth server:', error.message);
+    console.error('Error requesting for auth code from auth server:', error);
     throw new Error('Error requesting for auth code from auth server: ' + error.message);
   }
 }

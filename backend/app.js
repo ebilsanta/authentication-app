@@ -6,7 +6,7 @@ const { createClient } = require("redis");
 const cookieParser = require("cookie-parser");
 const app = express();
 const port = 3000;
-const hostedLoginRouter = require("./src/routes/hostedLoginRoutes");
+const hostedLoginRouter = require("./src/routes/hostedRoutes");
 const bankSSORouter = require("./src/routes/bankSSORoutes");
 
 const oneDay = 1000 * 60 * 60 * 24;
@@ -28,11 +28,12 @@ app.use(
   })
 );
 
+console.log(process.env.SESSION_SECRET)
 app.use(cookieParser(secret = process.env.SESSION_SECRET));
 
 app.use(express.json());
 
-app.use("/hosted", hostedLoginRouter);
+app.use("/api/hosted", hostedLoginRouter);
 app.use("/bankSSO", bankSSORouter);
 
 app.listen(port, () => {
