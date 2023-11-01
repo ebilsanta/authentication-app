@@ -66,7 +66,7 @@ async def process_authcode(
 
     if not code_challenge:
         return respond(redirect_url, "invalid_request", desc="code challenge required")
-    elif len(code_challenge) != 44:
+    elif len(code_challenge) != 43:
         return respond(redirect_url, "invalid_request", desc="invalid code challenge")
 
     if code_challenge_method != "S256":
