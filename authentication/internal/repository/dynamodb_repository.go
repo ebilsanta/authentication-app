@@ -130,6 +130,36 @@ func (d *DynamoDBAuthenticationRepository) GetCredentialByEmail(company string, 
 	return &credential, nil
 }
 
+func (d *DynamoDBAuthenticationRepository) GetUserByEmail(company string, email string) (*models.User, error) {
+	result, err := d.DB.Query(&dynamodb.QueryInput{
+		TableName: aws.String(os.Getenv("USER_TABLE")),
+		KeyConditionExpression: aws.String("company = :company AND email = :email"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":company": {
+				S: aws.String(company),
+			},
+			":email": {
+				S: aws.String(email),
+			},
+		},
+	})
+
+	if err != nil {
+		log.Printf("Couldn't execute query to get user. Here's why: %v\n", err)
+		return nil, err
+	} else if len(result.Items) == 0 {
+		return nil, nil
+	}
+
+	var user models.User
+	err = dynamodbattribute.UnmarshalMap(result.Items[0], &user)
+	if err != nil {
+		log.Printf("Couldn't unmarshal response. Here's why: %v\n", err)
+	}
+
+	return &user, nil
+}
+
 func (d *DynamoDBAuthenticationRepository) DeleteCredentialByEmail(company string, email string) (string, error) {
 	return "User Deleted", nil
 }

@@ -2,11 +2,18 @@ package usecase
 
 import (
 	"context"
+	// "crypto/rsa"
+	"crypto/x509"
+    "encoding/pem"
 	"log"
+	"time"
 	// "fmt"
 	"os"
-	"golang.org/x/crypto/bcrypt"
 	"strconv"
+	"strings"
+
+	"github.com/golang-jwt/jwt"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/authentication/internal/repository"
 	"github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/authentication/internal/utils"
@@ -19,9 +26,46 @@ func HashPassword(password string, cost int) (string, error) {
     return string(bytes), err
 }
 
+func CheckPasswordHash(password string, hash string) bool {
+    err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+    return err == nil
+}
+
+func GenerateIdToken(details map[string]interface{}) (string, error) {
+
+	key_string := utils.GetPrivateKey()
+	parsed_key_string := strings.ReplaceAll(key_string, "\\n", "\n")
+	block, _ := pem.Decode([]byte(parsed_key_string))
+    if block == nil {
+        log.Println("failed to parse PEM block containing the public key")
+		return "", nil
+    }
+
+    key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+    if err != nil {
+        log.Println("failed to parse DER encoded public key: " + err.Error())
+		return "", err
+    }
+	
+	t := jwt.NewWithClaims(jwt.SigningMethodRS256, 
+	jwt.MapClaims{ 
+		"iss": details["iss"], 
+		"sub": details["sub"], 
+		"aud": details["aud"],
+		"exp": details["exp"],
+		"iat": details["iat"],
+		"company": details["company"],
+		"email": details["email"],
+	})
+	s, err := t.SignedString(key) 
+
+	return s, err
+}
+
 type AuthenticationUsecase interface {
 	Register(company string, email string, first_name string, last_name string, birthdate string, password string) (string, string, error)
 	VerifyEmail(verification_key string, otp string, email string) (string, string, string, error)
+	Login(company string, email string, password string) (string, string, error)
 }
 
 type authenticationUsecase struct {
@@ -96,6 +140,48 @@ func (a *authenticationUsecase) VerifyEmail(verification_key string, otp string,
 		return "Failure", "Error updating verification status of user", email, err
 	}
 	return "Success", "Your email is verified, please proceed to login!", email, nil
+}
+
+func (a *authenticationUsecase) Login(company string, email string, password string) (string, string, error) {
+	user, err := a.authenticationRepos.GetUserByEmail(company, email)
+	if err != nil {
+		return "Error", "", err
+	}
+	if user == nil {
+		return "You are not an enrolled user!", "", nil
+	}
+
+	credential, err := a.authenticationRepos.GetCredentialByEmail(company, email)
+	if err != nil {
+		return "Error", "", err
+	}
+	if credential == nil {
+		return "You are not a registered user, please proceed to register!", "", nil
+	}
+
+	password_match := CheckPasswordHash(password, credential.Password)
+
+	if !password_match {
+		return "Password did not match", "", nil
+	}
+
+	expiration_delay_minutes := 20
+
+	key_details := map[string]interface{}{
+		"iss": "authn.itsag2t1.com",
+		"sub": "auth0|123456",
+		"aud": "authz.itsag2t1.com",
+		"exp": time.Now().Local().Add(time.Minute * time.Duration(expiration_delay_minutes)).Unix(),
+		"iat": time.Now().Local().Unix(),
+		"company": credential.Company,
+		"email": credential.Email,
+	}
+
+	id_token, err := GenerateIdToken(key_details)
+	if err != nil {
+		return "Error generating ID Token", "", err
+	}
+	return "User verified", id_token, nil
 }
 
 func NewAuthenticationUsecase(a repository.AuthenticationRepository) AuthenticationUsecase {

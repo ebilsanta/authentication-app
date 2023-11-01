@@ -27,3 +27,8 @@ func (srv *AuthenticationServer) VerifyEmail(c context.Context, verification *au
 	status, details, _, error := srv.useCase.VerifyEmail(verification.VerificationKey, verification.Otp, verification.Email)
 	return &authentication.VerifyEmailResponse{Status: status, Details: details, Email: verification.Email}, error
 }
+
+func (srv *AuthenticationServer) Login(c context.Context, credentials *authentication.LoginRequest) (*authentication.LoginResponse, error) {
+	status, idToken, error := srv.useCase.Login(credentials.Company, credentials.Email, credentials.Password)
+	return &authentication.LoginResponse{Status: status, IdToken: idToken}, error
+}

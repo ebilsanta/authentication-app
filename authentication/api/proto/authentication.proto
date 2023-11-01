@@ -28,7 +28,19 @@ message VerifyEmailResponse {
     string email = 3;
 }
 
+message LoginRequest {
+    string company = 1;
+    string email = 2;
+    string password = 3;
+}
+
+message LoginResponse {
+    string status = 1;
+    string idToken = 2;
+}
+
 service Authentication {
     rpc Register(RegisterRequest) returns (RegisterResponse);
     rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
 }

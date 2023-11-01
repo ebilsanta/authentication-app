@@ -6,6 +6,7 @@ type AuthenticationRepository interface {
 	GetUserByFullInfo(company string, email string, first_name string, last_name string, birthdate string) (*models.User, error)
 	UpdateUserByEmail(company string, email string) (*models.User, error)
 	GetCredentialByEmail(company string, email string) (*models.Credential, error)
+	GetUserByEmail(company string, email string) (*models.User, error)
 	DeleteCredentialByEmail(company string, email string) (string, error)
 	RegisterUser(company string, email string, password string) (*models.Credential, error)
 }

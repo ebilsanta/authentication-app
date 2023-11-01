@@ -8,7 +8,7 @@ import (
 	"log"
 	"net"
 	"encoding/json"
-	"io/ioutil"
+	// "io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -117,6 +117,26 @@ func handleMessage(message *sqs.Message) {
 			return
 		}
 		return
+	} else if path == "login" {
+		response, err := client.Login(context.Background(), &authentication.LoginRequest{
+			Company: data["company"],
+			Email: data["email"],
+			Password: data["password"],
+		})
+		if err != nil {
+			log.Println("Error making gRPC request:", err)
+			return
+		}
+		input := map[string]string{
+			"status": response.Status,
+			"idToken": response.IdToken,
+		}
+		err = ResponseMessage(input, callback, *message)
+		if err != nil {
+			log.Println("Error returning response:", err)
+			return
+		}
+		return
 	} else {
 		log.Println("Invalid route!")
 		return
@@ -138,13 +158,13 @@ func ResponseMessage(input map[string]string, callback string, message sqs.Messa
 		return err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	sb := string(body)
-	log.Printf(sb)
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return err
+	// }
+	// sb := string(body)
+	// log.Printf(sb)
 	deleteParams := &sqs.DeleteMessageInput{
 		QueueUrl:      aws.String(os.Getenv("SQS_REQUEST_QUEUE_URL")),
 		ReceiptHandle: message.ReceiptHandle,
