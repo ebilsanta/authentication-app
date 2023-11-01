@@ -16,7 +16,7 @@ async function requestForAuthCode(identityJwt) {
       code_challenge: codeChallenge,
       code_challenge_method: "S256",
       redirect_url: "http://localhost:8000",
-      callback_url: "http://52.77.251.19/authcode"
+      callback_url: process.env.TEMP_CALLBACK_URL + "authcode"
     }
     const { data } = await axios({
       url: process.env.AUTHZ_URL + 'authcode',
