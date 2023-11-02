@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { validationResult } = require("express-validator");
 const hostedController = require("../controllers/hostedController");
+const callbackController = require("../controllers/hostedCallbackController");
 const {
   validateAuthorizeRequest,
   getAuthHeaders,
@@ -15,5 +15,9 @@ router.post("/authorize", validateAuthorizeRequest, hostedController.authorize);
 router.get("/user", getAuthHeaders, hostedController.user);
 
 router.post("/register", registrationValidator, hostedController.register);
+
+router.get("/callback/authcode/:sessionId", callbackController.authCode);
+
+router.get("/callback/token/:sessionId", callbackController.token);
 
 module.exports = router;

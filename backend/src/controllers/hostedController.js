@@ -1,4 +1,4 @@
-const { requestForAuthCode, requestForAccessToken } = require('../services/hostedServices');
+const { requestForAuthCode, requestForAccessToken, checkForAuthCode } = require('../services/hostedServices');
 const { getIdentityJwt } = require("../utils/tempUtils");
 const {validationResult} = require('express-validator');
 
@@ -7,7 +7,8 @@ async function register(req, res, next) {
   if (!errors.isEmpty()) {
     return res.status(400).send({errors: errors.array()});
   }
-  return res.send('ok');
+  // make request to authentication server
+  return res.send('verification key');
 }
 
 async function login(req, res, next) {
@@ -21,17 +22,20 @@ async function authorize(req, res, next) {
   const sessionID = req.sessionID;
 
   try {
-    const {authCode, codeVerifier} = await requestForAuthCode(identityJwt);
+    const codeVerifier = await requestForAuthCode(identityJwt, sessionID);
 
-    // const { access_token, refresh_token, id_token, ephemeral_keypair } =
-    //   await requestForAccessToken(authCode);
+    const authCode = await checkForAuthCode(sessionID);
 
+
+    const { access_token, refresh_token, id_token, ephemeral_keypair } =
+      await requestForAccessToken(codeVerifier, authCode);
+    
 
     // save to session
     // req.session.access_token = access_token;
     // req.session.refresh_token = refresh_token;
     // req.session.ephemeral_keypair = ephemeral_keypair;
-    res.send("ok")
+    res.send(authCode)
     // res.send({ access_token, refresh_token, id_token });
   } catch (error) {
     res.status(500).send({ error: error.message });

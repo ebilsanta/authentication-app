@@ -2,7 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const RedisStore = require("connect-redis").default;
-const { createClient } = require("redis");
+
+const { redisClient } = require("./src/services/redis");
 const cookieParser = require("cookie-parser");
 const app = express();
 const port = 3000;
@@ -11,25 +12,21 @@ const bankSSORouter = require("./src/routes/bankSSORoutes");
 
 const oneDay = 1000 * 60 * 60 * 24;
 
-let redisClient = createClient({url: process.env.REDIS_URL});
-redisClient.connect().catch(console.error);
-
 let redisStore = new RedisStore({
   client: redisClient,
-  prefix: "session:"
-})
+  prefix: "session:",
+});
 
 app.use(
   session({
-    store: redisStore, 
+    store: redisStore,
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
   })
 );
 
-console.log(process.env.SESSION_SECRET)
-app.use(cookieParser(secret = process.env.SESSION_SECRET));
+app.use(cookieParser((secret = process.env.SESSION_SECRET)));
 
 app.use(express.json());
 

@@ -1,13 +1,12 @@
 const { generateEphemeralKeys, generateDpop, generateJKTThumbprint, generateClientAssertion } = require("../utils/dpopUtils");
 const { generateCodeVerifier, generateCodeChallenge } = require("../utils/pkceUtils");
 const axios = require('axios');
+const { eventEmitter } = require("../services/eventEmitter")
 
-async function requestForAuthCode(identityJwt) {
+async function requestForAuthCode(identityJwt, sessionID) {
   try {
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = generateCodeChallenge(codeVerifier);
-    console.log("code verifier", codeVerifier)
-    console.log("code challenge", codeChallenge, codeChallenge.length)
     const queryParams = {
       response_type: "code",
       state: codeChallenge,
@@ -16,43 +15,41 @@ async function requestForAuthCode(identityJwt) {
       code_challenge: codeChallenge,
       code_challenge_method: "S256",
       redirect_url: "http://localhost:8000",
+      // redirect_url: "http://localhost:8000/api/hosted/callback/authcode/" + sessionID,
       callback_url: process.env.TEMP_CALLBACK_URL + "authcode"
+      // callback_url: process.env.HOSTED_CALLBACK_URL + "authcode",
     }
-    const { data } = await axios({
+    const response = await axios({
       url: process.env.AUTHZ_URL + 'authcode',
       method: 'post',
       params: queryParams
     });
-    const authCode = data.authCode;
-    console.log(data)
-    return {authCode, codeVerifier};
+    console.log(queryParams)
+    return codeVerifier;
   } catch (error) {
     console.error('Error requesting for auth code from auth server:', error);
     throw new Error('Error requesting for auth code from auth server: ' + error.message);
   }
 }
 
-async function requestForAccessToken(authCode) {
+async function requestForAccessToken(codeVerifier, authCode) {
   try {
     const ephemeralKeyPair = await generateEphemeralKeys();
     const { publicKey, privateKey } = ephemeralKeyPair;
-    const dPoPProof = generateDpop(process.env.AUTHORISATION_SERVER_URL, null, 'POST', ephemeralKeyPair);
+    const dPoPProof = generateDpop(process.env.AUTHZ_URL, null, 'POST', ephemeralKeyPair);
     const jktThumbprint = generateJKTThumbprint(publicKey);
-    const clientAssertion = generateClientAssertion(process.env.AUTHORISATION_SERVER_URL, process.env.CLIENT_ID, privateKey, jktThumbprint);
+    const clientAssertion = generateClientAssertion(process.env.AUTHZ_URL, process.env.CLIENT_ID, privateKey, jktThumbprint);
     // to edit
     const { data } = await axios({
-      url: process.env.AUTHORISATION_SERVER_URL + '/oauth/token',
+      url: process.env.AUTHZ_URL + 'token',
       method: 'post',
-      headers: {
-        'DPoP': dPoPProof,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
       data: {
         grant_type: 'authorization_code',
-        code: authCode,
+        authcode: authCode,
+        dpop: dPoPProof,
+        client_assertion: clientAssertion,
+        redirect_url: "http://localhost:8000/api/hosted/callback/token/" + sessionID,
         code_verifier: codeVerifier,
-        client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-        client_assertion: clientAssertion
       }
     });
     const { access_token, refresh_token, id_token } = data;
@@ -62,8 +59,27 @@ async function requestForAccessToken(authCode) {
   }
 }
 
+function checkForAuthCode(sessionID) {
+  console.log("waiting for auth code", sessionID)
+  return new Promise((resolve, reject) => {
+    let timeout;
+
+    eventEmitter.on(`authCode:${sessionID}`, (authCode) => {
+      clearTimeout(timeout); // Clear the timeout since event was received
+      console.log(`Value of key 'authCode:${sessionID}': ${authCode}`);
+      resolve(authCode);
+    });
+
+    // Set a timeout to reject the promise if event is not received in 5 seconds
+    timeout = setTimeout(() => {
+      eventEmitter.removeAllListeners(`authCode:${sessionID}`);
+      reject(new Error(`Timeout waiting for auth code`));
+    }, 50000); // 5 seconds
+  });
+}
 
 module.exports = {
   requestForAuthCode,
-  requestForAccessToken
+  requestForAccessToken,
+  checkForAuthCode
 }
