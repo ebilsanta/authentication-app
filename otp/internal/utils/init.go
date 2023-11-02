@@ -46,12 +46,6 @@ func ConnectDB() (db *dynamodb.DynamoDB) {
 	})))
 }
 
-var ddb *dynamodb.DynamoDB = ConnectDB()
-
-func GetDB() (db *dynamodb.DynamoDB) {
-	return ddb
-}
-
 func ConnectSES() (s *ses.SES) {
 
 	aws_session := ""
@@ -82,10 +76,4 @@ func ConnectSES() (s *ses.SES) {
 		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
 		Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), aws_session),
 	})))
-}
-
-var awsses *ses.SES = ConnectSES()
-
-func GetSES() (s *ses.SES) {
-	return awsses
 }

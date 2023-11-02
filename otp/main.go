@@ -18,7 +18,7 @@ import (
 func main() {
 	defer glog.Flush()
 
-	db := utils.GetDB()
+	db := utils.ConnectDB()
 	if db == nil {
 		log.Fatalf("cannot connect to DB")
 	}

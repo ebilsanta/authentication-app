@@ -78,7 +78,7 @@ func SendOTPEmail(email string, otp string) error {
     TextBody := "Your OTP is: " + otp + "\n\nIf you did not request for an OTP please click this link: " + delete_otp_link
     CharSet := "UTF-8"
 
-	svc := utils.GetSES()
+	svc := utils.ConnectSES()
 
 	input := &ses.SendEmailInput{
         Destination: &ses.Destination{
