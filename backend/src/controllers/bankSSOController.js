@@ -34,7 +34,7 @@ async function authCodeCallback(req, res, next) {
                 return res.send("error while saving session information");
             }
             // TODO: decide whether there's a placeholder dashboard page to redirect to, or to redirect straight to profile page (aka userinfo page)
-            res.redirect('userInfo');
+            res.status(200).send('Exchanged for access token.');
         });
     } catch(error) {
         console.error('Error exchanging authorization code for access token with bank SSO:', error.message);
