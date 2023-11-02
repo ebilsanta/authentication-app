@@ -35,7 +35,6 @@ func GenerateIdToken(details map[string]interface{}) (string, error) {
 
 	key_string := utils.GetPrivateKey()
 	parsed_key_string := strings.ReplaceAll(key_string, "\\n", "\n")
-	log.Println(parsed_key_string)
 	block, _ := pem.Decode([]byte(parsed_key_string))
     if block == nil {
         log.Println("failed to parse PEM block containing the public key")
