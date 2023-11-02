@@ -122,7 +122,7 @@ func (a *authenticationUsecase) VerifyEmail(verification_key string, otp string,
 	conn, err := utils.ConnectOTPServer()
 	defer conn.Close()
 	if err != nil {
-		return "Could not Generate OTP", "", "", err
+		return "Failure", "Could not Verify OTP", email, err
 	}
 
 	client := otp_server.NewOTPClient(conn)
@@ -178,7 +178,7 @@ func (a *authenticationUsecase) Login(company string, email string, password str
 	}
 
 	id_token, err := GenerateIdToken(key_details)
-	if err != nil {
+	if err != nil || len(id_token) == 0{
 		return "Error generating ID Token", "", err
 	}
 	return "User verified", id_token, nil

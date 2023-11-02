@@ -41,11 +41,12 @@ func GetAWSCredentials() (string, string, string, error) {
 			log.Println("Error getting role credentials: ", err)
 			return "", "", "", err
 		}
-
+		log.Println("Using role credentials")
 		access_key_id = *stsResp.Credentials.AccessKeyId
 		secret_access_key = *stsResp.Credentials.SecretAccessKey
 		session_token = *stsResp.Credentials.SessionToken
     } else {
+		log.Println("Using dev credentials")
 		access_key_id = os.Getenv("AWS_ACCESS_KEY_ID")
 		secret_access_key = os.Getenv("AWS_SECRET_ACCESS_KEY")
 		session_token = ""
