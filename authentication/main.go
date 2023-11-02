@@ -181,7 +181,7 @@ func ResponseMessage(input map[string]string, callback string, message sqs.Messa
 func main() {
   	defer glog.Flush()
 
-	db := utils.GetDB()
+	db := utils.ConnectDB()
 	if db == nil {
 		log.Fatalf("cannot connect to DB")
 	}

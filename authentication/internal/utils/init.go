@@ -52,12 +52,6 @@ func ConnectDB() (db *dynamodb.DynamoDB) {
 	})))
 }
 
-var ddb *dynamodb.DynamoDB = ConnectDB()
-
-func GetDB() (db *dynamodb.DynamoDB) {
-	return ddb
-}
-
 func ConnectOTPServer() (*grpc.ClientConn, error) {
 	conn, err := grpc.DialContext(
 		context.Background(),
