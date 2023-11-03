@@ -3,6 +3,8 @@ from functools import lru_cache
 
 import boto3
 from boto3.session import Session
+from botocore.credentials import RefreshableCredentials
+from botocore.session import get_session
 from config import Settings
 
 
@@ -31,6 +33,7 @@ class AuthCodeRecord:
 class Database:
     def __init__(self):
         sets = get_settings()
+        self.session_name = "RoleSession1"
 
         if sets.db_access_key_id != "" and sets.db_secret_access_key != "":
             print("Using Credentials")
@@ -42,24 +45,41 @@ class Database:
             )
         elif sets.role_arn != "":
             print("Using Role")
-            sts_client = boto3.client("sts")
-            assumed_role_object = sts_client.assume_role(
-                RoleArn=sets.role_arn, RoleSessionName="RoleSession1"
+            self.sts_client = boto3.client("sts", region_name=sets.db_region_name)
+
+            session_credentials = RefreshableCredentials.create_from_metadata(
+                metadata=self._refresh(),
+                refresh_using=self._refresh,
+                method="sts-assume-role",
             )
 
-            credentials = assumed_role_object["Credentials"]
-            session = Session(
-                region_name=sets.db_region_name,
-                aws_access_key_id=credentials["AccessKeyId"],
-                aws_secret_access_key=credentials["SecretAccessKey"],
-                aws_session_token=credentials["SessionToken"],
-            )
-            ddb = session.resource("dynamodb")
+            session = get_session()
+            session._credentials = session_credentials
+            session.set_config_variable("region", sets.db_region_name)
+            autorefresh_session = Session(botocore_session=session)
+
+            ddb = autorefresh_session.resource("dynamodb")
         else:
             print("No DynamoDB login method")
 
         self.ac_table = ddb.Table(sets.db_collection_authcodes)
         self.users_table = ddb.Table(sets.db_collection_users)
+
+    def _refresh(self):
+        params = {
+            "RoleArn": get_settings().role_arn,
+            "RoleSessionName": self.session_name,
+            "DurationSeconds": 3600,
+        }
+
+        response = self.sts_client.assume_role(**params).get("Credentials")
+        credentials = {
+            "access_key": response.get("AccessKeyId"),
+            "secret_key": response.get("SecretAccessKey"),
+            "token": response.get("SessionToken"),
+            "expiry_time": response.get("Expiration").isoformat(),
+        }
+        return credentials
 
     async def insert_authcode_record(self, acr: AuthCodeRecord):
         return self.ac_table.put_item(Item=acr.__dict__)
