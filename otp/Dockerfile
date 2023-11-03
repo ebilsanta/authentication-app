@@ -1,9 +1,12 @@
-FROM golang:1.21-alpine3.17
+FROM golang:1.21-alpine3.17 AS builder
+
 WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /docker-gs-ping
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /service_executable
+
+FROM alpine:3.17
+COPY --from=builder /service_executable /service_executable
+COPY *.env .
 
 EXPOSE 8089
-CMD ["/docker-gs-ping"]
+CMD ["/service_executable"]
