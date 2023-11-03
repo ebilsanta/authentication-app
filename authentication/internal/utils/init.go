@@ -16,56 +16,33 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sts"
+	// "github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 )
 
-func GetAWSCredentials() (string, string, string, error) {
-	var (
-		access_key_id string
-		secret_access_key string
-		session_token string
-	)
+func GetAWSCredentials() credentials.Credentials {
 	err := godotenv.Load("authentication.env")
     if err != nil {
-		log.Print("Development env file not found, trying production env")
 		role := os.Getenv("ROLE_ARN")
-		stsClient := sts.New(session.Must(session.NewSession()))
-		params := &sts.AssumeRoleInput{
-			RoleArn:         aws.String(role),
-			RoleSessionName: aws.String("RoleSession0"),
-		}
-		stsResp, err := stsClient.AssumeRole(params)
+		sess := session.Must(session.NewSession())
+		creds := stscreds.NewCredentials(sess, role)
 
-		if err != nil {
-			log.Println("Error getting role credentials: ", err)
-			return "", "", "", err
-		}
 		log.Println("Using role credentials")
-		access_key_id = *stsResp.Credentials.AccessKeyId
-		secret_access_key = *stsResp.Credentials.SecretAccessKey
-		session_token = *stsResp.Credentials.SessionToken
-    } else {
-		log.Println("Using dev credentials")
-		access_key_id = os.Getenv("AWS_ACCESS_KEY_ID")
-		secret_access_key = os.Getenv("AWS_SECRET_ACCESS_KEY")
-		session_token = ""
-	}
-	return access_key_id, secret_access_key, session_token, nil
+		return *creds
+    }
+	log.Println("Using dev credentials")
+	return *credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), "")
 }
 
 func ConnectDB() (db *dynamodb.DynamoDB) {
-	access_key_id, secret_access_key, session_token, err := GetAWSCredentials()
+	sess := session.Must(session.NewSession())
+	creds := GetAWSCredentials()
 
-	if err != nil {
-		log.Println("Could not get credentials for DynamoDB")
-		return nil
-	}
-
-	return dynamodb.New(session.Must(session.NewSession(&aws.Config{
+	return dynamodb.New(sess, &aws.Config{
 		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
-		Credentials: credentials.NewStaticCredentials(access_key_id, secret_access_key, session_token),
-	})))
+		Credentials: &creds,
+	})
 }
 
 func ConnectOTPServer() (*grpc.ClientConn, error) {
@@ -83,31 +60,23 @@ func ConnectOTPServer() (*grpc.ClientConn, error) {
 }
 
 func ConnectSQS() (queue *sqs.SQS) {
-    access_key_id, secret_access_key, session_token, err := GetAWSCredentials()
+	sess := session.Must(session.NewSession())
+    creds := GetAWSCredentials()
 
-	if err != nil {
-		log.Println("Could not get credentials for SQS")
-		return nil
-	}
-
-	return sqs.New(session.Must(session.NewSession(&aws.Config{
+	return sqs.New(sess, &aws.Config{
 		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
-		Credentials: credentials.NewStaticCredentials(access_key_id, secret_access_key, session_token),
-	})))
+		Credentials: &creds,
+	})
 }
 
 func GetPrivateKey() string {
-	access_key_id, secret_access_key, session_token, err := GetAWSCredentials()
+	sess := session.Must(session.NewSession())
+	creds := GetAWSCredentials()
 
-	if err != nil {
-		log.Println("Could not get credentials for Secrets Manager")
-		return ""
-	}
-
-	sm := secretsmanager.New(session.Must(session.NewSession(&aws.Config{
+	sm := secretsmanager.New(sess, &aws.Config{
 		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
-		Credentials: credentials.NewStaticCredentials(access_key_id, secret_access_key, session_token),
-	})))
+		Credentials: &creds,
+	})
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId: aws.String(os.Getenv("KEYS_NAME")),
 	}

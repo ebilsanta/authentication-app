@@ -27,7 +27,7 @@ func (d *DynamoDBOTPRepository) CreateOTP(otp string, expiration_date string) (*
 
 	av, err := dynamodbattribute.MarshalMap(OTP)
 	if err != nil {
-		log.Printf("Got error marshalling new movie item: %s", err)
+		log.Printf("Got error marshalling new otp item: %s", err)
 		return nil, err
 	}
 
@@ -60,7 +60,7 @@ func (d *DynamoDBOTPRepository) GetOTP(otp string, expiration_date string) (*mod
 	})
 
 	if err != nil {
-		log.Printf("Couldn't execute query to get user. Here's why: %v\n", err)
+		log.Println("Couldn't execute query to get user. Here's why: ", err)
 		return nil, err
 	} else if len(result.Items) == 0 {
 		return nil, nil
