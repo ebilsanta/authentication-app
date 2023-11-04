@@ -3,6 +3,71 @@ const { generateCodeVerifier, generateCodeChallenge } = require("../utils/pkceUt
 const axios = require('axios');
 const { eventEmitter } = require("../services/eventEmitter")
 
+async function requestForRegistration(jsonRequest, sessionID) {
+  const { company, email, firstName, lastName, birthdate, password } = jsonRequest;
+  const data = {
+    company,
+    email,
+    firstName,
+    lastName,
+    birthdate,
+    password,
+    callback: process.env.TEMP_CALLBACK_URL + "register/" + sessionID,
+  }
+  try {
+    const response = await axios({
+      url: process.env.API_URL + 'register',
+      method: 'post',
+      data: data
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error registering user:', error);
+    throw new Error('Error registering user: ' + error.message);
+  }
+}
+
+async function requestForOtpVerification(otp, email, verificationKey, sessionID) {
+  const data = {
+    otp,
+    email,
+    verificationKey,
+    callback: process.env.TEMP_CALLBACK_URL + "otp/" + sessionID,
+  }
+  try {
+    const response = await axios({
+      url: process.env.API_URL + 'verify-email',
+      method: 'post',
+      data: data
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error verifying otp:', error);
+    throw new Error('Error verifying otp: ' + error.message);
+  }
+}
+
+async function requestForLogin(jsonRequest, sessionID) {
+  const { company, email, password } = jsonRequest;
+  const data = {
+    company,
+    email,
+    password,
+    callback: process.env.TEMP_CALLBACK_URL + "login/" + sessionID,
+  }
+  try {
+    const response = await axios({
+      url: process.env.API_URL + 'login',
+      method: 'post',
+      data: data
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error logging in:', error);
+    throw new Error('Error logging in: ' + error.message);
+  }
+}
+
 async function requestForAuthCode(identityJwt, sessionID) {
   try {
     const codeVerifier = generateCodeVerifier();
@@ -16,11 +81,11 @@ async function requestForAuthCode(identityJwt, sessionID) {
       code_challenge_method: "S256",
       redirect_url: "http://localhost:8000",
       // redirect_url: "http://localhost:8000/api/hosted/callback/authcode/" + sessionID,
-      callback_url: process.env.TEMP_CALLBACK_URL + "authcode"
+      callback_url: process.env.TEMP_CALLBACK_URL + "authcode/" + sessionID,
       // callback_url: process.env.HOSTED_CALLBACK_URL + "authcode",
     }
     const response = await axios({
-      url: process.env.AUTHZ_URL + 'authcode',
+      url: process.env.API_URL + 'hosted/authcode',
       method: 'post',
       params: queryParams
     });
@@ -78,8 +143,55 @@ function checkForAuthCode(sessionID) {
   });
 }
 
+function checkForVerificationKey(sessionID) {
+  console.log("waiting for verification key", sessionID)
+  return new Promise((resolve, reject) => {
+    let timeout;
+
+    eventEmitter.on(`verificationKey:${sessionID}`, (authCode) => {
+      clearTimeout(timeout); 
+      console.log(`Value of key 'verificationKey:${sessionID}': ${authCode}`);
+      if (authCode.startsWith('error')) {
+        reject(new Error(authCode));
+      }
+      resolve(authCode);
+    });
+
+    timeout = setTimeout(() => {
+      eventEmitter.removeAllListeners(`verificationKey:${sessionID}`);
+      reject(new Error(`Timeout waiting for verification key`));
+    }, 50000); 
+  });
+}
+
+function checkForVerificationResult(sessionID) {
+  console.log("waiting for verification result", sessionID)
+  return new Promise((resolve, reject) => {
+    let timeout;
+
+    eventEmitter.on(`otpVerification:${sessionID}`, (details) => {
+      clearTimeout(timeout); 
+      console.log(`Value of key 'otpVerification:${sessionID}': ${details}`);
+      if (details.startsWith('error')) {
+        reject(new Error(details));
+      }
+      resolve(details);
+    });
+
+    timeout = setTimeout(() => {
+      eventEmitter.removeAllListeners(`verificationResult:${sessionID}`);
+      reject(new Error(`Timeout waiting for verification result`));
+    }, 50000); 
+  });
+}
+
 module.exports = {
+  requestForRegistration,
+  requestForOtpVerification,
+  requestForLogin,
   requestForAuthCode,
   requestForAccessToken,
-  checkForAuthCode
+  checkForVerificationKey,
+  checkForAuthCode,
+  checkForVerificationResult
 }
