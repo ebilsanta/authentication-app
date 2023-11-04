@@ -1,10 +1,3 @@
-async function validateAuthorizeRequest(req, res, next) {
-  if (!req.body.identity_jwt) {
-    res.status(400).send('Missing identity_jwt in request body.');
-  }
-  next();
-}
-
 async function getAuthHeaders(req, res, next) {
   if (!req.sessionID) {
     return res.status(400).send('Missing session ID.');
@@ -24,5 +17,4 @@ async function getAuthHeaders(req, res, next) {
 
 module.exports = {
   getAuthHeaders, 
-  validateAuthorizeRequest
 }

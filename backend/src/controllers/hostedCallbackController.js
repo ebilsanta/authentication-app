@@ -24,6 +24,19 @@ async function otp(req, res, next) {
   res.send('Message received');
 }
 
+async function login(req, res, next) {
+  const { status, idToken } = req.body;
+  const sessionID = req.params.sessionId;
+  if (status === 'User verified') {
+    eventEmitter.emit(`idToken:${sessionID}`, idToken);
+    console.log("emitted:", `idToken:${sessionID}`)
+  } else {
+    eventEmitter.emit(`idToken:${sessionID}`, `error: ${status}`);
+  }
+
+  res.send('Token received');
+}
+
 
 async function authCode(req, res, next) {
   const sessionId = req.params.sessionId;
@@ -52,6 +65,7 @@ async function token(req, res, next) {
 module.exports = {
   register,
   otp,
+  login,
   authCode,
   token
 };

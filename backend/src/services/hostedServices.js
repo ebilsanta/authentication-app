@@ -185,6 +185,27 @@ function checkForVerificationResult(sessionID) {
   });
 }
 
+function checkForIdToken(sessionID) {
+  console.log("waiting for id token", sessionID)
+  return new Promise((resolve, reject) => {
+    let timeout;
+
+    eventEmitter.on(`idToken:${sessionID}`, (details) => {
+      clearTimeout(timeout); 
+      console.log(`Value of key 'idToken:${sessionID}': ${details}`);
+      if (details.startsWith('error')) {
+        reject(new Error(details));
+      }
+      resolve(details);
+    });
+
+    timeout = setTimeout(() => {
+      eventEmitter.removeAllListeners(`loginResult:${sessionID}`);
+      reject(new Error(`Timeout waiting for login result`));
+    }, 50000); 
+  });
+}
+
 module.exports = {
   requestForRegistration,
   requestForOtpVerification,
@@ -192,6 +213,7 @@ module.exports = {
   requestForAuthCode,
   requestForAccessToken,
   checkForVerificationKey,
+  checkForIdToken,
   checkForAuthCode,
   checkForVerificationResult
 }
