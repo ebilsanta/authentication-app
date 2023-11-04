@@ -50,7 +50,7 @@ async function otp(req, res, next) {
 
     const verificationResult = await checkForVerificationResult(sessionID);
 
-    res.redirect(verificationResult);
+    res.send(verificationResult);
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
