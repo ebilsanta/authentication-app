@@ -21,7 +21,7 @@ subject = "testing@test.com"
 audience = sets.audience
 redirect_url = sets.allowed_redirect
 
-iat = time.time()
+iat = int(time.time())
 exp = iat + 3600
 payload = {"iss": issuer, "sub": subject, "aud": audience, "iat": iat, "exp": exp}
 additional_headers = {"kid": uuid.uuid4().hex}
