@@ -1,45 +1,23 @@
 const crypto = require('node:crypto');
 const jose = require('node-jose');
+const { base64URLEncode } = require('./pkceUtils');
 
 async function generateEphemeralKeys() {
   let options = {
-    namedCurve: "P-256",
+    modulusLength: 2048, // Change the modulus length as needed
     publicKeyEncoding: {
       type: "spki",
       format: "pem",
     },
     privateKeyEncoding: {
-      type: "sec1",
+      type: "pkcs8",
       format: "pem",
     },
   };
-  
-  let ephemeralKeyPair = crypto.generateKeyPairSync("ec", options);
 
-  return ephemeralKeyPair;
-}
+  let rsaKeyPair = crypto.generateKeyPairSync("rsa", options);
 
-async function generateJKTThumbprint(publicKey) {
-  const publicKeyObj = crypto.createPublicKey(publicKey);
-  const jwk = {
-    kty: 'EC',
-    crv: 'P-256',
-    x: publicKeyObj.export({ format: 'jwk' }).x,
-    y: publicKeyObj.export({ format: 'jwk' }).y
-  };
-
-  // Calculate the SHA-256 thumbprint
-  const sha256Thumbprint = crypto.createHash('sha256')
-    .update(JSON.stringify(jwk))
-    .digest('base64');
-
-  // Base64url encode the thumbprint
-  const base64UrlThumbprint = sha256Thumbprint
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-
-  return base64UrlThumbprint;
+  return rsaKeyPair;
 }
 
 // ath: Base64urlencoded Hash of the access_token
@@ -54,16 +32,19 @@ async function generateDpop(url, ath, method, ephemeralKeyPair) {
   };
 
   if (ath) {
-    payload.ath = ath;
+    const encoder = crypto.createHash('sha256');
+    encoder.update(Buffer.from(ath, 'utf-8'));
+    const hash = encoder.digest();
+    const encodedHash = base64URLEncode(hash);
+    payload.ath = encodedHash;
   }
 
   let privateKey = await jose.JWK.asKey(ephemeralKeyPair.privateKey, "pem");
-  let jwk = (await jose.JWK.asKey(ephemeralKeyPair.publicKey, "pem")).toJSON(true);
-  jwk.use = "sig";
-  jwk.alg = "ES256";
+  let jwk = await jose.JWK.asKey(ephemeralKeyPair.publicKey, "pem");
+  const asciiEncodedPublicKey = Buffer.from(ephemeralKeyPair.publicKey).toString('base64').toString('ascii');
   let DPoP = await jose.JWS.createSign(
-    { format: "compact", fields: { typ: "dpop+jwt", jwk: jwk } },
-    { key: privateKey, reference: false }
+    { format: "compact", fields: { alg: 'RS256', typ: "dpop+jwt", jwk: asciiEncodedPublicKey } },
+    privateKey
   )
     .update(JSON.stringify(payload))
     .final();
@@ -82,31 +63,29 @@ function generateRandomString(length) {
   return result;
 }
 
-// jktThumbprint: base64url encoding of the JWK SHA-256 Thumbprint of the client's ephemeral public signing key used to sign the DPoP Proof JWT
-
-async function generateClientAssertion(url, clientId, privateSigningKey, jktThumbprint) {
+async function generateClientAssertion(audience, clientId, privateKey) {
   let now = Math.floor((Date.now() / 1000));
-
-  let payload = {
-    'sub': clientId,
-    'jti': generateRandomString(40),
-    'aud': url,
-    'iss': clientId,
-    'iat': now,
-    'exp': now + 300,
-    'cnf' : {
-      'jkt': jktThumbprint
-    }
+  const payload = {
+    iss: clientId,
+    sub: clientId,
+    aud: audience,
+    exp: now + 120,
+    iat: now,
   };
-  let jwsKey = await jose.JWK.asKey(privateSigningKey, 'pem');
 
-  let jwtToken = await jose.JWS.createSign({ 'format': 'compact', 'fields': { 'typ': 'JWT' } }, jwsKey).update(JSON.stringify(payload)).final();
-  return jwtToken;
-};
+  const privateKeyPEM = await jose.JWK.asKey(privateKey, "pem");
+  const clientAssertion = await jose.JWS.createSign(
+    { format: "compact", fields: { typ: 'JWT', alg: 'RS256' } },
+    privateKeyPEM, 
+  )
+    .update(JSON.stringify(payload))
+    .final();
+
+  return clientAssertion;
+}
 
 module.exports = {
   generateEphemeralKeys,
   generateDpop,
-  generateJKTThumbprint,
   generateClientAssertion
 }

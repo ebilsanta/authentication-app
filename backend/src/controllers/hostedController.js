@@ -6,9 +6,9 @@ const {
   checkForVerificationKey,
   checkForVerificationResult,
   checkForIdToken,
+  checkForAccessAndRefreshToken,
   requestForRegistration,
   requestForOtpVerification,
-  
 } = require("../services/hostedServices");
 const { getIdentityJwt } = require("../utils/tempUtils");
 const { validationResult } = require("express-validator");
@@ -48,7 +48,12 @@ async function otp(req, res, next) {
   const otp = req.body.otp;
   const { email, verificationKey } = req.session;
   try {
-    const response = await requestForOtpVerification(otp, email, verificationKey, sessionID);
+    const response = await requestForOtpVerification(
+      otp,
+      email,
+      verificationKey,
+      sessionID
+    );
 
     const verificationResult = await checkForVerificationResult(sessionID);
 
@@ -74,13 +79,9 @@ async function login(req, res, next) {
 
     req.session.idToken = idToken;
 
-    console.log(
-      "stored in session id token:",
-      req.session.idToken
-    );
-    
-    res.redirect(process.env.HOSTED_API_URL + "authorize")
-    
+    console.log("stored in session id token:", req.session.idToken);
+
+    res.redirect(process.env.HOSTED_API_URL + "authorize");
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
@@ -88,33 +89,49 @@ async function login(req, res, next) {
 
 async function authorize(req, res, next) {
   const identityJwt = req.session.idToken;
-  console.log("identityJwt= ", identityJwt);
+
   const sessionID = req.sessionID;
 
   try {
     const codeVerifier = await requestForAuthCode(identityJwt, sessionID);
 
+    req.session.codeVerifier = codeVerifier;
+
     const authCode = await checkForAuthCode(sessionID);
+    console.log("redirect url: ", process.env.HOSTED_API_URL + "token?code=" + authCode)
+    res.redirect(process.env.HOSTED_API_URL + "token?code=" + authCode);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+}
 
-    const { access_token, refresh_token, id_token, ephemeral_keypair } =
-      await requestForAccessToken(codeVerifier, authCode);
+async function token(req, res, next) {
+  const sessionID = req.sessionID;
+  const authCode = req.query.code;
+  const codeVerifier = req.session.codeVerifier;
 
-    // save to session
-    // req.session.access_token = access_token;
-    // req.session.refresh_token = refresh_token;
-    // req.session.ephemeral_keypair = ephemeral_keypair;
-    res.send(authCode);
-    // res.send({ access_token, refresh_token, id_token });
+  try {
+    const ephemeralKeyPair = await requestForAccessToken(codeVerifier, authCode, sessionID);
+    req.session.publicKey = ephemeralKeyPair.publicKey;
+    req.session.privateKey = ephemeralKeyPair.privateKey;
+
+    const accessAndRefreshTokens = await checkForAccessAndRefreshToken(sessionID);
+    const { accessToken, refreshToken } = JSON.parse(accessAndRefreshTokens);
+    req.session.accessToken = accessToken;
+    req.session.refreshToken = refreshToken;
+
+    res.redirect(process.env.HOSTED_API_URL + "user");
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
 }
 
 async function user(req, res, next) {
-  try {
-    console.log("req.headers= ", req.headers);
-    res.send("ok");
-  } catch (error) {}
+  const sessionID = req.sessionID;
+  const accessToken = req.session.accessToken;
+  const email = req.session.email;
+
+  res.send({email})
 }
 
 module.exports = {
@@ -122,5 +139,6 @@ module.exports = {
   register,
   login,
   authorize,
+  token,
   user,
 };

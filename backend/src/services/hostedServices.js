@@ -1,4 +1,4 @@
-const { generateEphemeralKeys, generateDpop, generateJKTThumbprint, generateClientAssertion } = require("../utils/dpopUtils");
+const { generateEphemeralKeys, generateDpop, generateClientAssertion } = require("../utils/dpopUtils");
 const { generateCodeVerifier, generateCodeChallenge } = require("../utils/pkceUtils");
 const axios = require('axios');
 const { eventEmitter } = require("../services/eventEmitter")
@@ -72,6 +72,9 @@ async function requestForAuthCode(identityJwt, sessionID) {
   try {
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = generateCodeChallenge(codeVerifier);
+    console.log("code verifier:", codeVerifier) 
+    console.log(typeof codeVerifier);
+    console.log("code challenge:", codeChallenge)
     const queryParams = {
       response_type: "code",
       state: codeChallenge,
@@ -80,7 +83,7 @@ async function requestForAuthCode(identityJwt, sessionID) {
       code_challenge: codeChallenge,
       code_challenge_method: "S256",
       redirect_url: "http://localhost:8000",
-      // redirect_url: "http://localhost:8000/api/hosted/callback/authcode/" + sessionID,
+      // redirect_url: process.env.HOSTED_API_URL + "redirect",
       callback_url: process.env.TEMP_CALLBACK_URL + "authcode/" + sessionID,
       // callback_url: process.env.HOSTED_CALLBACK_URL + "authcode",
     }
@@ -97,32 +100,63 @@ async function requestForAuthCode(identityJwt, sessionID) {
   }
 }
 
-async function requestForAccessToken(codeVerifier, authCode) {
+async function requestForAccessToken(codeVerifier, authCode, sessionID) {
   try {
     const ephemeralKeyPair = await generateEphemeralKeys();
-    const { publicKey, privateKey } = ephemeralKeyPair;
-    const dPoPProof = generateDpop(process.env.AUTHZ_URL, null, 'POST', ephemeralKeyPair);
-    const jktThumbprint = generateJKTThumbprint(publicKey);
-    const clientAssertion = generateClientAssertion(process.env.AUTHZ_URL, process.env.CLIENT_ID, privateKey, jktThumbprint);
-    // to edit
-    const { data } = await axios({
-      url: process.env.AUTHZ_URL + 'token',
+    const tokenEndpoint = process.env.API_URL + 'hosted/token';
+    const dPoPProof = await generateDpop(tokenEndpoint, null, 'POST', ephemeralKeyPair);
+    
+    const clientPrivateKey = process.env.ALLOWED_CLIENT_PVT_KEY.replace(/\\n/g, '\n');
+
+    const clientAssertion = await generateClientAssertion(process.env.AUDIENCE, process.env.ALLOWED_CLIENT, clientPrivateKey);
+
+    const data = {
+      grant_type: 'authorization_code',
+      authcode: authCode,
+      dpop: dPoPProof,
+      client_assertion: clientAssertion,
+      redirect_url: "http://localhost:8000",
+      code_verifier: codeVerifier,
+      callback_url: process.env.TEMP_CALLBACK_URL + "token/" + sessionID,
+    }
+    console.log("access token request data:", data )
+
+    const response = await axios({
+      url: tokenEndpoint,
       method: 'post',
-      data: {
-        grant_type: 'authorization_code',
-        authcode: authCode,
-        dpop: dPoPProof,
-        client_assertion: clientAssertion,
-        redirect_url: "http://localhost:8000/api/hosted/callback/token/" + sessionID,
-        code_verifier: codeVerifier,
-      }
+      data: data
     });
-    const { access_token, refresh_token, id_token } = data;
-    return { access_token, refresh_token, id_token, ephemeral_keypair: ephemeralKeyPair };
+    return ephemeralKeyPair;
   } catch (error) {
+    console.error(error);
     throw new Error('Error requesting for access token from auth server: ' + error.message);
   }
 }
+
+async function requestToRefreshToken(refreshToken, publicKey, privateKey, sessionID) {
+  try {
+    const tokenEndpoint = process.env.API_URL + 'hosted/refresh';
+    const ephemeralKeyPair = { publicKey, privateKey };
+    const dPoPProof = await generateDpop(tokenEndpoint, refreshToken, 'POST', ephemeralKeyPair);
+    const data = {
+      grant_type: 'authorization_code',
+      refresh_token: refreshToken,
+      dpop: dPoPProof,
+      callback_url: process.env.TEMP_CALLBACK_URL + "refresh/" + sessionID,
+    }
+    console.log(data)
+    const response = await axios({
+      url: tokenEndpoint,
+      method: 'post',
+      data: data
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error refreshing access token from auth server:', error);
+    throw new Error('Error refreshing access token from auth server: ' + error.message);
+  }
+}
+
 
 function checkForAuthCode(sessionID) {
   console.log("waiting for auth code", sessionID)
@@ -132,6 +166,9 @@ function checkForAuthCode(sessionID) {
     eventEmitter.on(`authCode:${sessionID}`, (authCode) => {
       clearTimeout(timeout); // Clear the timeout since event was received
       console.log(`Value of key 'authCode:${sessionID}': ${authCode}`);
+      if (authCode.startsWith('error')) {
+        reject(new Error(authCode));
+      }
       resolve(authCode);
     });
 
@@ -206,14 +243,37 @@ function checkForIdToken(sessionID) {
   });
 }
 
+function checkForAccessAndRefreshToken(sessionID) {
+  console.log("waiting for access and refresh token", sessionID)
+  return new Promise((resolve, reject) => {
+    let timeout;
+
+    eventEmitter.on(`accessToken:${sessionID}`, (details) => {
+      clearTimeout(timeout); 
+      console.log(`Value of key 'accessToken:${sessionID}': ${details}`);
+      if (details.startsWith('error')) {
+        reject(new Error(details));
+      }
+      resolve(details);
+    });
+
+    timeout = setTimeout(() => {
+      eventEmitter.removeAllListeners(`accessToken:${sessionID}`);
+      reject(new Error(`Timeout waiting for access token`));
+    }, 50000); 
+  });
+}
+
 module.exports = {
   requestForRegistration,
   requestForOtpVerification,
   requestForLogin,
   requestForAuthCode,
   requestForAccessToken,
+  requestToRefreshToken,
   checkForVerificationKey,
   checkForIdToken,
   checkForAuthCode,
-  checkForVerificationResult
+  checkForVerificationResult,
+  checkForAccessAndRefreshToken
 }

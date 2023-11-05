@@ -37,35 +37,56 @@ async function login(req, res, next) {
   res.send('Token received');
 }
 
-
 async function authCode(req, res, next) {
-  const sessionId = req.params.sessionId;
-  const locationHeader = req.headers.location;
-  if (locationHeader) {
-    const params = locationHeader.split('?')[1];
-    if (params.startsWith('error')) {
-      throw new Error("Error requesting auth code:", params);
-    }
-    const authCode = locationHeader.split('=')[1];
-    eventEmitter.emit(`authCode:${sessionId}`, authCode)
-    res.send("Auth code received");
+  const sessionID = req.params.sessionId;
+  const response = req.body.headers.location;
+  let authCode;
+  if (response) {
+    const params = response.split('?')[1];
+    if (params.startsWith('code')) {
+      authCode = response.split('=')[1];
+      eventEmitter.emit(`authCode:${sessionID}`, authCode)
+    } else {
+      eventEmitter.emit(`authCode:${sessionID}`, `error: ${params}`);
+    }    
   }
+  res.send(`Auth code received ${authCode}`);
+  
 }
 
 async function token(req, res, next) {
   const sessionId = req.params.sessionId;
-  const locationHeader = req.headers.location;
-  if (locationHeader) {
-    const token = locationHeader.split('=')[1];
-    eventEmitter.emit(`token:${sessionId}`, token)
-    res.send("Token received");
+  const body = req.body.body;
+  if (!body.error) {
+    const accessToken = body.access_token;
+    const refreshToken = body.refresh_token;
+    eventEmitter.emit(`accessToken:${sessionId}`, JSON.stringify({accessToken, refreshToken}));
+  } else {
+    eventEmitter.emit(`accessToken:${sessionId}`, `error: ${body.error}`);
   }
+  res.send("Token received");
 }
+
+async function refresh(req, res, next) {
+  const sessionId = req.params.sessionId;
+  const body = req.body.body;
+  if (!body.error) {
+    const accessToken = body.access_token;
+    const refreshToken = body.refresh_token;
+    eventEmitter.emit(`refreshToken:${sessionId}`, JSON.stringify({accessToken, refreshToken}));
+  } else {
+    eventEmitter.emit(`refreshToken:${sessionId}`, `error: ${body.error}`);
+  }
+  res.send("Token received");
+}
+
+
 
 module.exports = {
   register,
   otp,
   login,
   authCode,
-  token
+  token,
+  refresh
 };
