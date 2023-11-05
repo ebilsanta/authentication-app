@@ -52,6 +52,8 @@ class ClientAssertionService:
             return "invalid_client", "invalid_audience"
         except jwt.InvalidTokenError as e:
             return "invalid_client", "Error verifying Client Assertion: " + str(e)
+        except Exception as e:
+            return "Cannot verify CA" + str(e) + str(assertion)
 
 
 def do_generate_client_assertion(client_id, audience, expiry, iat, client_pvt):

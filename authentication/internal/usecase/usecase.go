@@ -169,12 +169,11 @@ func (a *authenticationUsecase) Login(company string, email string, password str
 
 	key_details := map[string]interface{}{
 		"iss": "authn.itsag2t1.com",
-		"sub": "auth0|123456",
+		"sub": credential.Email,
 		"aud": "authz.itsag2t1.com",
 		"exp": time.Now().Local().Add(time.Minute * time.Duration(expiration_delay_minutes)).Unix(),
 		"iat": time.Now().Local().Unix(),
 		"company": credential.Company,
-		"email": credential.Email,
 	}
 
 	id_token, err := GenerateIdToken(key_details)

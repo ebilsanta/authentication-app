@@ -97,4 +97,6 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
     except jwt.InvalidTokenError:
         return None, "Invalid JWT"
     except Exception as e:
-        return None, "An error occurred during JWT decoding:" + str(e)
+        return None, "An error occurred during dpop JWT decoding:" + str(e) + str(
+            dpop_jwt
+        )
