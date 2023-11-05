@@ -386,7 +386,7 @@ def test_token_with_ath_ok():
         sets.authz_url,
         "POST",
         base64.b64encode(
-            hashlib.sha256(access_token.encode("utf-8")).digest()
+            hashlib.sha256(access_token.encode("ascii")).digest()
         ).decode(),
     )[1:-1]
 
@@ -399,7 +399,7 @@ def test_token_with_ath_ok():
     assert (
         dpop_decoded["ath"]
         == base64.b64encode(
-            hashlib.sha256(access_token.encode("utf-8")).digest()
+            hashlib.sha256(access_token.encode("ascii")).digest()
         ).decode()
     )
 
@@ -428,7 +428,7 @@ def test_token_invalid_at_dpop_failure():
         sets.authz_url,
         "POST",
         base64.b64encode(
-            hashlib.sha256(access_token.encode("utf-8")).digest()
+            hashlib.sha256(access_token.encode("ascii")).digest()
         ).decode(),
     )[1:-1]
 
@@ -446,7 +446,7 @@ def test_refresh_ok():
         "exp": now + 86400,
         "iat": now,
         "cnf.jkt": base64.b64encode(
-            hashlib.sha256(sets.authz_pub_key.encode("utf-8")).digest()
+            hashlib.sha256(sets.authz_pub_key.encode("ascii")).digest()
         ).decode(),
         "typ": "dpop+refresh",
     }
@@ -462,7 +462,7 @@ def test_refresh_ok():
         sets.authz_url,
         "POST",
         base64.b64encode(
-            hashlib.sha256(refresh_token.encode("utf-8")).digest()
+            hashlib.sha256(refresh_token.encode("ascii")).digest()
         ).decode(),
     )[1:-1]
 
