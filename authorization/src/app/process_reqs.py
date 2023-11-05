@@ -131,7 +131,7 @@ async def process_token(
     if generate_pkce_code_challenge(code_verifier) != authc["code_challenge"]:
         return respond("Invalid PKCE Code Verifier | " + code_verifier + " | " \
                        + generate_pkce_code_challenge(code_verifier) + " | " + authc["code_challenge"] \
-                        + " | " + authc)
+                        + " | " + str(authc))
 
     sets = get_settings()
 
