@@ -87,18 +87,21 @@ async function authCode(req, res, next) {
 async function token(req, res, next) {
   try {
     const sessionId = req.params.sessionId;
-    const body = req.body.body;
-    console.log('token callback', req.body)
+    const response = req.body.response;
+    const responseObj = JSON.parse(response);
+    const body = responseObj.body;
+    console.log('token callback parsed body', body);
+
     if (!body.error) {
       const accessToken = body.access_token;
       const refreshToken = body.refresh_token;
       console.log('received access and refresh tokens')
       eventEmitter.emit(`accessToken:${sessionId}`, JSON.stringify({accessToken, refreshToken}));
     } else {
-      eventEmitter.emit(`accessToken:${sessionId}`, `error: ${body.error}`);
+      eventEmitter.emit(`accessToken:${sessionId}`, `error: ${body.error}, ${body.error_description}`);
     }
   } catch (error) {
-    eventEmitter.emit(`accessToken:${sessionId}`, `error: ${error}`);
+    console.log('error', error)
   }
   
   res.send("Token received");
@@ -108,7 +111,9 @@ async function refresh(req, res, next) {
   try {
     const sessionId = req.params.sessionId;
     console.log('refresh callback', req.body)
-    const body = req.body.body;
+    const response = req.body.response;
+    const responseObj = JSON.parse(response);
+    const body = responseObj.body;
     if (!body.error) {
       const accessToken = body.access_token;
       console.log('received refreshed access token')

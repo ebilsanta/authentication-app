@@ -34,20 +34,20 @@ async function checkAuth(req, res, next) {
   const sessionID = req.sessionID;
 
   const authZPubKey = process.env.AUTHZ_PUB_KEY.replace(/\\n/g, '\n');
-  try {
+  // try {
 
-    const decodedAccessToken = jwt.verify(accessToken, authZPubKey);
+  //   const decodedAccessToken = jwt.verify(accessToken, authZPubKey);
 
-  } catch (error) {
-    try {
+  // } catch (error) {
+  //   try {
 
-      const decodedRefreshToken = jwt.verify(refreshToken, authZPubKey);
+  //     const decodedRefreshToken = jwt.verify(refreshToken, authZPubKey);
 
-    } catch (error) {
+  //   } catch (error) {
 
-      return res.status(401).send({error: 'Refresh token expired.'});
+  //     return res.status(401).send({error: 'Refresh token expired.'});
 
-    }
+  //   }
 
     try {
       const response = await requestToRefreshToken(refreshToken, publicKey, privateKey, sessionID);
@@ -62,7 +62,7 @@ async function checkAuth(req, res, next) {
 
     }
     
-  }
+  // }
     
   next();
 }
