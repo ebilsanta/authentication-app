@@ -174,7 +174,7 @@ function checkForAuthCode(sessionID) {
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`authCode:${sessionID}`);
       reject(new Error(`Timeout waiting for auth code`));
-    }, 20000); 
+    }, 50000); 
   });
 }
 
@@ -195,7 +195,7 @@ function checkForVerificationKey(sessionID) {
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`verificationKey:${sessionID}`);
       reject(new Error(`Timeout waiting for verification key`));
-    }, 20000); 
+    }, 50000); 
   });
 }
 
@@ -216,7 +216,7 @@ function checkForEmailVerification(sessionID) {
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`verifyEmailOTP:${sessionID}`);
       reject(new Error(`Timeout waiting for email verification result`));
-    }, 20000); 
+    }, 50000); 
   });
 }
 
@@ -237,7 +237,7 @@ function checkForIdToken(sessionID) {
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`loginResult:${sessionID}`);
       reject(new Error(`Timeout waiting for login result`));
-    }, 20000); 
+    }, 50000); 
   });
 }
 
@@ -258,7 +258,7 @@ function checkForAccessAndRefreshToken(sessionID) {
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`accessToken:${sessionID}`);
       reject(new Error(`Timeout waiting for access token`));
-    }, 20000); 
+    }, 50000); 
   });
 }
 
@@ -279,7 +279,7 @@ function checkForRefreshedAccessToken(sessionID) {
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`refresh:${sessionID}`);
       reject(new Error(`Timeout waiting for refreshed access token`));
-    }, 20000); 
+    }, 50000); 
   });
 }
 
