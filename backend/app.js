@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const RedisStore = require("connect-redis").default;
+const cors = require('cors');
 
 const { redisClient } = require("./src/services/redis");
 const cookieParser = require("cookie-parser");
@@ -16,6 +17,8 @@ let redisStore = new RedisStore({
   client: redisClient,
   prefix: "session:",
 });
+
+app.use(cors());
 
 app.use(
   session({
