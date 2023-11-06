@@ -3,7 +3,7 @@ const router = express.Router();
 const hostedController = require("../controllers/hostedController");
 const callbackController = require("../controllers/hostedCallbackController");
 const {
-  getAuthHeaders, checkIdToken, checkCodeVerifier, checkAuth, checkEmailAndVerificationKey
+  getAuthHeaders, checkIdToken, checkAuth, checkEmailAndVerificationKey, checkCodeVerifierAndAuthCode
 } = require("../middlewares/hostedMiddleware");
 const { registrationValidator, loginValidator, verifyEmailValidator } = require("../validators/hostedValidators");
 
@@ -17,7 +17,7 @@ router.post("/login", loginValidator, hostedController.login);
 
 router.get("/authorize", checkIdToken, hostedController.authorize);
 
-router.get("/token", checkCodeVerifier, hostedController.token);
+router.get("/token", checkCodeVerifierAndAuthCode, hostedController.token);
 
 router.get("/user", checkAuth, hostedController.user);
 

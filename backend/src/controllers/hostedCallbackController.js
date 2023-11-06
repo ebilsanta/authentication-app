@@ -1,95 +1,121 @@
 const { eventEmitter } = require("../services/eventEmitter");
 
 async function register(req, res, next) {
-  const { email, message, verification_key } = req.body;
-  const sessionID = req.params.sessionId;
-  console.log('register callback', req.body)
-  if (message === 'Successfully Registered!') {
-    console.log("received verification key", verification_key)
-    eventEmitter.emit(`verificationKey:${sessionID}`, verification_key);
-  } else {
-    eventEmitter.emit(`verificationKey:${sessionID}`, `error: ${message}`);
+  try {
+    const { email, message, verification_key } = req.body;
+    const sessionID = req.params.sessionId;
+    console.log('register callback', req.body)
+    if (message === 'Successfully Registered!') {
+      console.log("received verification key", verification_key)
+      eventEmitter.emit(`verificationKey:${sessionID}`, verification_key);
+    } else {
+      eventEmitter.emit(`verificationKey:${sessionID}`, `error: ${message}`);
+    }
+  } catch (error) {
+    eventEmitter.emit(`verificationKey:${sessionID}`, `error: ${error}`);
   }
 
   res.send('Verification key received');
 }
 
 async function verifyEmail(req, res, next) {
-  const { details, email, status } = req.body;
-  const sessionID = req.params.sessionId;
-  console.log('verify email callback', req.body)
-  if (status === 'Success') {
-    console.log("received successful email verification")
-    eventEmitter.emit(`verifyEmailOTP:${sessionID}`, details);
-  } else {
-    eventEmitter.emit(`verifyEmailOTP:${sessionID}`, `error: ${details}`);
+  try {
+    const { details, email, status } = req.body;
+    const sessionID = req.params.sessionId;
+    console.log('verify email callback', req.body)
+    if (status === 'Success') {
+      console.log("received successful email verification")
+      eventEmitter.emit(`verifyEmailOTP:${sessionID}`, details);
+    } else {
+      eventEmitter.emit(`verifyEmailOTP:${sessionID}`, `error: ${details}`);
+    }
+  } catch (error) {
+    eventEmitter.emit(`verifyEmailOTP:${sessionID}`, `error: ${error}`);
   }
-
+  
   res.send('Message received');
 }
 
 async function login(req, res, next) {
-  const { status, idToken } = req.body;
-  console.log('login callback', req.body)
-  const sessionID = req.params.sessionId;
-  if (status === 'User verified') {
-    console.log('received id token', idToken)
-    eventEmitter.emit(`idToken:${sessionID}`, idToken);
-  } else {
-    eventEmitter.emit(`idToken:${sessionID}`, `error: ${status}`);
+  try {
+    const { status, idToken } = req.body;
+    console.log('login callback', req.body)
+    const sessionID = req.params.sessionId;
+    if (status === 'User verified') {
+      console.log('received id token', idToken)
+      eventEmitter.emit(`idToken:${sessionID}`, idToken);
+    } else {
+      eventEmitter.emit(`idToken:${sessionID}`, `error: ${status}`);
+    }
+  } catch (error) {
+    eventEmitter.emit(`idToken:${sessionID}`, `error: ${error}`);
   }
-
+  
   res.send('Token received');
 }
 
 async function authCode(req, res, next) {
-  const sessionID = req.params.sessionId;
-  console.log('auth code callback', req.body)
-  if (!req.body.headers) {
-    eventEmitter.emit(`authCode:${sessionID}`, `error: error receiving auth code`)
-  }
-  const response = req.body.headers.location;
-  let authCode;
-  if (response) {
-    const params = response.split('?')[1];
-    if (params.startsWith('code')) {
-      authCode = response.split('=')[1];
-      console.log('received authCode', authCode)
-      eventEmitter.emit(`authCode:${sessionID}`, authCode)
+  try {
+    const sessionID = req.params.sessionId;
+    console.log('auth code callback', req.body)
+    const response = req.body.response.headers.location;
+    let authCode;
+    if (response) {
+      const params = response.split('?')[1];
+      if (params.startsWith('code')) {
+        authCode = response.split('=')[1];
+        console.log('received authCode', authCode)
+        eventEmitter.emit(`authCode:${sessionID}`, authCode)
+      } else {
+        eventEmitter.emit(`authCode:${sessionID}`, `error: ${params}`);
+      }    
     } else {
-      eventEmitter.emit(`authCode:${sessionID}`, `error: ${params}`);
-    }    
+      eventEmitter.emit(`authCode:${sessionID}`, `error: Could not get auth code from auth server`);
+    }
+  } catch (error) {
+    eventEmitter.emit(`authCode:${sessionID}`, `error: ${error}`);
   }
+  
   res.send(`Auth code received ${authCode}`);
   
 }
 
 async function token(req, res, next) {
-  const sessionId = req.params.sessionId;
-  const body = req.body.body;
-  console.log('token callback', req.body)
-  if (!body.error) {
-    const accessToken = body.access_token;
-    const refreshToken = body.refresh_token;
-    console.log('received access and refresh tokens')
-    eventEmitter.emit(`accessToken:${sessionId}`, JSON.stringify({accessToken, refreshToken}));
-  } else {
-    eventEmitter.emit(`accessToken:${sessionId}`, `error: ${body.error}`);
+  try {
+    const sessionId = req.params.sessionId;
+    const body = req.body.body;
+    console.log('token callback', req.body)
+    if (!body.error) {
+      const accessToken = body.access_token;
+      const refreshToken = body.refresh_token;
+      console.log('received access and refresh tokens')
+      eventEmitter.emit(`accessToken:${sessionId}`, JSON.stringify({accessToken, refreshToken}));
+    } else {
+      eventEmitter.emit(`accessToken:${sessionId}`, `error: ${body.error}`);
+    }
+  } catch (error) {
+    eventEmitter.emit(`accessToken:${sessionId}`, `error: ${error}`);
   }
+  
   res.send("Token received");
 }
 
 async function refresh(req, res, next) {
-  const sessionId = req.params.sessionId;
-  console.log('refresh callback', req.body)
-  const body = req.body.body;
-  if (!body.error) {
-    const accessToken = body.access_token;
-    console.log('received refreshed access token')
-    eventEmitter.emit(`refresh:${sessionId}`, accessToken);
-  } else {
-    eventEmitter.emit(`refresh:${sessionId}`, `error: ${body.error}`);
+  try {
+    const sessionId = req.params.sessionId;
+    console.log('refresh callback', req.body)
+    const body = req.body.body;
+    if (!body.error) {
+      const accessToken = body.access_token;
+      console.log('received refreshed access token')
+      eventEmitter.emit(`refresh:${sessionId}`, accessToken);
+    } else {
+      eventEmitter.emit(`refresh:${sessionId}`, `error: ${body.error}`);
+    }
+  } catch (error) {
+    eventEmitter.emit(`refresh:${sessionId}`, `error: ${error}`);
   }
+  
   res.send("Token received");
 }
 

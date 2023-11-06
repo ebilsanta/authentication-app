@@ -15,7 +15,10 @@ async function checkEmailAndVerificationKey(req, res, next) {
   next();
 }
 
-async function checkCodeVerifier(req, res, next) {
+async function checkCodeVerifierAndAuthCode(req, res, next) {
+  if (!req.query.code) {
+    return res.status(400).send({error: 'Missing auth code in query.'});
+  }
   if (!req.session.codeVerifier) {
     return res.status(400).send({error: 'Missing code verifier in session.'});
   }
@@ -67,6 +70,6 @@ async function checkAuth(req, res, next) {
 module.exports = {
   checkIdToken,
   checkEmailAndVerificationKey,
-  checkCodeVerifier,
+  checkCodeVerifierAndAuthCode,
   checkAuth, 
 }
