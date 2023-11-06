@@ -3,6 +3,7 @@ const { eventEmitter } = require("../services/eventEmitter");
 async function register(req, res, next) {
   const { email, message, verification_key } = req.body;
   const sessionID = req.params.sessionId;
+  console.log('register callback', req.body)
   if (message === 'Successfully Registered!') {
     console.log("received verification key", verification_key)
     eventEmitter.emit(`verificationKey:${sessionID}`, verification_key);
@@ -16,6 +17,7 @@ async function register(req, res, next) {
 async function verifyEmail(req, res, next) {
   const { details, email, status } = req.body;
   const sessionID = req.params.sessionId;
+  console.log('verify email callback', req.body)
   if (status === 'Success') {
     console.log("received successful email verification")
     eventEmitter.emit(`verifyEmailOTP:${sessionID}`, details);
@@ -28,6 +30,7 @@ async function verifyEmail(req, res, next) {
 
 async function login(req, res, next) {
   const { status, idToken } = req.body;
+  console.log('login callback', req.body)
   const sessionID = req.params.sessionId;
   if (status === 'User verified') {
     console.log('received id token', idToken)
@@ -41,6 +44,10 @@ async function login(req, res, next) {
 
 async function authCode(req, res, next) {
   const sessionID = req.params.sessionId;
+  console.log('auth code callback', req.body)
+  if (!req.body.headers) {
+    eventEmitter.emit(`authCode:${sessionID}`, `error: error receiving auth code`)
+  }
   const response = req.body.headers.location;
   let authCode;
   if (response) {
@@ -60,6 +67,7 @@ async function authCode(req, res, next) {
 async function token(req, res, next) {
   const sessionId = req.params.sessionId;
   const body = req.body.body;
+  console.log('token callback', req.body)
   if (!body.error) {
     const accessToken = body.access_token;
     const refreshToken = body.refresh_token;
@@ -73,6 +81,7 @@ async function token(req, res, next) {
 
 async function refresh(req, res, next) {
   const sessionId = req.params.sessionId;
+  console.log('refresh callback', req.body)
   const body = req.body.body;
   if (!body.error) {
     const accessToken = body.access_token;

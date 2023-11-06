@@ -3,14 +3,14 @@ const router = express.Router();
 const hostedController = require("../controllers/hostedController");
 const callbackController = require("../controllers/hostedCallbackController");
 const {
-  getAuthHeaders, checkIdToken, checkCodeVerifier, checkAuth
+  getAuthHeaders, checkIdToken, checkCodeVerifier, checkAuth, checkEmailAndVerificationKey
 } = require("../middlewares/hostedMiddleware");
-const { registrationValidator, loginValidator, otpValidator } = require("../validators/hostedValidators");
+const { registrationValidator, loginValidator, verifyEmailValidator } = require("../validators/hostedValidators");
 
 
 router.post("/register", registrationValidator, hostedController.register);
 
-router.post("/verify-email", otpValidator, hostedController.verifyEmail);
+router.post("/verify-email", verifyEmailValidator, checkEmailAndVerificationKey, hostedController.verifyEmail);
 
 
 router.post("/login", loginValidator, hostedController.login);

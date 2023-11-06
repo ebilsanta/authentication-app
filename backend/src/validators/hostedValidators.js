@@ -10,7 +10,7 @@ const registrationValidator = [
   body("password", "Password is empty").not().isEmpty(),
 ];
 
-const otpValidator = [
+const verifyEmailValidator = [
   body("otp", "OTP is empty").not().isEmpty(),
   body("otp", "OTP must be 6-digit numeric").isNumeric().isLength({ min: 6, max: 6 })
 ]
@@ -25,6 +25,6 @@ const loginValidator = [
 
 module.exports = {
   registrationValidator,
-  otpValidator,
+  verifyEmailValidator,
   loginValidator
 }
