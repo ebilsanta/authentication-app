@@ -12,7 +12,7 @@ async function requestForRegistration(jsonRequest, sessionID) {
     lastName,
     birthdate,
     password,
-    callback: process.env.TEMP_CALLBACK_URL + "register/" + sessionID,
+    callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "register/" + sessionID,
   }
   try {
     const response = await axios({
@@ -32,7 +32,7 @@ async function requestToVerifyEmail(otp, email, verificationKey, sessionID) {
     otp,
     email,
     verificationKey,
-    callback: process.env.TEMP_CALLBACK_URL + "verify-email/" + sessionID,
+    callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "verify-email/" + sessionID,
   }
   try {
     const response = await axios({
@@ -53,7 +53,7 @@ async function requestForLogin(jsonRequest, sessionID) {
     company,
     email,
     password,
-    callback: process.env.TEMP_CALLBACK_URL + "login/" + sessionID,
+    callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "login/" + sessionID,
   }
   try {
     const response = await axios({
@@ -81,9 +81,7 @@ async function requestForAuthCode(identityJwt, sessionID) {
       code_challenge: codeChallenge,
       code_challenge_method: "S256",
       redirect_url: "http://localhost:8000",
-      // redirect_url: process.env.CLIENT_HOSTED_API_URL + "redirect",
-      callback_url: process.env.TEMP_CALLBACK_URL + "authcode/" + sessionID,
-      // callback_url: process.env.HOSTED_CALLBACK_URL + "authcode",
+      callback_url: process.env.CLIENT_HOSTED_CALLBACK_URL + "authcode/" + sessionID,
     }
     const response = await axios({
       url: process.env.API_URL + 'hosted/authcode',
@@ -114,7 +112,7 @@ async function requestForAccessToken(codeVerifier, authCode, sessionID) {
       client_assertion: clientAssertion,
       redirect_url: "http://localhost:8000",
       code_verifier: codeVerifier,
-      callback_url: process.env.TEMP_CALLBACK_URL + "token/" + sessionID,
+      callback_url: process.env.CLIENT_HOSTED_CALLBACK_URL + "token/" + sessionID,
     }
 
     const response = await axios({
@@ -138,7 +136,7 @@ async function requestToRefreshToken(refreshToken, publicKey, privateKey, sessio
       grant_type: 'authorization_code',
       refresh_token: refreshToken,
       dpop: dPoPProof,
-      callback_url: process.env.TEMP_CALLBACK_URL + "refresh/" + sessionID,
+      callback_url: process.env.CLIENT_HOSTED_CALLBACK_URL + "refresh/" + sessionID,
     }
     console.log(data)
     const response = await axios({

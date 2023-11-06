@@ -81,7 +81,7 @@ async function login(req, res, next) {
 
     req.session.idToken = idToken;
 
-    res.redirect(process.env.CLIENT_HOSTED_API_URL + "authorize");
+    res.redirect(process.env.CLIENT_HOSTED_URL + "authorize");
   } catch (error) {
     let message = error.message;
     if (message.includes(":")) {
@@ -103,7 +103,7 @@ async function authorize(req, res, next) {
 
     const authCode = await checkForAuthCode(sessionID);
 
-    res.redirect(process.env.CLIENT_HOSTED_API_URL + "token?code=" + authCode);
+    res.redirect(process.env.CLIENT_HOSTED_URL + "token?code=" + authCode);
   } catch (error) {
     let message = error.message;
     if (message.includes(":")) {
@@ -134,7 +134,7 @@ async function token(req, res, next) {
     req.session.accessToken = accessToken;
     req.session.refreshToken = refreshToken;
 
-    res.redirect(process.env.CLIENT_HOSTED_API_URL + "user");
+    res.redirect(process.env.CLIENT_HOSTED_URL + "user");
   } catch (error) {
     let message = error.message;
     if (message.includes(":")) {
