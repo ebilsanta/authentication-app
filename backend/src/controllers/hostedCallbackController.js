@@ -58,10 +58,14 @@ async function authCode(req, res, next) {
   try {
     const sessionID = req.params.sessionId;
     console.log('auth code callback', req.body)
-    const response = req.body.response.headers.location;
+    const response = req.body.response;
+    console.log("typeof response", typeof response)
+    const responseObj = JSON.parse(response);
+    console.log("responseObj", responseObj)
+    const location = responseObj.headers.location;
     let authCode;
-    if (response) {
-      const params = response.split('?')[1];
+    if (location) {
+      const params = location.split('?')[1];
       if (params.startsWith('code')) {
         authCode = response.split('=')[1];
         console.log('received authCode', authCode)
@@ -73,7 +77,7 @@ async function authCode(req, res, next) {
       eventEmitter.emit(`authCode:${sessionID}`, `error: Could not get auth code from auth server`);
     }
   } catch (error) {
-    eventEmitter.emit(`authCode:${sessionID}`, `error: ${error}`);
+    console.log('error', error)
   }
   
   res.send(`Auth code received ${authCode}`);
