@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { requestToRefreshToken } = require('../services/hostedServices');
+const { requestToRefreshToken, checkForRefreshedAccessToken } = require('../services/hostedServices');
 
 async function checkIdToken(req, res, next) {
   if (!req.session.idToken) {
@@ -28,26 +28,34 @@ async function checkAuth(req, res, next) {
 
   const authZPubKey = process.env.AUTHZ_PUB_KEY.replace(/\\n/g, '\n');
   try {
-    const decodedAccessToken = jwt.verify(accessToken, authZPubKey);
-    const currentTimestamp = Math.floor(Date.now() / 1000)
-    if (true || decodedAccessToken.exp < currentTimestamp) {
-      const decodedRefreshToken = jwt.verify(refreshToken, authZPubKey);
-      if (decodedRefreshToken.exp < currentTimestamp) {
-        return res.status(401).send('Not authorized.');
-      }
 
-      const response = await requestToRefreshToken(refreshToken, publicKey, privateKey, sessionID);
-      return res.send(response);
+    const decodedAccessToken = jwt.verify(accessToken, authZPubKey);
+
+  } catch (error) {
+    try {
+
+      const decodedRefreshToken = jwt.verify(refreshToken, authZPubKey);
+
+    } catch (error) {
+
+      return res.status(401).send('Refresh token expired.');
+
     }
 
-    
-  } catch (error) {
-    console.error(error);
-    return res.status(401).send('Not authorized.');
-  }
-  // check that access_token is valid, if not refresh it.
+    try {
+      const response = await requestToRefreshToken(refreshToken, publicKey, privateKey, sessionID);
 
-  // create dpop and attach to request
+      const newAccessToken = await checkForRefreshedAccessToken(sessionID);
+
+      req.session.accessToken = newAccessToken;
+
+    } catch (error) {
+        
+      return res.status(401).send('Error refreshing access token.');
+
+    }
+    
+  }
     
   next();
 }

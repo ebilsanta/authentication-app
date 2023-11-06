@@ -264,6 +264,27 @@ function checkForAccessAndRefreshToken(sessionID) {
   });
 }
 
+function checkForRefreshedAccessToken(sessionID) {
+  console.log("waiting for refreshed access token", sessionID)
+  return new Promise((resolve, reject) => {
+    let timeout;
+
+    eventEmitter.on(`refresh:${sessionID}`, (details) => {
+      clearTimeout(timeout); 
+      console.log(`Value of key 'refresh:${sessionID}': ${details}`);
+      if (details.startsWith('error')) {
+        reject(new Error(details));
+      }
+      resolve(details);
+    });
+
+    timeout = setTimeout(() => {
+      eventEmitter.removeAllListeners(`refresh:${sessionID}`);
+      reject(new Error(`Timeout waiting for refreshed access token`));
+    }, 50000); 
+  });
+}
+
 module.exports = {
   requestForRegistration,
   requestForOtpVerification,
@@ -275,5 +296,6 @@ module.exports = {
   checkForIdToken,
   checkForAuthCode,
   checkForVerificationResult,
-  checkForAccessAndRefreshToken
+  checkForAccessAndRefreshToken,
+  checkForRefreshedAccessToken
 }

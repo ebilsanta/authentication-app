@@ -72,10 +72,9 @@ async function refresh(req, res, next) {
   const body = req.body.body;
   if (!body.error) {
     const accessToken = body.access_token;
-    const refreshToken = body.refresh_token;
-    eventEmitter.emit(`refreshToken:${sessionId}`, JSON.stringify({accessToken, refreshToken}));
+    eventEmitter.emit(`refresh:${sessionId}`, accessToken);
   } else {
-    eventEmitter.emit(`refreshToken:${sessionId}`, `error: ${body.error}`);
+    eventEmitter.emit(`refresh:${sessionId}`, `error: ${body.error}`);
   }
   res.send("Token received");
 }
