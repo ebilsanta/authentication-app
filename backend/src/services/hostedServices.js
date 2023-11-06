@@ -237,7 +237,7 @@ function checkForIdToken(sessionID) {
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`loginResult:${sessionID}`);
       reject(new Error(`Timeout waiting for login result`));
-    }, 50000); 
+    }, 10000); 
   });
 }
 
@@ -258,7 +258,7 @@ function checkForAccessAndRefreshToken(sessionID) {
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`accessToken:${sessionID}`);
       reject(new Error(`Timeout waiting for access token`));
-    }, 50000); 
+    }, 10000); 
   });
 }
 
@@ -279,7 +279,7 @@ function checkForRefreshedAccessToken(sessionID) {
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`refresh:${sessionID}`);
       reject(new Error(`Timeout waiting for refreshed access token`));
-    }, 50000); 
+    }, 10000); 
   });
 }
 

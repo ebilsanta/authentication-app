@@ -73,6 +73,7 @@ async function login(req, res, next) {
 
   const sessionID = req.sessionID;
   const jsonRequest = req.body;
+  req.session.email = jsonRequest.email;
 
   try {
     const response = await requestForLogin(jsonRequest, sessionID);
