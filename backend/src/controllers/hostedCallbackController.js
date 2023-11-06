@@ -67,7 +67,7 @@ async function authCode(req, res, next) {
     if (location) {
       const params = location.split('?')[1];
       if (params.startsWith('code')) {
-        authCode = response.split('=')[1];
+        authCode = response.split('=')[1].split("\"")[0];
         console.log('received authCode', authCode)
         eventEmitter.emit(`authCode:${sessionID}`, authCode)
       } else {
