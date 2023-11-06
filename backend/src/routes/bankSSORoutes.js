@@ -8,6 +8,10 @@ const {
 
 const { introspectToken } = require('../middlewares/bankSSOMiddleware');
 
+router.get('/health', (req, res) => {
+    res.status(200).send('Backend (BankSSO) is healthy!');
+  });
+
 router.get('/login', login);
 
 router.get('/callback', authCodeCallback);

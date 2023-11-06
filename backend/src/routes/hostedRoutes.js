@@ -7,6 +7,9 @@ const {
 } = require("../middlewares/hostedMiddleware");
 const { registrationValidator, loginValidator, verifyEmailValidator } = require("../validators/hostedValidators");
 
+router.get('/health', (req, res) => {
+  res.status(200).send('Backend (Hosted) is healthy!');
+});
 
 router.post("/register", registrationValidator, hostedController.register);
 
