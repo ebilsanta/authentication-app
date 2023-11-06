@@ -14,6 +14,7 @@ async function requestForRegistration(jsonRequest, sessionID) {
     password,
     callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "register/" + sessionID,
   }
+  console.log("registration req", data)
   try {
     const response = await axios({
       url: process.env.API_URL + 'register',
@@ -34,6 +35,7 @@ async function requestToVerifyEmail(otp, email, verificationKey, sessionID) {
     verificationKey,
     callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "verify-email/" + sessionID,
   }
+  console.log("verify email req", data)
   try {
     const response = await axios({
       url: process.env.API_URL + 'verify-email',
@@ -55,6 +57,7 @@ async function requestForLogin(jsonRequest, sessionID) {
     password,
     callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "login/" + sessionID,
   }
+  console.log("login request", data)
   try {
     const response = await axios({
       url: process.env.API_URL + 'login',
@@ -83,6 +86,7 @@ async function requestForAuthCode(identityJwt, sessionID) {
       redirect_url: "http://localhost:8000",
       callback_url: process.env.CLIENT_HOSTED_CALLBACK_URL + "authcode/" + sessionID,
     }
+    console.log("auth code request", queryParams)
     const response = await axios({
       url: process.env.API_URL + 'hosted/authcode',
       method: 'post',
@@ -114,6 +118,7 @@ async function requestForAccessToken(codeVerifier, authCode, sessionID) {
       code_verifier: codeVerifier,
       callback_url: process.env.CLIENT_HOSTED_CALLBACK_URL + "token/" + sessionID,
     }
+    console.log("request access token", data)
 
     const response = await axios({
       url: tokenEndpoint,
@@ -138,7 +143,7 @@ async function requestToRefreshToken(refreshToken, publicKey, privateKey, sessio
       dpop: dPoPProof,
       callback_url: process.env.CLIENT_HOSTED_CALLBACK_URL + "refresh/" + sessionID,
     }
-    console.log(data)
+    console.log("request refresh token", data)
     const response = await axios({
       url: tokenEndpoint,
       method: 'post',
