@@ -10,7 +10,7 @@ const { registrationValidator, loginValidator, otpValidator } = require("../vali
 
 router.post("/register", registrationValidator, hostedController.register);
 
-router.post("/otp", otpValidator, hostedController.otp);
+router.post("/verify-email", otpValidator, hostedController.verifyEmail);
 
 
 router.post("/login", loginValidator, hostedController.login);
@@ -24,7 +24,7 @@ router.get("/user", checkAuth, hostedController.user);
 
 router.post("/callback/register/:sessionId", callbackController.register);
 
-router.post("/callback/otp/:sessionId", callbackController.otp);
+router.post("/callback/verify-email/:sessionId", callbackController.verifyEmail);
 
 router.post("/callback/login/:sessionId", callbackController.login);
 

@@ -12,13 +12,13 @@ async function register(req, res, next) {
   res.send('Verification key received');
 }
 
-async function otp(req, res, next) {
+async function verifyEmail(req, res, next) {
   const { details, email, status } = req.body;
   const sessionID = req.params.sessionId;
   if (status === 'Success') {
-    eventEmitter.emit(`otpVerification:${sessionID}`, details);
+    eventEmitter.emit(`verifyEmailOTP:${sessionID}`, details);
   } else {
-    eventEmitter.emit(`otpVerification:${sessionID}`, `error: ${details}`);
+    eventEmitter.emit(`verifyEmailOTP:${sessionID}`, `error: ${details}`);
   }
 
   res.send('Message received');
@@ -83,7 +83,7 @@ async function refresh(req, res, next) {
 
 module.exports = {
   register,
-  otp,
+  verifyEmail,
   login,
   authCode,
   token,

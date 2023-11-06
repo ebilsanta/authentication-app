@@ -27,12 +27,12 @@ async function requestForRegistration(jsonRequest, sessionID) {
   }
 }
 
-async function requestForOtpVerification(otp, email, verificationKey, sessionID) {
+async function requestToVerifyEmail(otp, email, verificationKey, sessionID) {
   const data = {
     otp,
     email,
     verificationKey,
-    callback: process.env.TEMP_CALLBACK_URL + "otp/" + sessionID,
+    callback: process.env.TEMP_CALLBACK_URL + "verify-email/" + sessionID,
   }
   try {
     const response = await axios({
@@ -72,9 +72,7 @@ async function requestForAuthCode(identityJwt, sessionID) {
   try {
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = generateCodeChallenge(codeVerifier);
-    console.log("code verifier:", codeVerifier) 
-    console.log(typeof codeVerifier);
-    console.log("code challenge:", codeChallenge)
+
     const queryParams = {
       response_type: "code",
       state: codeChallenge,
@@ -83,7 +81,7 @@ async function requestForAuthCode(identityJwt, sessionID) {
       code_challenge: codeChallenge,
       code_challenge_method: "S256",
       redirect_url: "http://localhost:8000",
-      // redirect_url: process.env.HOSTED_API_URL + "redirect",
+      // redirect_url: process.env.CLIENT_HOSTED_API_URL + "redirect",
       callback_url: process.env.TEMP_CALLBACK_URL + "authcode/" + sessionID,
       // callback_url: process.env.HOSTED_CALLBACK_URL + "authcode",
     }
@@ -92,7 +90,6 @@ async function requestForAuthCode(identityJwt, sessionID) {
       method: 'post',
       params: queryParams
     });
-    console.log(queryParams)
     return codeVerifier;
   } catch (error) {
     console.error('Error requesting for auth code from auth server:', error);
@@ -119,7 +116,6 @@ async function requestForAccessToken(codeVerifier, authCode, sessionID) {
       code_verifier: codeVerifier,
       callback_url: process.env.TEMP_CALLBACK_URL + "token/" + sessionID,
     }
-    console.log("access token request data:", data )
 
     const response = await axios({
       url: tokenEndpoint,
@@ -164,7 +160,7 @@ function checkForAuthCode(sessionID) {
     let timeout;
 
     eventEmitter.on(`authCode:${sessionID}`, (authCode) => {
-      clearTimeout(timeout); // Clear the timeout since event was received
+      clearTimeout(timeout); 
       console.log(`Value of key 'authCode:${sessionID}': ${authCode}`);
       if (authCode.startsWith('error')) {
         reject(new Error(authCode));
@@ -172,11 +168,10 @@ function checkForAuthCode(sessionID) {
       resolve(authCode);
     });
 
-    // Set a timeout to reject the promise if event is not received in 5 seconds
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`authCode:${sessionID}`);
       reject(new Error(`Timeout waiting for auth code`));
-    }, 50000); // 5 seconds
+    }, 10000); 
   });
 }
 
@@ -197,18 +192,18 @@ function checkForVerificationKey(sessionID) {
     timeout = setTimeout(() => {
       eventEmitter.removeAllListeners(`verificationKey:${sessionID}`);
       reject(new Error(`Timeout waiting for verification key`));
-    }, 50000); 
+    }, 10000); 
   });
 }
 
-function checkForVerificationResult(sessionID) {
-  console.log("waiting for verification result", sessionID)
+function checkForEmailVerification(sessionID) {
+  console.log("waiting for verify email result", sessionID)
   return new Promise((resolve, reject) => {
     let timeout;
 
-    eventEmitter.on(`otpVerification:${sessionID}`, (details) => {
+    eventEmitter.on(`verifyEmailOTP:${sessionID}`, (details) => {
       clearTimeout(timeout); 
-      console.log(`Value of key 'otpVerification:${sessionID}': ${details}`);
+      console.log(`Value of key verifyEmailOTP':${sessionID}': ${details}`);
       if (details.startsWith('error')) {
         reject(new Error(details));
       }
@@ -216,9 +211,9 @@ function checkForVerificationResult(sessionID) {
     });
 
     timeout = setTimeout(() => {
-      eventEmitter.removeAllListeners(`verificationResult:${sessionID}`);
-      reject(new Error(`Timeout waiting for verification result`));
-    }, 50000); 
+      eventEmitter.removeAllListeners(`verifyEmailOTP:${sessionID}`);
+      reject(new Error(`Timeout waiting for email verification result`));
+    }, 10000); 
   });
 }
 
@@ -287,7 +282,7 @@ function checkForRefreshedAccessToken(sessionID) {
 
 module.exports = {
   requestForRegistration,
-  requestForOtpVerification,
+  requestToVerifyEmail,
   requestForLogin,
   requestForAuthCode,
   requestForAccessToken,
@@ -295,7 +290,7 @@ module.exports = {
   checkForVerificationKey,
   checkForIdToken,
   checkForAuthCode,
-  checkForVerificationResult,
+  checkForEmailVerification,
   checkForAccessAndRefreshToken,
   checkForRefreshedAccessToken
 }

@@ -3,24 +3,21 @@ const { requestToRefreshToken, checkForRefreshedAccessToken } = require('../serv
 
 async function checkIdToken(req, res, next) {
   if (!req.session.idToken) {
-    return res.status(400).send('User is not authenticated');
+    return res.status(400).send({error: 'User is not authenticated'});
   }
   next();
 }
 
 async function checkCodeVerifier(req, res, next) {
   if (!req.session.codeVerifier) {
-    return res.status(400).send('Missing code verifier in session.');
+    return res.status(400).send({error: 'Missing code verifier in session.'});
   }
   next();
 }
 
 async function checkAuth(req, res, next) {
-  if (!req.sessionID) {
-    return res.status(400).send('Missing session ID.');
-  }
   if (!req.session.accessToken || !req.session.refreshToken || !req.session.privateKey || !req.session.publicKey) {
-    return res.status(401).send('Not authorized.');
+    return res.status(401).send({error: 'No tokens in session.'});
   }
 
   const { accessToken, refreshToken, privateKey, publicKey } = req.session;
@@ -38,7 +35,7 @@ async function checkAuth(req, res, next) {
 
     } catch (error) {
 
-      return res.status(401).send('Refresh token expired.');
+      return res.status(401).send({error: 'Refresh token expired.'});
 
     }
 
@@ -51,7 +48,7 @@ async function checkAuth(req, res, next) {
 
     } catch (error) {
         
-      return res.status(401).send('Error refreshing access token.');
+      return res.status(401).send({error: 'Error refreshing access token.'});
 
     }
     
