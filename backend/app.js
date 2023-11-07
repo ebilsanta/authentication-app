@@ -3,9 +3,7 @@ const express = require("express");
 const session = require("express-session");
 const RedisStore = require("connect-redis").default;
 const cors = require('cors');
-
 const { redisClient } = require("./src/services/redis");
-const cookieParser = require("cookie-parser");
 const app = express();
 const port = 3000;
 const hostedLoginRouter = require("./src/routes/hostedRoutes");
@@ -38,8 +36,6 @@ app.use(
   })
 );
 console.log('secure cookie and sameSite none')
-
-app.use(cookieParser((secret = process.env.SESSION_SECRET)));
 
 app.use(express.json());
 
