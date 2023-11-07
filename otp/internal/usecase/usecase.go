@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/aes"
 	"crypto/cipher"
+	"errors"
 	"encoding/base64"
 	"strings"
 	"time"
@@ -52,6 +53,9 @@ func Encode(details map[string]string) (string, error) {
 }
 
 func Decode(verification_key string) (map[string]string, error) {
+	if len(verification_key) == 0 || len(verification_key) % 4 != 0 {
+		return nil, errors.New("Invalid Base64 String")
+	}
 	crypt_password := os.Getenv("CRYPT_PASSWORD")
 	block, err := aes.NewCipher([]byte(crypt_password))
 	if err != nil {
@@ -66,6 +70,9 @@ func Decode(verification_key string) (map[string]string, error) {
 	plainText := make([]byte, len(cipherText))
 	cfb.XORKeyStream(plainText, cipherText)
 	details := strings.Split(string(plainText), "\n")
+	if len(details) != 4 {
+		return nil, errors.New("Verification Key did not contain the right details")
+	}
 	return map[string]string{"company": details[0], "expiration_date": details[1], "email": details[2], "otp": details[3]}, nil
 }
 

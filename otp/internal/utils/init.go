@@ -16,10 +16,12 @@ import (
 )
 
 func GetAWSCredentials() credentials.Credentials {
-	err := godotenv.Load("authentication.env")
+	err := godotenv.Load("otp.env")
     if err != nil {
 		role := os.Getenv("ROLE_ARN")
-		sess := session.Must(session.NewSession())
+		sess := session.Must(session.NewSession(&aws.Config{
+			Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
+		}))
 		creds := stscreds.NewCredentials(sess, role)
 
 		log.Println("Using role credentials")
@@ -30,20 +32,18 @@ func GetAWSCredentials() credentials.Credentials {
 }
 
 func ConnectDB() (db *dynamodb.DynamoDB) {
-	sess := session.Must(session.NewSession())
 	creds := GetAWSCredentials()
 
-	return dynamodb.New(sess, &aws.Config{
+	return dynamodb.New(session.Must(session.NewSession()), &aws.Config{
 		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
 		Credentials: &creds,
 	})
 }
 
 func ConnectSES() (s *ses.SES) {
-	sess := session.Must(session.NewSession())
 	creds := GetAWSCredentials()
 
-	return ses.New(sess, &aws.Config{
+	return ses.New(session.Must(session.NewSession()), &aws.Config{
 		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
 		Credentials: &creds,
 	})
