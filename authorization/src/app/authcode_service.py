@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 import jwt
+from app.jwks import update_authN_key
 from config import Settings
 from fastapi.responses import RedirectResponse
 from requests.models import PreparedRequest
@@ -17,7 +18,8 @@ class AuthCodeService:
 
         self.allowed_client = sets.allowed_client
         self.allowed_issuer = sets.allowed_issuer
-        self.pub_key = sets.pub_key.replace("\\n", "\n").replace("\\t", "\t")
+        self.pub_key = sets.pub_key.replace("\\n", "\n").replace("\\t", "\t") if sets.pub_key \
+            else update_authN_key().replace("\\n", "\n").replace("\\t", "\t")
         self.audience = sets.audience
         self.redirect = sets.allowed_redirect
 

@@ -1,5 +1,6 @@
 from typing import Union
 
+from app.jwks import update_authN_key
 from app.models import TokenRequest, RefreshRequest
 from app.process_reqs import process_authcode, process_token, process_refresh
 from app.sqs_service import SQS_Service
@@ -84,3 +85,8 @@ async def post_refresh(refresh_req: RefreshRequest):
 @repeat_every(seconds=1)
 async def pull_from_sqs():
     await sqss.poll_sqs()
+
+@app.on_event("startup")
+@repeat_every(seconds=10)
+async def update_authN_pub_key():
+    update_authN_key()

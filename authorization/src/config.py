@@ -13,6 +13,7 @@ class Settings(BaseSettings):
 
     pub_key: str
     pvt_key: str
+    pub_key_url: str
 
     audience: str
     authz_url: str
