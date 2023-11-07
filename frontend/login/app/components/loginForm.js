@@ -16,7 +16,7 @@ export default function LoginForm() {
         Sign In
       </button>
       <text className="block uppercase tracking-wide text-gray-400 text-xs mb-2 text-center pt-5">
-        Don't have an account? <Link href="/register" className="font-bold text-gray-500">Register</Link> instead
+        Don&apos;t have an account? <Link href="/register" className="font-bold text-gray-500">Register</Link> instead
       </text>
     </form>
   </div>;
