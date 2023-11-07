@@ -137,6 +137,48 @@ func handleMessage(message *sqs.Message) {
 			return
 		}
 		return
+	} else if path == "otp" {
+		response, err := client.NewOTP(context.Background(), &authentication.NewOTPRequest{
+			Company: data["company"],
+			Email: data["email"],
+		})
+		if err != nil {
+			log.Println("Error making gRPC request:", err)
+			return
+		}
+		input := map[string]string{
+			"message": response.Message,
+			"verification_key": response.VerificationKey,
+		}
+		err = ResponseMessage(input, callback, *message)
+		if err != nil {
+			log.Println("Error returning response:", err)
+			return
+		}
+		return
+	} else if path == "change-password" {
+		response, err := client.ChangePassword(context.Background(), &authentication.ChangePasswordRequest{
+			VerificationKey: data["verificationKey"],
+			Otp: data["otp"],
+			Company: data["company"],
+			Email: data["email"],
+			Password: data["password"],
+		})
+		if err != nil {
+			log.Println("Error making gRPC request:", err)
+			return
+		}
+		input := map[string]string{
+			"status": response.Status,
+			"details": response.Details,
+			"email": response.Email,
+		}
+		err = ResponseMessage(input, callback, *message)
+		if err != nil {
+			log.Println("Error returning response:", err)
+			return
+		}
+		return
 	} else {
 		log.Println("Invalid route!")
 		return
