@@ -66,6 +66,8 @@ type AuthenticationUsecase interface {
 	Register(company string, email string, first_name string, last_name string, birthdate string, password string) (string, string, error)
 	VerifyEmail(verification_key string, otp string, email string) (string, string, string, error)
 	Login(company string, email string, password string) (string, string, error)
+	NewOTP(company string, email string) (string, string, error)
+	ChangePassword(verification_key string, otp string, company string, email string, password string) (string, string, string, error)
 }
 
 type authenticationUsecase struct {
@@ -130,6 +132,7 @@ func (a *authenticationUsecase) VerifyEmail(verification_key string, otp string,
 	response, err := client.VerifyOTP(context.Background(), &otp_server.VerifyOTPRequest{VerificationKey: verification_key, Otp: otp, Email: email})
 	if err != nil {
 		log.Fatalf("Error when calling VerifyOTP: %s", err)
+		return "Failure", "Error verifying OTP", email, err
 	}
 	if response.Status == "Failure" {
 		return response.Status, response.Details, email, err
@@ -181,6 +184,69 @@ func (a *authenticationUsecase) Login(company string, email string, password str
 		return "Error generating ID Token", "", err
 	}
 	return "User verified", id_token, nil
+}
+
+func (a *authenticationUsecase) NewOTP(company string, email string) (string, string, error) {
+	credential, err := a.authenticationRepos.GetCredentialByEmail(company, email)
+	if err != nil {
+		log.Println("Error getting user: ", err)
+		return "Error getting user!", "", err
+	} else if credential == nil {
+		log.Println("User not registered")
+		return "You are not registered with us!", "", nil
+	}
+
+	conn, err := utils.ConnectOTPServer()
+	defer conn.Close()
+	if err != nil {
+		return "Could not Generate OTP", "", err
+	}
+
+	client := otp_server.NewOTPClient(conn)
+
+	response, err := client.GetOTP(context.Background(), &otp_server.OTPRequest{Company: company, Email: email})
+	if err != nil {
+		log.Fatalf("Error when calling GetOTP: %s", err)
+		return "Error sending OTP!", "", err
+	}
+
+	return "OTP Sent!", response.VerificationKey, nil
+}
+
+func (a *authenticationUsecase) ChangePassword(verification_key string, otp string, company string, email string, password string) (string, string, string, error) {
+	credential, err := a.authenticationRepos.GetCredentialByEmail(company, email)
+	if err != nil {
+		log.Println("Error getting user: ", err)
+		return "Failure", "Error getting user!", email, err
+	} else if credential == nil {
+		log.Println("User not registered")
+		return "Failure", "You are not registered with us!", email, nil
+	}
+
+	conn, err := utils.ConnectOTPServer()
+	defer conn.Close()
+	if err != nil {
+		return "Failure", "Could not Generate OTP", email, err
+	}
+
+	client := otp_server.NewOTPClient(conn)
+
+	response, err := client.VerifyOTP(context.Background(), &otp_server.VerifyOTPRequest{VerificationKey: verification_key, Otp: otp, Email: email})
+	if err != nil {
+		log.Fatalf("Error when calling VerifyOTP: %s", err)
+		return "Failure", "Error verifying OTP", email, err
+	}
+	if response.Status == "Failure" {
+		return response.Status, response.Details, email, err
+	}
+
+	_, err = a.authenticationRepos.UpdateUserPassword(response.Company, response.Email, password)
+
+	if err != nil {
+		return "Failure", "Error updating password", email, err
+	}
+
+	return "Success", "Password updated!", email, nil
 }
 
 func NewAuthenticationUsecase(a repository.AuthenticationRepository) AuthenticationUsecase {

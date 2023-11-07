@@ -39,8 +39,34 @@ message LoginResponse {
     string idToken = 2;
 }
 
+message NewOTPRequest {
+    string company = 1;
+    string email = 2;
+}
+
+message NewOTPResponse {
+    string message = 1;
+    string verificationKey = 2;
+}
+
+message ChangePasswordRequest {
+    string verificationKey = 1;
+    string otp = 2;
+    string company = 3;
+    string email = 4;
+    string password = 5;
+}
+
+message ChangePasswordResponse {
+    string status = 1;
+    string details = 2;
+    string email = 3;
+}
+
 service Authentication {
     rpc Register(RegisterRequest) returns (RegisterResponse);
     rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
     rpc Login(LoginRequest) returns (LoginResponse);
+    rpc NewOTP(NewOTPRequest) returns (NewOTPResponse);
+    rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
 }

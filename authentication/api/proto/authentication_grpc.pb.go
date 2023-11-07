@@ -19,9 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Authentication_Register_FullMethodName    = "/Authentication/Register"
-	Authentication_VerifyEmail_FullMethodName = "/Authentication/VerifyEmail"
-	Authentication_Login_FullMethodName       = "/Authentication/Login"
+	Authentication_Register_FullMethodName       = "/Authentication/Register"
+	Authentication_VerifyEmail_FullMethodName    = "/Authentication/VerifyEmail"
+	Authentication_Login_FullMethodName          = "/Authentication/Login"
+	Authentication_NewOTP_FullMethodName         = "/Authentication/NewOTP"
+	Authentication_ChangePassword_FullMethodName = "/Authentication/ChangePassword"
 )
 
 // AuthenticationClient is the client API for Authentication service.
@@ -31,6 +33,8 @@ type AuthenticationClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	NewOTP(ctx context.Context, in *NewOTPRequest, opts ...grpc.CallOption) (*NewOTPResponse, error)
+	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error)
 }
 
 type authenticationClient struct {
@@ -68,6 +72,24 @@ func (c *authenticationClient) Login(ctx context.Context, in *LoginRequest, opts
 	return out, nil
 }
 
+func (c *authenticationClient) NewOTP(ctx context.Context, in *NewOTPRequest, opts ...grpc.CallOption) (*NewOTPResponse, error) {
+	out := new(NewOTPResponse)
+	err := c.cc.Invoke(ctx, Authentication_NewOTP_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authenticationClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error) {
+	out := new(ChangePasswordResponse)
+	err := c.cc.Invoke(ctx, Authentication_ChangePassword_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthenticationServer is the server API for Authentication service.
 // All implementations must embed UnimplementedAuthenticationServer
 // for forward compatibility
@@ -75,6 +97,8 @@ type AuthenticationServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	NewOTP(context.Context, *NewOTPRequest) (*NewOTPResponse, error)
+	ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error)
 	mustEmbedUnimplementedAuthenticationServer()
 }
 
@@ -90,6 +114,12 @@ func (UnimplementedAuthenticationServer) VerifyEmail(context.Context, *VerifyEma
 }
 func (UnimplementedAuthenticationServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedAuthenticationServer) NewOTP(context.Context, *NewOTPRequest) (*NewOTPResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewOTP not implemented")
+}
+func (UnimplementedAuthenticationServer) ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
 }
 func (UnimplementedAuthenticationServer) mustEmbedUnimplementedAuthenticationServer() {}
 
@@ -158,6 +188,42 @@ func _Authentication_Login_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Authentication_NewOTP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewOTPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServer).NewOTP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Authentication_NewOTP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServer).NewOTP(ctx, req.(*NewOTPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Authentication_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServer).ChangePassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Authentication_ChangePassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServer).ChangePassword(ctx, req.(*ChangePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Authentication_ServiceDesc is the grpc.ServiceDesc for Authentication service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +242,14 @@ var Authentication_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _Authentication_Login_Handler,
+		},
+		{
+			MethodName: "NewOTP",
+			Handler:    _Authentication_NewOTP_Handler,
+		},
+		{
+			MethodName: "ChangePassword",
+			Handler:    _Authentication_ChangePassword_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

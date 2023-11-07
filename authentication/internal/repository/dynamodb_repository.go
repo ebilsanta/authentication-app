@@ -88,6 +88,7 @@ func (d *DynamoDBAuthenticationRepository) UpdateUserByEmail(company string, ema
 	output, err := d.DB.UpdateItem(input)
 	if err != nil {
 		log.Fatalf("Got error calling UpdateItem: %s", err)
+		return nil, err
 	}
 
 	var updated models.User
@@ -185,4 +186,40 @@ func (d *DynamoDBAuthenticationRepository) RegisterUser(company string, email st
 	}
 
 	return credential, nil
+}
+
+func (d *DynamoDBAuthenticationRepository) UpdateUserPassword(company string, email string, password string) (*models.Credential, error) {
+	input := &dynamodb.UpdateItemInput{
+		TableName: aws.String(os.Getenv("CREDENTIAL_TABLE")),
+		Key: map[string]*dynamodb.AttributeValue{
+			"company": {
+				S: aws.String(company),
+			},
+			"email": {
+				S: aws.String(email),
+			},
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":password": {
+				S: aws.String(password),
+			},
+		},
+		ReturnValues:     aws.String("UPDATED_NEW"),
+		UpdateExpression: aws.String("set password = :password"),
+	}
+	
+	output, err := d.DB.UpdateItem(input)
+	if err != nil {
+		log.Fatalf("Got error calling UpdateItem: %s", err)
+		return nil, err
+	}
+
+	var updated models.Credential
+
+	err = dynamodbattribute.UnmarshalMap(output.Attributes, &updated)
+	if err != nil {
+		log.Printf("Couldn't unmarshall update response. Here's why: %v\n", err)
+	}
+
+	return &updated, nil
 }

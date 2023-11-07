@@ -9,4 +9,5 @@ type AuthenticationRepository interface {
 	GetUserByEmail(company string, email string) (*models.User, error)
 	DeleteCredentialByEmail(company string, email string) (string, error)
 	RegisterUser(company string, email string, password string) (*models.Credential, error)
+	UpdateUserPassword(company string, email string, password string) (*models.Credential, error)
 }
