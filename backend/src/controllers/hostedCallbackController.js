@@ -13,7 +13,7 @@ async function register(req, res, next) {
     }
   } catch (error) {
     eventEmitter.emit(`verificationKey:${sessionID}`, `error: ${error}`);
-  }
+  } 
 
   res.send('Verification key received');
 }
@@ -57,12 +57,9 @@ async function login(req, res, next) {
 async function authCode(req, res, next) {
   try {
     const sessionID = req.params.sessionId;
-    console.log('auth code callback', req.body)
-    const response = req.body.response;
-    console.log("typeof response", typeof response)
-    const responseObj = JSON.parse(response);
-    console.log("responseObj", responseObj)
-    const location = responseObj.headers.location;
+    console.log('auth code callback req.body', req.body)
+    console.log("headers", req.body.headers)
+    const location = req.body.headers.location;
     let authCode;
     if (location) {
       const params = location.split('?')[1];
