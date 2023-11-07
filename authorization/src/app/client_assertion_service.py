@@ -2,6 +2,7 @@ import time
 from functools import lru_cache
 
 import jwt
+from app.jwks import update_client_pub_key
 from config import Settings
 
 
@@ -14,9 +15,7 @@ class ClientAssertionService:
     def __init__(self) -> None:
         sets = get_settings()
         self.client_id = sets.allowed_client
-        self.client_pub = sets.allowed_client_pub_key.replace("\\n", "\n").replace(
-            "\\t", "\t"
-        )
+        self.client_pub = (sets.allowed_client_pub_key if sets.allowed_client_pub_key else update_client_pub_key()).replace("\\n", "\n").replace("\\t", "\t")
         self.client_pvt = sets.allowed_client_pvt_key.replace("\\n", "\n").replace(
             "\\t", "\t"
         )
@@ -53,7 +52,7 @@ class ClientAssertionService:
         except jwt.InvalidTokenError as e:
             return "invalid_client", "Error verifying Client Assertion: " + str(e)
         except Exception as e:
-            return "Cannot verify CA" + str(e) + str(assertion)
+            return "Cannot verify CA" + str(e), str(assertion)
 
 
 def do_generate_client_assertion(client_id, audience, expiry, iat, client_pvt):

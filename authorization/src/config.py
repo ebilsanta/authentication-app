@@ -7,6 +7,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     allowed_client_pub_key: str
     allowed_client_pvt_key: str
+    allowed_client_pub_key_url: str
+
     allowed_client: str
     allowed_issuer: str
     allowed_redirect: str
@@ -18,8 +20,10 @@ class Settings(BaseSettings):
     audience: str
     authz_url: str
     authz_client_id: str
+
     authz_pvt_key: str
     authz_pub_key: str
+    authz_pub_key_url: str
 
     db_name: str
     db_collection_authcodes: str

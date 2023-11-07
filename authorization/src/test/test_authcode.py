@@ -61,9 +61,8 @@ async def test_authcode_ok():
             "id_jwt": testing_jwt,
             "code_challenge_method": "S256",
         }
-        # print(code_verifier)
-        # print(json.dumps(params))
-        print('|', private_key, '|')
+        print(code_verifier)
+        print(json.dumps(params))
 
         response = client.post(build_url("/authcode", params), follow_redirects=False)
 

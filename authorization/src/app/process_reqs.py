@@ -11,6 +11,7 @@ from app.client_assertion_service import ClientAssertionService
 from app.database import AuthCodeRecord, Database
 from app.dpop_service import DpopService
 from app.pkce import generate_pkce_code_challenge
+from app.jwks import update_authZ_key
 from config import Settings
 from fastapi import status
 from fastapi.encoders import jsonable_encoder
@@ -141,7 +142,7 @@ async def process_token(
         "iss": sets.audience,
         "exp": now + 3600,
         "iat": now,
-        "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
+        "cnf.jkt": base64.b64encode(hashlib.sha256(base64.b64decode(jwk)).digest()).decode(),
     }
     access_token = jwt.encode(
         payload,
@@ -155,7 +156,7 @@ async def process_token(
         "iss": sets.audience,
         "exp": now + 86400,
         "iat": now,
-        "cnf.jkt": base64.b64encode(hashlib.sha256(jwk).digest()).decode(),
+        "cnf.jkt": base64.b64encode(hashlib.sha256(base64.b64decode(jwk)).digest()).decode(),
     }
 
     refresh_token = jwt.encode(
@@ -207,7 +208,7 @@ async def process_refresh(grant_type, dpop, refresh_token):
     if grant_type != "authorization_code":
         return respond("unsupported grant type")
 
-    err, jwk = dps.verify_dpop(dpop, at=refresh_token)
+    jwk, err = dps.verify_dpop(dpop, at=refresh_token)
 
     if err:
         print(err)
@@ -215,12 +216,11 @@ async def process_refresh(grant_type, dpop, refresh_token):
 
     decoded_ref = jwt.decode(
         refresh_token,
-        get_settings().authz_pub_key.replace("\\n", "\n").replace("\\t", "\t"),
+        (get_settings().authz_pub_key if get_settings().authz_pub_key else update_authZ_key()).replace("\\n", "\n").replace("\\t", "\t"),
         algorithms=["RS256"],
     )
 
     sets = get_settings()
-
     now = int(time.time())
     payload = {
         "sub": decoded_ref["sub"],
@@ -230,7 +230,7 @@ async def process_refresh(grant_type, dpop, refresh_token):
         "cnf.jkt": base64.b64encode(
             hashlib.sha256(
                 jwk.encode("ascii")
-            ).digest()  # Confirm this is ok, compared to access token's impl
+            ).digest() 
         ).decode(),
     }
     access_token = jwt.encode(

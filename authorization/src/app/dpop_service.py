@@ -3,6 +3,7 @@ import hashlib
 import json
 import time
 import uuid
+from app.jwks import update_authZ_key
 from functools import lru_cache
 
 import jwt
@@ -58,8 +59,8 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
         uvh = jwt.get_unverified_header(dpop_jwt)
         if uvh["alg"] != "RS256":
             return None, "Invalid algorithm"
-        jwk = base64.b64decode(uvh["jwk"])
-        decoded = jwt.decode(dpop_jwt, jwk, algorithms=["RS256"])
+        jwk = uvh["jwk"]
+        decoded = jwt.decode(dpop_jwt, base64.b64decode(jwk), algorithms=["RS256"])
 
         if uvh["typ"] != "dpop+jwt":
             return None, "Invalid token type"
@@ -81,12 +82,12 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
         if at:
             decoded_at = jwt.decode(
                 at,
-                get_settings().authz_pub_key.replace("\\n", "\n").replace("\\t", "\t"),
+                (get_settings().authz_pub_key if get_settings().authz_pub_key else update_authZ_key()).replace("\\n", "\n").replace("\\t", "\t"),
                 algorithms=["RS256"],
             )
             if (
                 decoded_at["cnf.jkt"]
-                != base64.b64encode(hashlib.sha256(jwk).digest()).decode()
+                != base64.b64encode(hashlib.sha256(base64.b64decode(jwk)).digest()).decode()
             ):
                 return None, "dPoP and JWT mismatch"
 
