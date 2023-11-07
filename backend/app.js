@@ -37,6 +37,7 @@ app.use(
     }
   })
 );
+console.log('secure cookie and sameSite none')
 
 app.use(cookieParser((secret = process.env.SESSION_SECRET)));
 
