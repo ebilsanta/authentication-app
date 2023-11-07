@@ -44,7 +44,6 @@ class AuthCodeService:
 
     def verify_jwt(self, id_jwt):
         try:
-            print('|', self.pub_key, '|')
             decoded = jwt.decode(
                 id_jwt, self.pub_key, algorithms=["RS256"], audience=self.audience
             )
