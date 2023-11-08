@@ -31,6 +31,8 @@ app.use(
   })
 );
 
+app.set("trust proxy", 1);
+
 const cookieSettings = {
   sameSite: "none",
   secure: true,
@@ -45,6 +47,7 @@ app.use(
     resave: false,
     saveUninitialized: true,
     cookie: cookieSettings,
+    proxy: true
   })
 );
 console.log("cookie settings, ", cookieSettings);
