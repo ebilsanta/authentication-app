@@ -17,7 +17,7 @@ let redisStore = new RedisStore({
 });
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://localhost:3000', 'https://localhost:3001', process.env.FRONTEND_URL ],
   credentials: true
 }));
 
@@ -35,7 +35,12 @@ app.use(
     }
   })
 );
-console.log('secure cookie and sameSite none')
+console.log("cookie settings, ", {
+  sameSite: "none",
+  secure: true,
+  maxAge: oneDay,
+  httpOnly: true,
+})
 
 app.use(express.json());
 
