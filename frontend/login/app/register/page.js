@@ -1,3 +1,5 @@
+"use client"
+
 import Hero from "../components/hero";
 import RegisterForm from "../components/registerForm";
 

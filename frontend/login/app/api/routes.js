@@ -1,8 +1,11 @@
+'use client'
+
 import 'dotenv/config'
 
-const baseURL = process.env.BASE_URL
+// const baseURL = process.env.REACT_APP_BASE_URL
+const baseURL = "https://client.itsag2t1.com/api/"
 
-async function register(company = "ascenda", email, first_name, last_name, birthdate, password) {
+async function register(router, email, first_name, last_name, birthdate, password, company = "ascenda") {
     const res = await fetch(baseURL + "hosted/register", {
         method: "POST",
         headers : {
@@ -18,12 +21,17 @@ async function register(company = "ascenda", email, first_name, last_name, birth
             password: password
         })
     })
-    const res_json = await res.json()
-    console.log(res_json)
-    return res_json
+    const data = await res.json()
+    if (res.status != 201) {
+        console.log(data)
+        return null
+    }
+    console.log(data)
+    // return { props: { data } }
+    router.push("/otp")
 }
 
-async function verifyEmail(otp) {
+async function verifyEmail(router, otp) {
     const res = await fetch(baseURL + "hosted/verify-email", {
         method: "POST",
         headers : {
@@ -34,12 +42,17 @@ async function verifyEmail(otp) {
             otp: otp
         })
     })
-    const res_json = await res.json()
-    console.log(res_json)
-    return res_json
+    const data = await res.json()
+    if (res.status != 200) {
+        console.log(data)
+        return
+    }
+    console.log(data)
+    // return { props: { data } }
+    router.push("/login")
 }
 
-async function login(otp) {
+async function login(router, email, password, company = "ascenda") {
     const res = await fetch(baseURL + "hosted/login", {
         method: "POST",
         headers : {
@@ -47,10 +60,20 @@ async function login(otp) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            otp: otp
+            company: company,
+            email: email,
+            password: password
         })
     })
-    const res_json = await res.json()
-    console.log(res_json)
-    return res_json
+
+    const data = await res.json()
+    console.log(data)
+    if (res.status === 200) {
+      router.push("/home")
+    } else {
+        console.log("Login Failed")
+      return
+    }
 }
+
+export { register, verifyEmail, login }
