@@ -2,13 +2,9 @@ const {
   requestForAuthCode,
   requestForAccessToken,
   requestForLogin,
-  checkForAuthCode,
-  checkForVerificationKey,
-  checkForIdToken,
-  checkForAccessAndRefreshToken,
-  checkForEmailVerification,
   requestForRegistration,
   requestToVerifyEmail,
+  waitForEvent,
 } = require("../services/hostedServices");
 const { validationResult } = require("express-validator");
 
@@ -22,12 +18,12 @@ async function register(req, res, next) {
   try {
     const response = await requestForRegistration(jsonRequest, sessionID);
 
-    const verificationKey = await checkForVerificationKey(sessionID);
+    const verificationKey = await waitForEvent("verificationKey", sessionID);
 
     req.session.verificationKey = verificationKey;
     req.session.email = jsonRequest.email;
 
-    res.json({message: "Successful Registration"});
+    res.json({ message: "Successful Registration" });
   } catch (error) {
     let message = error.message;
     if (message.includes(":")) {
@@ -53,9 +49,9 @@ async function verifyEmail(req, res, next) {
       sessionID
     );
 
-    const verificationResult = await checkForEmailVerification(sessionID);
+    const verificationResult = await waitForEvent("verifyEmailOTP", sessionID);
 
-    res.json({message: verificationResult});
+    res.json({ message: verificationResult });
   } catch (error) {
     let message = error.message;
     if (message.includes(":")) {
@@ -68,7 +64,7 @@ async function verifyEmail(req, res, next) {
 async function login(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).send({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() });
   }
 
   const sessionID = req.sessionID;
@@ -78,7 +74,7 @@ async function login(req, res, next) {
   try {
     const response = await requestForLogin(jsonRequest, sessionID);
 
-    const idToken = await checkForIdToken(sessionID);
+    const idToken = await waitForEvent("idToken", sessionID);
 
     req.session.idToken = idToken;
 
@@ -101,8 +97,7 @@ async function authorize(req, res, next) {
     const codeVerifier = await requestForAuthCode(identityJwt, sessionID);
 
     req.session.codeVerifier = codeVerifier;
-
-    const authCode = await checkForAuthCode(sessionID);
+    const authCode = await waitForEvent("authCode", sessionID);
 
     res.redirect(process.env.CLIENT_HOSTED_URL + "token?code=" + authCode);
   } catch (error) {
@@ -128,9 +123,8 @@ async function token(req, res, next) {
     req.session.publicKey = ephemeralKeyPair.publicKey;
     req.session.privateKey = ephemeralKeyPair.privateKey;
 
-    const accessAndRefreshTokens = await checkForAccessAndRefreshToken(
-      sessionID
-    );
+    const accessAndRefreshTokens = await waitForEvent("accessToken", sessionID);
+
     const { accessToken, refreshToken } = JSON.parse(accessAndRefreshTokens);
     req.session.accessToken = accessToken;
     req.session.refreshToken = refreshToken;

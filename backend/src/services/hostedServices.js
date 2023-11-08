@@ -156,132 +156,27 @@ async function requestToRefreshToken(refreshToken, publicKey, privateKey, sessio
   }
 }
 
-
-function checkForAuthCode(sessionID) {
-  console.log("waiting for auth code", sessionID)
+function waitForEvent(key, sessionID) {
+  console.log(`waiting for ${key}`, sessionID)
   return new Promise((resolve, reject) => {
     let timeout;
 
-    eventEmitter.on(`authCode:${sessionID}`, (authCode) => {
+    eventEmitter.on(`${key}:${sessionID}`, (message) => {
       clearTimeout(timeout); 
-      console.log(`Value of key 'authCode:${sessionID}': ${authCode}`);
-      if (authCode.startsWith('error')) {
-        reject(new Error(authCode));
+      console.log(`Value of key '${key}:${sessionID}': ${message}`);
+      if (message.startsWith('error')) {
+        reject(new Error(message));
       }
-      resolve(authCode);
+      resolve(message);
     });
 
     timeout = setTimeout(() => {
-      eventEmitter.removeAllListeners(`authCode:${sessionID}`);
-      reject(new Error(`Timeout waiting for auth code`));
-    }, 50000); 
+      eventEmitter.removeAllListeners(`${key}:${sessionID}`);
+      reject(new Error(`Timeout waiting for ${key}`));
+    }, 15000); 
   });
 }
 
-function checkForVerificationKey(sessionID) {
-  console.log("waiting for verification key", sessionID)
-  return new Promise((resolve, reject) => {
-    let timeout;
-
-    eventEmitter.on(`verificationKey:${sessionID}`, (authCode) => {
-      clearTimeout(timeout); 
-      console.log(`Value of key 'verificationKey:${sessionID}': ${authCode}`);
-      if (authCode.startsWith('error')) {
-        reject(new Error(authCode));
-      }
-      resolve(authCode);
-    });
-
-    timeout = setTimeout(() => {
-      eventEmitter.removeAllListeners(`verificationKey:${sessionID}`);
-      reject(new Error(`Timeout waiting for verification key`));
-    }, 50000); 
-  });
-}
-
-function checkForEmailVerification(sessionID) {
-  console.log("waiting for verify email result", sessionID)
-  return new Promise((resolve, reject) => {
-    let timeout;
-
-    eventEmitter.on(`verifyEmailOTP:${sessionID}`, (details) => {
-      clearTimeout(timeout); 
-      console.log(`Value of key verifyEmailOTP':${sessionID}': ${details}`);
-      if (details.startsWith('error')) {
-        reject(new Error(details));
-      }
-      resolve(details);
-    });
-
-    timeout = setTimeout(() => {
-      eventEmitter.removeAllListeners(`verifyEmailOTP:${sessionID}`);
-      reject(new Error(`Timeout waiting for email verification result`));
-    }, 50000); 
-  });
-}
-
-function checkForIdToken(sessionID) {
-  console.log("waiting for id token", sessionID)
-  return new Promise((resolve, reject) => {
-    let timeout;
-
-    eventEmitter.on(`idToken:${sessionID}`, (details) => {
-      clearTimeout(timeout); 
-      console.log(`Value of key 'idToken:${sessionID}': ${details}`);
-      if (details.startsWith('error')) {
-        reject(new Error(details));
-      }
-      resolve(details);
-    });
-
-    timeout = setTimeout(() => {
-      eventEmitter.removeAllListeners(`loginResult:${sessionID}`);
-      reject(new Error(`Timeout waiting for login result`));
-    }, 50000); 
-  });
-}
-
-function checkForAccessAndRefreshToken(sessionID) {
-  console.log("waiting for access and refresh token", sessionID)
-  return new Promise((resolve, reject) => {
-    let timeout;
-
-    eventEmitter.on(`accessToken:${sessionID}`, (details) => {
-      clearTimeout(timeout); 
-      console.log(`Value of key 'accessToken:${sessionID}': ${details}`);
-      if (details.startsWith('error')) {
-        reject(new Error(details));
-      }
-      resolve(details);
-    });
-
-    timeout = setTimeout(() => {
-      eventEmitter.removeAllListeners(`accessToken:${sessionID}`);
-      reject(new Error(`Timeout waiting for access token`));
-    }, 50000); 
-  });
-}
-
-function checkForRefreshedAccessToken(sessionID) {
-  console.log("waiting for refreshed access token", sessionID)
-  return new Promise((resolve, reject) => {
-    let timeout;
-
-    eventEmitter.on(`refresh:${sessionID}`, (details) => {
-      clearTimeout(timeout); 
-      console.log(`Value of key 'refresh:${sessionID}': ${details}`);
-      if (details.startsWith('error')) {
-        reject(new Error(details));
-      }
-      resolve(details);
-    });
-
-    timeout = setTimeout(() => {
-      eventEmitter.removeAllListeners(`refresh:${sessionID}`);
-      reject(new Error(`Timeout waiting for refreshed access token`));
-    }, 50000); 
-  });
-}
 
 module.exports = {
   requestForRegistration,
@@ -290,10 +185,5 @@ module.exports = {
   requestForAuthCode,
   requestForAccessToken,
   requestToRefreshToken,
-  checkForVerificationKey,
-  checkForIdToken,
-  checkForAuthCode,
-  checkForEmailVerification,
-  checkForAccessAndRefreshToken,
-  checkForRefreshedAccessToken
+  waitForEvent,
 }
