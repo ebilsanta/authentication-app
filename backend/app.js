@@ -7,6 +7,7 @@ const { redisClient } = require("./src/services/redis");
 const app = express();
 const port = 3000;
 const hostedLoginRouter = require("./src/routes/hostedRoutes");
+const hostedCallbackRouter = require("./src/routes/hostedCallbackRoutes");
 const bankSSORouter = require("./src/routes/bankSSORoutes");
 
 const oneDay = 1000 * 60 * 60 * 24;
@@ -55,6 +56,7 @@ console.log("cookie settings, ", cookieSettings);
 app.use(express.json());
 
 app.use("/api/hosted", hostedLoginRouter);
+app.use("/api/hosted/callback", hostedCallbackRouter);
 app.use("/api/bankSSO", bankSSORouter);
 
 app.listen(port, () => {

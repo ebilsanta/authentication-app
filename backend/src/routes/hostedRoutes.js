@@ -1,9 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const hostedController = require("../controllers/hostedController");
-const callbackController = require("../controllers/hostedCallbackController");
 const {
-  getAuthHeaders, checkIdToken, checkAuth, checkEmailAndVerificationKey, checkCodeVerifierAndAuthCode
+  checkIdToken, checkAuth, checkEmailAndVerificationKey, checkCodeVerifierAndAuthCode
 } = require("../middlewares/hostedMiddleware");
 const { registrationValidator, loginValidator, verifyEmailValidator } = require("../validators/hostedValidators");
 
@@ -24,17 +23,5 @@ router.get("/token", checkCodeVerifierAndAuthCode, hostedController.token);
 
 router.get("/user", checkAuth, hostedController.user);
 
-
-router.post("/callback/register/:sessionId", callbackController.register);
-
-router.post("/callback/verify-email/:sessionId", callbackController.verifyEmail);
-
-router.post("/callback/login/:sessionId", callbackController.login);
-
-router.post("/callback/authcode/:sessionId", callbackController.authCode);
-
-router.post("/callback/token/:sessionId", callbackController.token);
-
-router.post("/callback/refresh/:sessionId", callbackController.refresh)
-
 module.exports = router;
+
