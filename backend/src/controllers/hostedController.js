@@ -4,6 +4,8 @@ const {
   requestForLogin,
   requestForRegistration,
   requestToVerifyEmail,
+  requestForOtp,
+  requestToChangePassword,
   waitForEvent,
 } = require("../services/hostedServices");
 const { validationResult } = require("express-validator");
@@ -147,6 +149,64 @@ async function user(req, res, next) {
   res.json({ email });
 }
 
+async function otp(req, res, next) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).send({ errors: errors.array() });
+  }
+  const { company, email } = req.body;
+  const sessionID = req.sessionID;
+  try {
+    const response = await requestForOtp(company, email, sessionID);
+
+    const verificationKey = await waitForEvent("verificationKey", sessionID);
+
+    req.session.verificationKey = verificationKey;
+    req.session.email = email;
+
+    res.json({ message: "OTP Sent!" });
+  } catch (error) {
+    let message = error.message;
+    if (message.includes(":")) {
+      message = message.split(":")[1].trim();
+    }
+    res.status(500).json({ error: message });
+  }
+}
+
+async function changePassword(req, res, next) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).send({ errors: errors.array() });
+  }
+  const { password, otp } = req.body;
+  const sessionID = req.sessionID;
+  const email = req.session.email;
+  const verificationKey = req.session.verificationKey;
+  try {
+    const response = await requestToChangePassword(
+      verificationKey,
+      email,
+      otp,
+      password,
+      sessionID
+    );
+
+    const changePasswordResult = await waitForEvent(
+      "changePassword",
+      sessionID
+    );
+
+    res.json({ message: "Change password successfully" });
+  } catch (error) {
+    let message = error.message;
+    if (message.includes(":")) {
+      message = message.split(":")[1].trim();
+    }
+    res.status(500).json({ error: message });
+  }
+}
+
 module.exports = {
   verifyEmail,
   register,
@@ -154,4 +214,6 @@ module.exports = {
   authorize,
   token,
   user,
+  otp,
+  changePassword,
 };

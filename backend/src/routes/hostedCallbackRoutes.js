@@ -14,4 +14,8 @@ router.post("/token/:sessionId", callbackController.token);
 
 router.post("/refresh/:sessionId", callbackController.refresh);
 
+router.post("/otp/:sessionId", callbackController.otp);
+
+router.post("/change-password/:sessionId", callbackController.changePassword);
+
 module.exports = router;

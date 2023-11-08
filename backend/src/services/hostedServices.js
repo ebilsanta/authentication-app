@@ -156,6 +156,46 @@ async function requestToRefreshToken(refreshToken, publicKey, privateKey, sessio
   }
 }
 
+async function requestForOtp(company, email, sessionID) {
+  try {
+    const data = {
+      company,
+      email,
+      callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "otp/" + sessionID,
+    }
+    const response = await axios({
+      url: process.env.API_URL + 'otp',
+      method: 'post',
+      data: data
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error requesting for otp from auth server:', error);
+    throw new Error('Error requesting for otp from auth server: ' + error.message);
+  }
+}
+
+async function requestToChangePassword(verificationKey, email, otp, password, sessionID) {
+  try {
+    const data = {
+      verificationKey,
+      otp,
+      email,
+      password,
+      callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "change-password/" + sessionID,
+    }
+    const response = await axios({
+      url: process.env.API_URL + 'change-password',
+      method: 'post',
+      data: data
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error requesting to change password:', error);
+    throw new Error('Error requesting to change password: ' + error.message);
+  }
+}
+
 function waitForEvent(key, sessionID) {
   console.log(`waiting for ${key}`, sessionID)
   return new Promise((resolve, reject) => {
@@ -185,5 +225,7 @@ module.exports = {
   requestForAuthCode,
   requestForAccessToken,
   requestToRefreshToken,
+  requestForOtp, 
+  requestToChangePassword,
   waitForEvent,
 }

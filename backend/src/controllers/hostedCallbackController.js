@@ -1,9 +1,9 @@
 const { eventEmitter } = require("../services/eventEmitter");
 
 async function register(req, res, next) {
+  const sessionID = req.params.sessionId;
   try {
     const { email, message, verification_key } = req.body;
-    const sessionID = req.params.sessionId;
     console.log("register callback", req.body);
     if (message === "Successfully Registered!") {
       console.log("received verification key", verification_key);
@@ -19,9 +19,9 @@ async function register(req, res, next) {
 }
 
 async function verifyEmail(req, res, next) {
+  const sessionID = req.params.sessionId;
   try {
     const { details, email, status } = req.body;
-    const sessionID = req.params.sessionId;
     console.log("verify email callback", req.body);
     if (status === "Success") {
       console.log("received successful email verification");
@@ -37,10 +37,10 @@ async function verifyEmail(req, res, next) {
 }
 
 async function login(req, res, next) {
+  const sessionID = req.params.sessionId;
   try {
     const { status, idToken } = req.body;
     console.log("login callback", req.body);
-    const sessionID = req.params.sessionId;
     if (status === "User verified") {
       console.log("received id token", idToken);
       eventEmitter.emit(`idToken:${sessionID}`, idToken);
@@ -55,16 +55,16 @@ async function login(req, res, next) {
 }
 
 async function authCode(req, res, next) {
+  const sessionID = req.params.sessionId;
   try {
-    const sessionID = req.params.sessionId;
     console.log("auth code callback req.body", req.body);
     const response = JSON.parse(req.body.response);
     const location = response.headers.location;
-    console.log("location, ", location)
+    console.log("location, ", location);
     let authCode;
     if (location) {
       const params = location.split("?")[1];
-      console.log("params ", params)
+      console.log("params ", params);
       if (params.startsWith("code")) {
         authCode = location.split("=")[1].split('"')[0];
         console.log("received authCode", authCode);
@@ -86,8 +86,8 @@ async function authCode(req, res, next) {
 }
 
 async function token(req, res, next) {
+  const sessionId = req.params.sessionId;
   try {
-    const sessionId = req.params.sessionId;
     const response = req.body.response;
     const responseObj = JSON.parse(response);
     const body = responseObj.body;
@@ -108,15 +108,15 @@ async function token(req, res, next) {
       );
     }
   } catch (error) {
-    console.log("error", error);
+    eventEmitter.emit(`accessToken:${sessionId}`, `error: ${error}`);
   }
 
   res.json({ message: "Token received" });
 }
 
 async function refresh(req, res, next) {
+  const sessionId = req.params.sessionId;
   try {
-    const sessionId = req.params.sessionId;
     console.log("refresh callback", req.body);
     const response = req.body.response;
     const responseObj = JSON.parse(response);
@@ -135,6 +135,40 @@ async function refresh(req, res, next) {
   res.json({ message: "Token received" });
 }
 
+async function otp(req, res, next) {
+  const sessionID = req.params.sessionId;
+  try {
+    const { message, verification_key } = req.body;
+    console.log("otp callback", req.body);
+    if (message === "OTP Sent!") {
+      console.log("received otp verification key", verification_key);
+      eventEmitter.emit(`verificationKey:${sessionID}`, verification_key);
+    } else {
+      eventEmitter.emit(`verificationKey:${sessionID}`, `error: ${message}`);
+    }
+  } catch (error) {
+    eventEmitter.emit(`verificationKey:${sessionID}`, `error: ${error}`);
+  }
+  res.json({ message: "Verification key received" });
+}
+
+async function changePassword(req, res, next) {
+  const sessionID = req.params.sessionId;
+  try {
+    const { status, details, email } = req.body;
+    console.log("change password callback", req.body);
+    if (status !== "Success") {
+      eventEmitter.emit(`changePassword:${sessionID}`, `error: ${details}`);
+    } else {
+      console.log("received change password response: ", status);
+      eventEmitter.emit(`changePassword:${sessionID}`, status);
+    }
+  } catch (error) {
+    eventEmitter.emit(`changePassword:${sessionID}`, `error: Error changing password`);
+  }
+  res.json({ message: "Change password response received" });
+}
+
 module.exports = {
   register,
   verifyEmail,
@@ -142,4 +176,6 @@ module.exports = {
   authCode,
   token,
   refresh,
+  otp,
+  changePassword
 };
