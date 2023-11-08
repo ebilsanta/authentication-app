@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const RedisStore = require("connect-redis").default;
-const cors = require('cors');
+const cors = require("cors");
 const { redisClient } = require("./src/services/redis");
 const app = express();
 const port = 3000;
@@ -16,10 +16,27 @@ let redisStore = new RedisStore({
   prefix: "session:",
 });
 
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://localhost:3000', 'https://localhost:3001', process.env.FRONTEND_URL ],
-  credentials: true
-}));
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://localhost:3000",
+  "https://localhost:3001",
+  process.env.FRONTEND_URL,
+];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+
+const cookieSettings = {
+  sameSite: "none",
+  secure: true,
+  maxAge: oneDay,
+  httpOnly: true,
+};
 
 app.use(
   session({
@@ -27,20 +44,10 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: {
-      sameSite: "none",
-      secure: true,
-      maxAge: oneDay,
-      httpOnly: true,
-    }
+    cookie: cookieSettings,
   })
 );
-console.log("cookie settings, ", {
-  sameSite: "none",
-  secure: true,
-  maxAge: oneDay,
-  httpOnly: true,
-})
+console.log("cookie settings, ", cookieSettings);
 
 app.use(express.json());
 
