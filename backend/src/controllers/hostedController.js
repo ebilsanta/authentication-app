@@ -27,7 +27,7 @@ async function register(req, res, next) {
     req.session.verificationKey = verificationKey;
     req.session.email = jsonRequest.email;
 
-    res.send("Successful Registration");
+    res.json({message: "Successful Registration"});
   } catch (error) {
     let message = error.message;
     if (message.includes(":")) {
@@ -55,13 +55,13 @@ async function verifyEmail(req, res, next) {
 
     const verificationResult = await checkForEmailVerification(sessionID);
 
-    res.send(verificationResult);
+    res.json({message: verificationResult});
   } catch (error) {
     let message = error.message;
     if (message.includes(":")) {
       message = message.split(":")[1].trim();
     }
-    res.status(500).send({ error: message });
+    res.status(500).json({ error: message });
   }
 }
 
@@ -88,7 +88,7 @@ async function login(req, res, next) {
     if (message.includes(":")) {
       message = message.split(":")[1].trim();
     }
-    res.status(500).send({ error: message });
+    res.status(500).json({ error: message });
   }
 }
 
@@ -110,7 +110,7 @@ async function authorize(req, res, next) {
     if (message.includes(":")) {
       message = message.split(":")[1].trim();
     }
-    res.status(500).send({ error: message });
+    res.status(500).json({ error: message });
   }
 }
 
@@ -141,7 +141,7 @@ async function token(req, res, next) {
     if (message.includes(":")) {
       message = message.split(":")[1].trim();
     }
-    res.status(500).send({ error: message });
+    res.status(500).json({ error: message });
   }
 }
 
@@ -150,7 +150,7 @@ async function user(req, res, next) {
   const accessToken = req.session.accessToken;
   const email = req.session.email;
 
-  res.send({ email });
+  res.json({ email });
 }
 
 module.exports = {
