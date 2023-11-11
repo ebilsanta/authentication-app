@@ -64,6 +64,7 @@ class SQS_Service:
                 QueueUrl=self.queue_url,
                 AttributeNames=["All"],
                 MaxNumberOfMessages=10,
+                WaitTimeSeconds=20,
                 MessageAttributeNames=["All"],
             ).get("Messages", [])
         except Exception as e:
