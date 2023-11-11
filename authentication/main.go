@@ -156,10 +156,29 @@ func handleMessage(message *sqs.Message) {
 			return
 		}
 		return
-	} else if path == "change-password" {
-		response, err := client.ChangePassword(context.Background(), &authentication.ChangePasswordRequest{
+	} else if path == "valid-token" {
+		response, err := client.ValidToken(context.Background(), &authentication.ValidTokenRequest{
 			VerificationKey: data["verificationKey"],
 			Otp: data["otp"],
+			Email: data["email"],
+		})
+		if err != nil {
+			log.Println("Error making gRPC request:", err)
+			return
+		}
+		input := map[string]string{
+			"message": response.Message,
+			"token": response.Token,
+		}
+		err = ResponseMessage(input, callback, *message)
+		if err != nil {
+			log.Println("Error returning response:", err)
+			return
+		}
+		return
+	} else if path == "change-password" {
+		response, err := client.ChangePassword(context.Background(), &authentication.ChangePasswordRequest{
+			Token: data["token"],
 			Company: data["company"],
 			Email: data["email"],
 			Password: data["password"],
