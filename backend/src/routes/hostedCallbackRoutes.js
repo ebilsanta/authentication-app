@@ -16,7 +16,7 @@ router.post("/refresh/:sessionId", callbackController.refresh);
 
 router.post("/otp/:sessionId", callbackController.otp);
 
-router.post("/valid-token/sessionId", callbackController.validToken);
+router.post("/valid-token/:sessionId", callbackController.validToken);
 
 router.post("/change-password/:sessionId", callbackController.changePassword);
 

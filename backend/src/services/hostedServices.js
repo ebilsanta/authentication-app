@@ -175,15 +175,16 @@ async function requestForOtp(company, email, sessionID) {
   }
 }
 
-async function requestToVerifyOtp(otp, company, email, verificationKey, sessionID) {
+async function requestToVerifyOtp(otp, email, verificationKey, sessionID) {
   try {
     const data = {
       otp,
-      company,
       email,
       verificationKey,
       callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "valid-token/" + sessionID,
     }
+    console.log("verify OTP data", data);
+    console.log("api url", process.env.API_URL + "valid-token")
     const response = await axios({
       url: process.env.API_URL + 'valid-token',
       method: 'post',
@@ -264,6 +265,7 @@ module.exports = {
   requestForOtp, 
   requestToChangePassword,
   requestToVerifyOtp,
+  requestForUserData,
   formatError, 
   waitForEvent,
 }

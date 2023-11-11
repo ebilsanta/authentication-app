@@ -7,6 +7,7 @@ const {
   requestForOtp,
   requestToVerifyOtp,
   requestToChangePassword,
+  requestForUserData,
   waitForEvent,
   formatError,
 } = require("../services/hostedServices");
@@ -128,8 +129,16 @@ async function user(req, res, next) {
   const sessionID = req.sessionID;
   const accessToken = req.session.accessToken;
   const email = req.session.email;
+  const publicKey = req.session.publicKey;
+  const privateKey = req.session.privateKey;
+  const ephemeralKeyPair = { publicKey, privateKey };
+  try {
+    const userData = await requestForUserData(ephemeralKeyPair, accessToken, sessionID);
 
-  res.json({ email });
+    res.json({ userData });
+  } catch (error) {
+    res.status(500).send({ error: formatError(error) });
+  }
 }
 
 async function requestOtp(req, res, next) {
@@ -160,13 +169,12 @@ async function verifyOtp(req, res, next) {
     return res.status(400).send({ errors: errors.array() });
   }
   const { otp } = req.body;
-  const { company, email, verificationKey } = req.session;
+  const { email, verificationKey } = req.session;
   const sessionID = req.sessionID;
 
   try {
     const response = await requestToVerifyOtp(
       otp,
-      company,
       email,
       verificationKey,
       sessionID
