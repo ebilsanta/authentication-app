@@ -192,12 +192,12 @@ func ResponseMessage(input map[string]string, callback string, message sqs.Messa
 	_, err := url.ParseRequestURI(callback)
 	if err != nil {
 		log.Println("Error with callback URL: ", err)
-		return err
+		return nil
 	}
 	resp, err := http.Post(callback, "application/json", responseBody)
 	if err != nil {
 		log.Println("An Error Occured: ", err)
-		return err
+		return nil
 	}
 	defer resp.Body.Close()
 	// body, err := ioutil.ReadAll(resp.Body)
@@ -214,7 +214,7 @@ func ResponseMessage(input map[string]string, callback string, message sqs.Messa
 	_, err = queue.DeleteMessage(deleteParams)
 	if err != nil {
 		log.Println(err)
-		return err
+		return nil
 	}
 	return nil
 }
