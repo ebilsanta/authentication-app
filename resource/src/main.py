@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from jose import jwt, jwk, JWTError
 import requests
 import os
@@ -54,11 +54,74 @@ def verify_jwt(token: str):
         )
 
 
+# Thanks matt!
+def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
+    try:
+        uvh = jwt.get_unverified_header(dpop_jwt)
+        if uvh["alg"] != "RS256":
+            return None, "Invalid algorithm"
+        jwk = uvh["jwk"]
+        decoded = jwt.decode(dpop_jwt, base64.b64decode(jwk), algorithms=["RS256"])
+
+        if uvh["typ"] != "dpop+jwt":
+            return None, "Invalid token type"
+        if decoded["htm"] != htm:
+            return None, "Invalid dPoP HTTP Method"
+
+        if decoded["htu"] != htu:
+            return None, "Invalid dPoP URL"
+
+        if (
+            "ath" in decoded
+            and decoded["ath"]
+            != base64.b64encode(
+                hashlib.sha256(at.encode("ascii")).digest()
+            ).decode()  # Same, verify output is same
+        ):
+            return None, "Invalid access token hash"
+
+        if at:
+            decoded_at = jwt.decode(
+                at,
+                (
+                    get_settings().authz_pub_key
+                    if get_settings().authz_pub_key
+                    else update_authZ_key()
+                )
+                .replace("\\n", "\n")
+                .replace("\\t", "\t"),
+                algorithms=["RS256"],
+            )
+            if (
+                decoded_at["cnf.jkt"]
+                != base64.b64encode(
+                    hashlib.sha256(base64.b64decode(jwk)).digest()
+                ).decode()
+            ):
+                return None, "dPoP and JWT mismatch"
+
+        return jwk, None
+
+    except jwt.ExpiredSignatureError:
+        return None, "JWT has expired"
+    except jwt.InvalidTokenError:
+        return None, "Invalid JWT"
+    except Exception as e:
+        return None, "An error occurred during dpop JWT decoding:" + str(e) + str(
+            dpop_jwt
+        )
+
+
 @app.get("/user")
-async def read_user(decoded_token: dict = Depends(verify_jwt)):
-    # Extract user details from the decoded token. Adjust the keys according to your token's payload structure.
+async def read_user(request: Request, decoded_token: dict = Depends(verify_jwt)):
+    await verify_dpop_jwt(request, request.url.path, request.method)
     user_details = {
         "user_id": decoded_token.get("sub"),  # 'sub' is typically used for the user ID
         "email": decoded_token.get("email"),
     }
     return user_details
+
+
+@app.get("/health")
+def get_health():
+    return {"status": "ok"}
