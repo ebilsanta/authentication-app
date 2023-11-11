@@ -22,6 +22,7 @@ async function introspectToken(req, res, next) {
         .then((result) => {
             var payload = JSON.parse(Buffer.from(result.payload).toString());
             console.log(payload);
+            var header = result.header;
 
             var currentTimestamp = new Date().getTime() / 1000;
             var tokenExpired = payload.exp <= currentTimestamp;
@@ -30,7 +31,9 @@ async function introspectToken(req, res, next) {
                 throw new Error("Not issued by Bank SSO");
             } else if (tokenExpired) {
                 throw new Error("Access token expired");
-            }
+            } else if (header.kid != process.env.BANKSSO_CLIENT_ID) {
+                throw new Error("Access token not meant for our client.")
+            } 
             next();
         })
         .catch((error) => {
