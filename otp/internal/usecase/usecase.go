@@ -171,7 +171,7 @@ func (o *otpUsecase) VerifyOTP(verification_key string, otp string, email string
 	}
 	now := time.Now()
 	expiration_date, _ := time.Parse(now.String(), details["expiration_date"])
-	if details["otp"] == otp && details["email"] == email && expiration_date.Before(now) {
+	if details["otp"] == otp && details["email"] == email && expiration_date.After(now) {
 		OTP, err := o.otpRepos.GetOTP(otp, details["expiration_date"])
 		if err != nil || OTP == nil {
 			return "Failure", "Invalid OTP", "", email, err
