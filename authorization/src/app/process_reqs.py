@@ -128,11 +128,8 @@ async def process_token(
 
     authc = await db.get_authcode_record(authcode)
 
-    print(generate_pkce_code_challenge(code_verifier))
     if generate_pkce_code_challenge(code_verifier) != authc["code_challenge"]:
-        return respond("Invalid PKCE Code Verifier | " + code_verifier + " | " \
-                       + generate_pkce_code_challenge(code_verifier) + " | " + authc["code_challenge"] \
-                        + " | " + str(authc))
+        return respond("Invalid PKCE Code Verifier " + code_verifier)
 
     sets = get_settings()
 
@@ -167,7 +164,7 @@ async def process_token(
     )
 
     await db.insert_token_record(TokenRecord(access_token, now + 3600, True))
-
+    
     if redirect_url:
         return JSONResponse(
             content=jsonable_encoder(
