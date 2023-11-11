@@ -314,7 +314,7 @@ func (a *authenticationUsecase) ValidToken(verification_key string, otp string, 
 		return "Could not verify OTP", "", nil
 	}
 	if response.Status == "Failure" {
-		return response.Details, "email", nil
+		return response.Details, "", nil
 	}
 	_, err = a.authenticationRepos.UpdateUserByEmail(response.Company, response.Email)
 
