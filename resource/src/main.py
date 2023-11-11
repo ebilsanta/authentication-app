@@ -120,3 +120,8 @@ async def read_user(request: Request, decoded_token: dict = Depends(verify_jwt))
         "email": decoded_token.get("email"),
     }
     return user_details
+
+
+@app.get("/health")
+def get_health():
+    return {"status": "ok"}
