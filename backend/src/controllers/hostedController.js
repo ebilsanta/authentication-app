@@ -161,6 +161,7 @@ async function verifyOtp(req, res, next) {
   }
   const { otp } = req.body;
   const { company, email, verificationKey } = req.session;
+  const sessionID = req.sessionID;
 
   try {
     const response = await requestToVerifyOtp(
