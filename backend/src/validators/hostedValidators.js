@@ -29,6 +29,8 @@ const otpValidator = [
 ]
 
 const changePasswordValidator = [
+  body("email", "Email is empty").not().isEmpty(),
+  body("email", "Invalid email").isEmail(),
   body("company", "Company is empty").not().isEmpty(),
   body("password", "Password is empty").not().isEmpty(),
   body("otp", "OTP is empty").not().isEmpty(),

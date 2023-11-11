@@ -5,6 +5,7 @@ const {
   checkIdToken,
   checkAuth,
   checkEmailAndVerificationKey,
+  checkVerificationKey,
   checkCodeVerifierAndAuthCode,
 } = require("../middlewares/hostedMiddleware");
 const {
@@ -41,7 +42,7 @@ router.post("/otp", otpValidator, hostedController.otp);
 router.post(
   "/change-password",
   changePasswordValidator,
-  checkEmailAndVerificationKey,
+  checkVerificationKey,
   hostedController.changePassword
 );
 
