@@ -1,7 +1,7 @@
 "use client"
 
 import Image from 'next/image'
-import Hero from '../components/hero'
-export default function Login() {
-  return <Hero />
+import Home from '../components/home'
+export default function HomePage() {
+  return <Home />
 }
