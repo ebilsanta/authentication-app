@@ -75,7 +75,7 @@ func (d *DynamoDBAuthenticationRepository) UpdateUserByEmail(company string, ema
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":status": {
-				S: aws.String("Verified"),
+				S: aws.String("active"),
 			},
 		},
 		ExpressionAttributeNames: map[string]*string{
