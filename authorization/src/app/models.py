@@ -15,3 +15,6 @@ class RefreshRequest(BaseModel):
     grant_type: str
     dpop: str
     refresh_token: str
+
+class TokenIntrospectionRequest(BaseModel):
+    token: str

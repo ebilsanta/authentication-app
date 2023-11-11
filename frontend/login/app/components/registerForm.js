@@ -27,8 +27,8 @@ export default function RegisterForm() {
       body: JSON.stringify({
         company: company,
         email: email,
-        first_name: firstName, 
-        last_name: lastName,
+        firstName: firstName, 
+        lastName: lastName,
         birthdate: birthdate,
         password: password
       })

@@ -8,12 +8,12 @@ from typing import Union
 import jwt
 from app.authcode_service import AuthCodeService
 from app.client_assertion_service import ClientAssertionService
-from app.database import AuthCodeRecord, Database
+from app.database import AuthCodeRecord, Database, TokenRecord
 from app.dpop_service import DpopService
 from app.pkce import generate_pkce_code_challenge
 from app.jwks import update_authZ_key
 from config import Settings
-from fastapi import status
+from fastapi import Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -165,6 +165,9 @@ async def process_token(
         algorithm="RS256",
         headers={"typ": "dpop+refresh"},  # Enforce a check
     )
+
+    await db.insert_token_record(TokenRecord(access_token, now + 3600, True))
+
     if redirect_url:
         return JSONResponse(
             content=jsonable_encoder(
@@ -249,3 +252,15 @@ async def process_refresh(grant_type, dpop, refresh_token):
             {"access_token": access_token, "token_type": "DPoP", "expires_in": 3600}
         ),
     )
+
+async def introspect(token: str):
+    tkr = await db.get_token_record(token)
+    if tkr:
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=jsonable_encoder(
+                {"TODO:": "Return all the good fields"}
+            )
+        )
+    else:
+        return Response(status_code=404)
