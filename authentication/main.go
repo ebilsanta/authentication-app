@@ -192,27 +192,30 @@ func ResponseMessage(input map[string]string, callback string, message sqs.Messa
 	_, err := url.ParseRequestURI(callback)
 	if err != nil {
 		log.Println("Error with callback URL: ", err)
+		deleteParams := &sqs.DeleteMessageInput{
+			QueueUrl:      aws.String(os.Getenv("SQS_REQUEST_QUEUE_URL")),
+			ReceiptHandle: message.ReceiptHandle,
+		}
+		_, err = queue.DeleteMessage(deleteParams)
+		if err != nil {
+			log.Println(err)
+		}
+		return nil
 	}
 	resp, err := http.Post(callback, "application/json", responseBody)
 	if err != nil {
 		log.Println("An Error Occured: ", err)
+		deleteParams := &sqs.DeleteMessageInput{
+			QueueUrl:      aws.String(os.Getenv("SQS_REQUEST_QUEUE_URL")),
+			ReceiptHandle: message.ReceiptHandle,
+		}
+		_, err = queue.DeleteMessage(deleteParams)
+		if err != nil {
+			log.Println(err)
+		}
+		return nil
 	}
 	defer resp.Body.Close()
-	// body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return err
-	// }
-	// sb := string(body)
-	// log.Printf(sb)
-	deleteParams := &sqs.DeleteMessageInput{
-		QueueUrl:      aws.String(os.Getenv("SQS_REQUEST_QUEUE_URL")),
-		ReceiptHandle: message.ReceiptHandle,
-	}
-	_, err = queue.DeleteMessage(deleteParams)
-	if err != nil {
-		log.Println(err)
-	}
 	return nil
 }
 
