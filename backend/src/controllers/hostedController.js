@@ -5,8 +5,10 @@ const {
   requestForRegistration,
   requestToVerifyEmail,
   requestForOtp,
+  requestToVerifyOtp,
   requestToChangePassword,
   waitForEvent,
+  formatError,
 } = require("../services/hostedServices");
 const { validationResult } = require("express-validator");
 
@@ -27,11 +29,7 @@ async function register(req, res, next) {
 
     res.json({ message: "Successful Registration" });
   } catch (error) {
-    let message = error.message;
-    if (message.includes(":")) {
-      message = message.split(":")[1].trim();
-    }
-    res.status(500).send({ error: message });
+    res.status(500).send({ error: formatError(error) });
   }
 }
 
@@ -55,11 +53,7 @@ async function verifyEmail(req, res, next) {
 
     res.json({ message: verificationResult });
   } catch (error) {
-    let message = error.message;
-    if (message.includes(":")) {
-      message = message.split(":")[1].trim();
-    }
-    res.status(500).json({ error: message });
+    res.status(500).send({ error: formatError(error) });
   }
 }
 
@@ -72,6 +66,7 @@ async function login(req, res, next) {
   const sessionID = req.sessionID;
   const jsonRequest = req.body;
   req.session.email = jsonRequest.email;
+  req.session.company = jsonRequest.company;
 
   try {
     const response = await requestForLogin(jsonRequest, sessionID);
@@ -82,11 +77,7 @@ async function login(req, res, next) {
 
     res.redirect(process.env.CLIENT_HOSTED_URL + "authorize");
   } catch (error) {
-    let message = error.message;
-    if (message.includes(":")) {
-      message = message.split(":")[1].trim();
-    }
-    res.status(500).json({ error: message });
+    res.status(500).send({ error: formatError(error) });
   }
 }
 
@@ -103,11 +94,7 @@ async function authorize(req, res, next) {
 
     res.redirect(process.env.CLIENT_HOSTED_URL + "token?code=" + authCode);
   } catch (error) {
-    let message = error.message;
-    if (message.includes(":")) {
-      message = message.split(":")[1].trim();
-    }
-    res.status(500).json({ error: message });
+    res.status(500).send({ error: formatError(error) });
   }
 }
 
@@ -133,11 +120,7 @@ async function token(req, res, next) {
 
     res.redirect(process.env.CLIENT_HOSTED_URL + "user");
   } catch (error) {
-    let message = error.message;
-    if (message.includes(":")) {
-      message = message.split(":")[1].trim();
-    }
-    res.status(500).json({ error: message });
+    res.status(500).send({ error: formatError(error) });
   }
 }
 
@@ -149,12 +132,13 @@ async function user(req, res, next) {
   res.json({ email });
 }
 
-async function otp(req, res, next) {
+async function requestOtp(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).send({ errors: errors.array() });
   }
-  const { company, email } = req.body;
+  const { email } = req.body;
+  const company = req.session.company;
   const sessionID = req.sessionID;
   try {
     const response = await requestForOtp(company, email, sessionID);
@@ -166,11 +150,32 @@ async function otp(req, res, next) {
 
     res.json({ message: "OTP Sent!" });
   } catch (error) {
-    let message = error.message;
-    if (message.includes(":")) {
-      message = message.split(":")[1].trim();
-    }
-    res.status(500).json({ error: message });
+    res.status(500).send({ error: formatError(error) });
+  }
+}
+
+async function verifyOtp(req, res, next) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).send({ errors: errors.array() });
+  }
+  const { otp } = req.body;
+  const { company, email, verificationKey } = req.session;
+
+  try {
+    const response = await requestToVerifyOtp(
+      otp,
+      company,
+      email,
+      verificationKey
+    );
+
+    const validToken = await waitForEvent("valid-token", sessionID);
+    req.session.validToken = validToken;
+
+    res.json({ message: "OTP Verified" });
+  } catch (error) {
+    res.status(500).json({ error: formatError(error) });
   }
 }
 
@@ -179,15 +184,15 @@ async function changePassword(req, res, next) {
   if (!errors.isEmpty()) {
     return res.status(400).send({ errors: errors.array() });
   }
-  const { email, company, password, otp } = req.body;
+  const { email, password } = req.body;
   const sessionID = req.sessionID;
-  const verificationKey = req.session.verificationKey;
+  const { verificationKey, validToken, company }  = req.session;
   try {
     const response = await requestToChangePassword(
       verificationKey,
       company,
       email,
-      otp,
+      validToken,
       password,
       sessionID
     );
@@ -197,13 +202,9 @@ async function changePassword(req, res, next) {
       sessionID
     );
 
-    res.json({ message: "Change password successfully" });
+    res.json({ message: "Changed password successfully" });
   } catch (error) {
-    let message = error.message;
-    if (message.includes(":")) {
-      message = message.split(":")[1].trim();
-    }
-    res.status(500).json({ error: message });
+    res.status(500).send({ error: formatError(error) });
   }
 }
 
@@ -214,6 +215,7 @@ module.exports = {
   authorize,
   token,
   user,
-  otp,
+  requestOtp,
+  verifyOtp, 
   changePassword,
 };

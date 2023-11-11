@@ -12,7 +12,8 @@ const {
   registrationValidator,
   loginValidator,
   verifyEmailValidator,
-  otpValidator,
+  verifyOtpValidator, 
+  requestOtpValidator,
   changePasswordValidator,
 } = require("../validators/hostedValidators");
 
@@ -37,11 +38,14 @@ router.get("/token", checkCodeVerifierAndAuthCode, hostedController.token);
 
 router.get("/user", checkAuth, hostedController.user);
 
-router.post("/otp", otpValidator, hostedController.otp);
+router.post("/otp", requestOtpValidator, checkAuth, hostedController.requestOtp);
+
+router.post("/verify-otp", verifyOtpValidator, checkAuth, hostedController.verifyOtp);
 
 router.post(
   "/change-password",
   changePasswordValidator,
+  checkAuth, 
   checkVerificationKey,
   hostedController.changePassword
 );

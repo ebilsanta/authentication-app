@@ -175,12 +175,33 @@ async function requestForOtp(company, email, sessionID) {
   }
 }
 
-async function requestToChangePassword(verificationKey, company, email, otp, password, sessionID) {
+async function requestToVerifyOtp(otp, company, email, verificationKey, sessionID) {
+  try {
+    const data = {
+      otp,
+      company,
+      email,
+      verificationKey,
+      callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "valid-token/" + sessionID,
+    }
+    const response = await axios({
+      url: process.env.API_URL + 'valid-token',
+      method: 'post',
+      data: data
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error requesting to verify otp:', error);
+    throw new Error('Error requesting to verify otp: ' + error.message);
+  }
+}
+
+async function requestToChangePassword(verificationKey, company, email, validToken, password, sessionID) {
   try {
     const data = {
       verificationKey,
       company, 
-      otp,
+      valid_token: validToken, 
       email,
       password,
       callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "change-password/" + sessionID,
@@ -195,6 +216,14 @@ async function requestToChangePassword(verificationKey, company, email, otp, pas
     console.error('Error requesting to change password:', error);
     throw new Error('Error requesting to change password: ' + error.message);
   }
+}
+
+function formatError(error) {
+  let message = error.message;
+  if (message.includes(":")) {
+    message = message.split(":")[1].trim();
+  }
+  return message;
 }
 
 function waitForEvent(key, sessionID) {
@@ -228,5 +257,7 @@ module.exports = {
   requestToRefreshToken,
   requestForOtp, 
   requestToChangePassword,
+  requestToVerifyOtp,
+  formatError, 
   waitForEvent,
 }

@@ -152,6 +152,23 @@ async function otp(req, res, next) {
   res.json({ message: "Verification key received" });
 }
 
+async function validToken(req, res, next) {
+  const sessionID = req.params.sessionId;
+  try {
+    const { message, token } = req.body;
+    console.log("valid token callback", req.body);
+    if (message === "Success") {
+      console.log("received valid token", token);
+      eventEmitter.emit(`valid-token:${sessionID}`, token);
+    } else {
+      eventEmitter.emit(`valid-token:${sessionID}`, `error: ${message}`);
+    }
+  } catch (error) {
+    eventEmitter.emit(`valid-token:${sessionID}`, `error: ${error}`);
+  }
+  res.json({ message: "Valid Token received" });
+}
+
 async function changePassword(req, res, next) {
   const sessionID = req.params.sessionId;
   try {
@@ -177,5 +194,6 @@ module.exports = {
   token,
   refresh,
   otp,
+  validToken, 
   changePassword
 };
