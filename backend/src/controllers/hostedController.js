@@ -196,10 +196,9 @@ async function changePassword(req, res, next) {
   }
   const { email, password } = req.body;
   const sessionID = req.sessionID;
-  const { verificationKey, validToken, company }  = req.session;
+  const { validToken, company }  = req.session;
   try {
     const response = await requestToChangePassword(
-      verificationKey,
       company,
       email,
       validToken,

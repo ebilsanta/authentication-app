@@ -197,16 +197,17 @@ async function requestToVerifyOtp(otp, email, verificationKey, sessionID) {
   }
 }
 
-async function requestToChangePassword(verificationKey, company, email, validToken, password, sessionID) {
+async function requestToChangePassword(company, email, validToken, password, sessionID) {
   try {
     const data = {
-      verificationKey,
       company, 
-      valid_token: validToken, 
+      token: validToken, 
       email,
       password,
       callback: process.env.CLIENT_HOSTED_CALLBACK_URL + "change-password/" + sessionID,
     }
+    console.log("change password data", data);
+    
     const response = await axios({
       url: process.env.API_URL + 'change-password',
       method: 'post',
