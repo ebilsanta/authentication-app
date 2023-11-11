@@ -11,7 +11,7 @@ import pytest
 from app.client_assertion_service import do_generate_client_assertion
 from app.database import AuthCodeRecord
 from app.dpop_service import create_dpop_jwt, verify_dpop_jwt
-from app.jwks import update_authZ_key, update_client_pub_key
+from app.jwks import update_client_pub_key
 from app.pkce import generate_pkce_code_challenge, generate_pkce_code_verifier
 from config import get_settings
 from fastapi.testclient import TestClient
@@ -476,3 +476,49 @@ def test_refresh_ok():
     assert response.status_code == 200
     assert response.json()["token_type"] == "DPoP"
     assert response.json()["access_token"]
+
+@pytest.mark.asyncio
+async def test_introspection_ok():
+    with patch("app.process_reqs.db.get_authcode_record", new=mock.AsyncMock()) as m1:
+        m1.return_value = AuthCodeRecord(
+            ac,
+            uuid.uuid4().hex,
+            generate_pkce_code_challenge(code_verifier),
+            subject,
+            300,
+        ).__dict__
+
+        dpop = create_dpop_jwt(pvk, pbk, sets.authz_url, "POST")[1:-1]
+
+        now = int(time.time())
+        ca = do_generate_client_assertion(
+            sets.allowed_client, sets.audience, now + 300, now, pvk
+        )
+
+        params = {
+            "grant_type": "authorization_code",
+            "authcode": ac,
+            "dpop": dpop,
+            "client_assertion": ca,
+            "redirect_url": sets.allowed_redirect,
+            "code_verifier": code_verifier,
+        }
+
+        response = client.post("/token", json=params, follow_redirects=False)
+        assert response.status_code == 302
+        assert response.json()["token_type"] == "DPoP"
+        assert response.json()["access_token"]
+        assert response.json()["refresh_token"]
+
+        intro_res = client.post("/introspect", json={"token": response.json()["access_token"]})
+        assert intro_res.status_code == 200
+        assert intro_res.json()['sub'] == subject
+        assert intro_res.json()['iss'] == sets.audience
+        assert intro_res.json()['alg'] == 'RS256'
+        assert intro_res.json()['typ'] == 'dpop'
+        assert intro_res.json()['active'] == True
+
+@pytest.mark.asyncio
+async def test_introspection_missing_failure():
+    intro_res = client.post("/introspect", json={"token": "abc"})
+    assert intro_res.status_code == 404

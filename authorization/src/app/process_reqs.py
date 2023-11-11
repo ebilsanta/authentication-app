@@ -256,11 +256,23 @@ async def process_refresh(grant_type, dpop, refresh_token):
 async def introspect(token: str):
     tkr = await db.get_token_record(token)
     if tkr:
-        return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content=jsonable_encoder(
-                {"TODO:": "Return all the good fields"}
+        try:
+            data = jwt.decode(
+                token,
+                (get_settings().authz_pub_key if get_settings().authz_pub_key else update_authZ_key()).replace("\\n", "\n").replace("\\t", "\t"),
+                algorithms=["RS256"],
             )
-        )
+
+            data.update(jwt.get_unverified_header(token))
+            data.update({"active": tkr['active']})
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=jsonable_encoder(
+                    data
+                )
+            )
+        except:
+            return Response(status_code=404)
     else:
         return Response(status_code=404)
