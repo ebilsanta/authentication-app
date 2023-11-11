@@ -179,13 +179,14 @@ async function changePassword(req, res, next) {
   if (!errors.isEmpty()) {
     return res.status(400).send({ errors: errors.array() });
   }
-  const { password, otp } = req.body;
+  const { company, password, otp } = req.body;
   const sessionID = req.sessionID;
   const email = req.session.email;
   const verificationKey = req.session.verificationKey;
   try {
     const response = await requestToChangePassword(
       verificationKey,
+      company,
       email,
       otp,
       password,

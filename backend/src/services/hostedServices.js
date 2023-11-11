@@ -83,7 +83,7 @@ async function requestForAuthCode(identityJwt, sessionID) {
       client_id: process.env.ALLOWED_CLIENT,
       code_challenge: codeChallenge,
       code_challenge_method: "S256",
-      redirect_url: "http://localhost:8000",
+      redirect_url: process.env.CLIENT_HOSTED_URL,
       callback_url: process.env.CLIENT_HOSTED_CALLBACK_URL + "authcode/" + sessionID,
     }
     console.log("auth code request", queryParams)
@@ -114,7 +114,7 @@ async function requestForAccessToken(codeVerifier, authCode, sessionID) {
       authcode: authCode,
       dpop: dPoPProof,
       client_assertion: clientAssertion,
-      redirect_url: "http://localhost:8000",
+      redirect_url: process.env.CLIENT_HOSTED_URL,
       code_verifier: codeVerifier,
       callback_url: process.env.CLIENT_HOSTED_CALLBACK_URL + "token/" + sessionID,
     }
@@ -175,10 +175,11 @@ async function requestForOtp(company, email, sessionID) {
   }
 }
 
-async function requestToChangePassword(verificationKey, email, otp, password, sessionID) {
+async function requestToChangePassword(verificationKey, company, email, otp, password, sessionID) {
   try {
     const data = {
       verificationKey,
+      company, 
       otp,
       email,
       password,

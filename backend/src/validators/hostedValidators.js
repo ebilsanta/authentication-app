@@ -29,6 +29,7 @@ const otpValidator = [
 ]
 
 const changePasswordValidator = [
+  body("company", "Company is empty").not().isEmpty(),
   body("password", "Password is empty").not().isEmpty(),
   body("otp", "OTP is empty").not().isEmpty(),
   body("otp", "OTP must be 6-digit numeric").isNumeric().isLength({ min: 6, max: 6 })
