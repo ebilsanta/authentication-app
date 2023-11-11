@@ -99,7 +99,7 @@ func CheckValidToken(token_string string, email string) bool {
 		return false
     }
 
-    key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+    key, err := x509.ParsePKCS1PublicKey(block.Bytes)
     if err != nil {
         log.Println("failed to parse DER encoded public key: " + err.Error())
 		return false
