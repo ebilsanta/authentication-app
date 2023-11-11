@@ -83,7 +83,7 @@ async function requestForAuthCode(identityJwt, sessionID) {
       client_id: process.env.ALLOWED_CLIENT,
       code_challenge: codeChallenge,
       code_challenge_method: "S256",
-      redirect_url: process.env.CLIENT_HOSTED_URL,
+      redirect_url: 'http://localhost:8000',
       callback_url: process.env.CLIENT_HOSTED_CALLBACK_URL + "authcode/" + sessionID,
     }
     console.log("auth code request", queryParams)
@@ -114,7 +114,7 @@ async function requestForAccessToken(codeVerifier, authCode, sessionID) {
       authcode: authCode,
       dpop: dPoPProof,
       client_assertion: clientAssertion,
-      redirect_url: process.env.CLIENT_HOSTED_URL,
+      redirect_url: 'http://localhost:8000',
       code_verifier: codeVerifier,
       callback_url: process.env.CLIENT_HOSTED_CALLBACK_URL + "token/" + sessionID,
     }
