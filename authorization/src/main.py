@@ -1,8 +1,8 @@
 from typing import Union
 
 from app.jwks import update_authN_key
-from app.models import TokenRequest, RefreshRequest
-from app.process_reqs import process_authcode, process_token, process_refresh
+from app.models import TokenRequest, TokenIntrospectionRequest, RefreshRequest
+from app.process_reqs import introspect, process_authcode, process_token, process_refresh
 from app.sqs_service import SQS_Service
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
@@ -51,6 +51,7 @@ async def post_authcode(
 async def standard_validation_exception_handler(
     request: Request, exc: RequestValidationError
 ):
+    print(request, exc)
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder(
@@ -80,6 +81,10 @@ async def post_refresh(refresh_req: RefreshRequest):
         refresh_req.grant_type, refresh_req.dpop, refresh_req.refresh_token
     )
 
+@app.post("/introspect")
+async def post_introspect(token: TokenIntrospectionRequest):
+    print(token.token)
+    return await introspect(token.token)
 
 @app.on_event("startup")
 @repeat_every(seconds=1)

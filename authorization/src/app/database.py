@@ -94,6 +94,10 @@ class Database:
     async def insert_authcode_record(self, acr: AuthCodeRecord):
         return self.ac_table.put_item(Item=acr.__dict__)
     
+    async def get_token_record(self, token: str):
+        response = self.token_table.get_item(Key={"token": token})
+        return response.get("Item")
+    
     async def insert_token_record(self, tr: TokenRecord):
         return self.token_table.put_item(Item=tr.__dict__)
 

@@ -13,7 +13,7 @@ from app.dpop_service import DpopService
 from app.pkce import generate_pkce_code_challenge
 from app.jwks import update_authZ_key
 from config import Settings
-from fastapi import status
+from fastapi import Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -252,3 +252,15 @@ async def process_refresh(grant_type, dpop, refresh_token):
             {"access_token": access_token, "token_type": "DPoP", "expires_in": 3600}
         ),
     )
+
+async def introspect(token: str):
+    tkr = await db.get_token_record(token)
+    if tkr:
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=jsonable_encoder(
+                {"TODO:": "Return all the good fields"}
+            )
+        )
+    else:
+        return Response(status_code=404)
