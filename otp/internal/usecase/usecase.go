@@ -64,7 +64,8 @@ func Decode(verification_key string) (map[string]string, error) {
 	}
 	cipherText, err := base64.StdEncoding.DecodeString(verification_key)
 	if err != nil {
-		return nil, err
+		log.Println("Invalid Base64 String")
+		return nil, nil
 	}
 	bytes := []byte(os.Getenv("IV"))
 	cfb := cipher.NewCFBDecrypter(block, bytes)
