@@ -218,6 +218,12 @@ async function requestToChangePassword(verificationKey, company, email, validTok
   }
 }
 
+async function requestForUserData(ephemeralKeyPair, accessToken, sessionID) {
+  const userDataEndpoint = process.env.API_URL + 'user';
+  const dPoP = await generateDpop(userDataEndpoint, accessToken, 'GET', ephemeralKeyPair);
+  
+}
+
 function formatError(error) {
   let message = error.message;
   if (message.includes(":")) {

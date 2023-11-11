@@ -168,7 +168,8 @@ async function verifyOtp(req, res, next) {
       otp,
       company,
       email,
-      verificationKey
+      verificationKey,
+      sessionID
     );
 
     const validToken = await waitForEvent("valid-token", sessionID);
