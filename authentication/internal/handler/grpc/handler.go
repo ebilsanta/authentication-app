@@ -38,8 +38,13 @@ func (srv *AuthenticationServer) NewOTP(c context.Context, userInfo *authenticat
 	return &authentication.NewOTPResponse{Message: message, VerificationKey: verification_key}, error
 }
 
+func (srv *AuthenticationServer) ValidToken(c context.Context, verification *authentication.ValidTokenRequest) (*authentication.ValidTokenResponse, error) {
+	message, token, error := srv.useCase.ValidToken(verification.VerificationKey, verification.Otp, verification.Email)
+	return &authentication.ValidTokenResponse{Message: message, Token: token}, error
+}
+
 func (srv *AuthenticationServer) ChangePassword(c context.Context, verification *authentication.ChangePasswordRequest) (*authentication.ChangePasswordResponse, error) {
-	status, details, email, error := srv.useCase.ChangePassword(verification.VerificationKey, verification.Otp, verification.Company, verification.Email, verification.Password)
+	status, details, email, error := srv.useCase.ChangePassword(verification.Token, verification.Company, verification.Email, verification.Password)
 	return &authentication.ChangePasswordResponse{Status: status, Details: details, Email: email}, error
 }
 

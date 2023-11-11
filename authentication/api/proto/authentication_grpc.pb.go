@@ -23,6 +23,7 @@ const (
 	Authentication_VerifyEmail_FullMethodName    = "/Authentication/VerifyEmail"
 	Authentication_Login_FullMethodName          = "/Authentication/Login"
 	Authentication_NewOTP_FullMethodName         = "/Authentication/NewOTP"
+	Authentication_ValidToken_FullMethodName     = "/Authentication/ValidToken"
 	Authentication_ChangePassword_FullMethodName = "/Authentication/ChangePassword"
 )
 
@@ -34,6 +35,7 @@ type AuthenticationClient interface {
 	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	NewOTP(ctx context.Context, in *NewOTPRequest, opts ...grpc.CallOption) (*NewOTPResponse, error)
+	ValidToken(ctx context.Context, in *ValidTokenRequest, opts ...grpc.CallOption) (*ValidTokenResponse, error)
 	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error)
 }
 
@@ -81,6 +83,15 @@ func (c *authenticationClient) NewOTP(ctx context.Context, in *NewOTPRequest, op
 	return out, nil
 }
 
+func (c *authenticationClient) ValidToken(ctx context.Context, in *ValidTokenRequest, opts ...grpc.CallOption) (*ValidTokenResponse, error) {
+	out := new(ValidTokenResponse)
+	err := c.cc.Invoke(ctx, Authentication_ValidToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authenticationClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error) {
 	out := new(ChangePasswordResponse)
 	err := c.cc.Invoke(ctx, Authentication_ChangePassword_FullMethodName, in, out, opts...)
@@ -98,6 +109,7 @@ type AuthenticationServer interface {
 	VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	NewOTP(context.Context, *NewOTPRequest) (*NewOTPResponse, error)
+	ValidToken(context.Context, *ValidTokenRequest) (*ValidTokenResponse, error)
 	ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error)
 	mustEmbedUnimplementedAuthenticationServer()
 }
@@ -117,6 +129,9 @@ func (UnimplementedAuthenticationServer) Login(context.Context, *LoginRequest) (
 }
 func (UnimplementedAuthenticationServer) NewOTP(context.Context, *NewOTPRequest) (*NewOTPResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewOTP not implemented")
+}
+func (UnimplementedAuthenticationServer) ValidToken(context.Context, *ValidTokenRequest) (*ValidTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidToken not implemented")
 }
 func (UnimplementedAuthenticationServer) ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
@@ -206,6 +221,24 @@ func _Authentication_NewOTP_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Authentication_ValidToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServer).ValidToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Authentication_ValidToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServer).ValidToken(ctx, req.(*ValidTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Authentication_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ChangePasswordRequest)
 	if err := dec(in); err != nil {
@@ -246,6 +279,10 @@ var Authentication_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "NewOTP",
 			Handler:    _Authentication_NewOTP_Handler,
+		},
+		{
+			MethodName: "ValidToken",
+			Handler:    _Authentication_ValidToken_Handler,
 		},
 		{
 			MethodName: "ChangePassword",

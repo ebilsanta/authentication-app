@@ -49,12 +49,22 @@ message NewOTPResponse {
     string verificationKey = 2;
 }
 
-message ChangePasswordRequest {
+message ValidTokenRequest {
     string verificationKey = 1;
     string otp = 2;
-    string company = 3;
-    string email = 4;
-    string password = 5;
+    string email = 3;
+}
+
+message ValidTokenResponse {
+    string message = 1;
+    string token = 2;
+}
+
+message ChangePasswordRequest {
+    string token = 1;
+    string company = 2;
+    string email = 3;
+    string password = 4;
 }
 
 message ChangePasswordResponse {
@@ -68,5 +78,6 @@ service Authentication {
     rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
     rpc Login(LoginRequest) returns (LoginResponse);
     rpc NewOTP(NewOTPRequest) returns (NewOTPResponse);
+    rpc ValidToken(ValidTokenRequest) returns (ValidTokenResponse);
     rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse);
 }

@@ -91,3 +91,26 @@ func GetPrivateKey() string {
 
 	return data["PVT_KEY"]
 }
+
+func GetPublicKey() string {
+	sess := session.Must(session.NewSession())
+	creds := GetAWSCredentials()
+
+	sm := secretsmanager.New(sess, &aws.Config{
+		Region: aws.String(os.Getenv("AWS_PRIMARY_REGION")),
+		Credentials: &creds,
+	})
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(os.Getenv("KEYS_NAME")),
+	}
+	result, err := sm.GetSecretValue(input)
+	if err != nil {
+		log.Println("Error getting private key: ", err)
+		return ""
+	}
+
+	data := map[string]string{}
+	json.Unmarshal([]byte(*result.SecretString), &data)
+
+	return data["PUB_KEY"]
+}

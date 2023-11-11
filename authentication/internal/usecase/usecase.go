@@ -62,12 +62,97 @@ func GenerateIdToken(details map[string]interface{}) (string, error) {
 	return s, err
 }
 
+func GenerateValidToken(details map[string]interface{}) (string, error) {
+
+	key_string := utils.GetPrivateKey()
+	parsed_key_string := strings.ReplaceAll(key_string, "\\n", "\n")
+	block, _ := pem.Decode([]byte(parsed_key_string))
+    if block == nil {
+        log.Println("failed to parse PEM block containing the public key")
+		return "", nil
+    }
+
+    key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+    if err != nil {
+        log.Println("failed to parse DER encoded public key: " + err.Error())
+		return "", err
+    }
+	
+	t := jwt.NewWithClaims(jwt.SigningMethodRS256, 
+	jwt.MapClaims{ 
+		"iss": details["iss"], 
+		"sub": details["sub"], 
+		"exp": details["exp"],
+		"iat": details["iat"],
+	})
+	s, err := t.SignedString(key) 
+
+	return s, err
+}
+
+func CheckValidToken(token_string string, email string) bool {
+	key_string := utils.GetPublicKey()
+	parsed_key_string := strings.ReplaceAll(key_string, "\\n", "\n")
+	block, _ := pem.Decode([]byte(parsed_key_string))
+    if block == nil {
+        log.Println("failed to parse PEM block containing the public key")
+		return false
+    }
+
+    key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+    if err != nil {
+        log.Println("failed to parse DER encoded public key: " + err.Error())
+		return false
+    }
+
+	token, err := jwt.Parse(token_string, func(token *jwt.Token) (interface{}, error) {
+		// Check the signing method
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			log.Println("unexpected signing method: %v", token.Header["alg"])
+			return nil, err
+		}
+		return key, nil
+	})
+
+	if err != nil {
+		log.Println("Error occured parsing token: ", err)
+		return false
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		log.Println("Invalid Token")
+		return false
+	}
+
+	if claims["sub"] == nil || claims["exp"] == nil {
+		log.Println("Invalid Token Content")
+	}
+
+	now := time.Now()
+
+	parsed_time, err := time.Parse("1696969690", claims["exp"].(string))
+
+	if err != nil {
+		log.Println("Token Expiry is not a valid datetime")
+		return false
+	}
+
+	if claims["sub"] != email || now.Before(parsed_time) {
+		log.Println("Wrong email or Expired Token")
+		return false
+	}
+
+	return true
+}
+
 type AuthenticationUsecase interface {
 	Register(company string, email string, first_name string, last_name string, birthdate string, password string) (string, string, error)
 	VerifyEmail(verification_key string, otp string, email string) (string, string, string, error)
 	Login(company string, email string, password string) (string, string, error)
 	NewOTP(company string, email string) (string, string, error)
-	ChangePassword(verification_key string, otp string, company string, email string, password string) (string, string, string, error)
+	ValidToken(verification_key string, otp string, email string) (string, string, error)
+	ChangePassword(valid_token string, company string, email string, password string) (string, string, string, error)
 }
 
 type authenticationUsecase struct {
@@ -213,7 +298,48 @@ func (a *authenticationUsecase) NewOTP(company string, email string) (string, st
 	return "OTP Sent!", response.VerificationKey, nil
 }
 
-func (a *authenticationUsecase) ChangePassword(verification_key string, otp string, company string, email string, password string) (string, string, string, error) {
+func (a *authenticationUsecase) ValidToken(verification_key string, otp string, email string) (string, string, error) {
+	conn, err := utils.ConnectOTPServer()
+	defer conn.Close()
+	if err != nil {
+		log.Println("Could not connect to OTP Server")
+		return "Could not connect to OTP Server", "", nil
+	}
+
+	client := otp_server.NewOTPClient(conn)
+
+	response, err := client.VerifyOTP(context.Background(), &otp_server.VerifyOTPRequest{VerificationKey: verification_key, Otp: otp, Email: email})
+	if err != nil {
+		log.Fatalf("Error when calling VerifyOTP: %s", err)
+		return "Could not verify OTP", "", nil
+	}
+	if response.Status == "Failure" {
+		return response.Details, "email", nil
+	}
+	_, err = a.authenticationRepos.UpdateUserByEmail(response.Company, response.Email)
+
+	if err != nil {
+		return "Error updating verification status of user", "", err
+	}
+
+	expiration_delay_minutes := 5
+
+	key_details := map[string]interface{}{
+		"iss": "authn.itsag2t1.com",
+		"sub": email,
+		"exp": time.Now().Local().Add(time.Minute * time.Duration(expiration_delay_minutes)).Unix(),
+		"iat": time.Now().Local().Unix(),
+	}
+
+	valid_token, err := GenerateIdToken(key_details)
+	if err != nil || len(valid_token) == 0{
+		return "Error generating ID Token", "", nil
+	}
+
+	return "Success", valid_token, nil
+}
+
+func (a *authenticationUsecase) ChangePassword(valid_token string, company string, email string, password string) (string, string, string, error) {
 	credential, err := a.authenticationRepos.GetCredentialByEmail(company, email)
 	if err != nil {
 		log.Println("Error getting user: ", err)
@@ -223,24 +349,13 @@ func (a *authenticationUsecase) ChangePassword(verification_key string, otp stri
 		return "Failure", "You are not registered with us!", email, nil
 	}
 
-	conn, err := utils.ConnectOTPServer()
-	defer conn.Close()
-	if err != nil {
-		return "Failure", "Could not Generate OTP", email, err
+	isValid := CheckValidToken(valid_token, email)
+
+	if !isValid {
+		return "Failure", "Invalid Token", email, nil
 	}
 
-	client := otp_server.NewOTPClient(conn)
-
-	response, err := client.VerifyOTP(context.Background(), &otp_server.VerifyOTPRequest{VerificationKey: verification_key, Otp: otp, Email: email})
-	if err != nil {
-		log.Fatalf("Error when calling VerifyOTP: %s", err)
-		return "Failure", "Error verifying OTP", email, err
-	}
-	if response.Status == "Failure" {
-		return response.Status, response.Details, email, err
-	}
-
-	_, err = a.authenticationRepos.UpdateUserPassword(response.Company, response.Email, password)
+	_, err = a.authenticationRepos.UpdateUserPassword(company, email, password)
 
 	if err != nil {
 		return "Failure", "Error updating password", email, err
