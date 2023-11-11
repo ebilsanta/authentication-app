@@ -5,12 +5,12 @@ import (
 	"crypto/rand"
 	"crypto/aes"
 	"crypto/cipher"
-	"errors"
+	// "errors"
 	"encoding/base64"
 	"strings"
 	"time"
 	// "strconv"
-	// "log"
+	"log"
 	// "fmt"
 	"os"
 
@@ -154,7 +154,7 @@ func (o *otpUsecase) GetOTP(company string, email string) (string, string, error
 		return "", "Failure", err
 	}
 
-	if verification_key == nil {
+	if verification_key == "" {
 		return "", "Failure", nil
 	}
 
