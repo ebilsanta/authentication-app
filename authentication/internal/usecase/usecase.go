@@ -129,16 +129,9 @@ func CheckValidToken(token_string string, email string) bool {
 		log.Println("Invalid Token Content")
 	}
 
-	now := time.Now()
+	now := time.Now().Unix()
 
-	parsed_time, err := time.Parse("1696969690", claims["exp"].(string))
-
-	if err != nil {
-		log.Println("Token Expiry is not a valid datetime")
-		return false
-	}
-
-	if claims["sub"] != email || now.Before(parsed_time) {
+	if claims["sub"] != email || now > int64(claims["exp"].(float64)) {
 		log.Println("Wrong email or Expired Token")
 		return false
 	}

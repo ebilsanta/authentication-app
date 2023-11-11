@@ -27,7 +27,7 @@ func main() {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	lis, err := net.Listen("tcp", ":8089")
+	lis, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatalf("cannot create listener: %s", err)
 	}

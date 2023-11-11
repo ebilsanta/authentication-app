@@ -9,7 +9,7 @@ import (
 	"encoding/base64"
 	"strings"
 	"time"
-	// "strconv"
+	"strconv"
 	"log"
 	// "fmt"
 	"os"
@@ -69,8 +69,6 @@ func Decode(verification_key string) (map[string]string, error) {
 	plainText := make([]byte, len(cipherText))
 	cfb.XORKeyStream(plainText, cipherText)
 	details := strings.Split(string(plainText), "\n")
-	log.Println(details)
-	log.Println(len(details))
 	if len(details) != 4 {
 		log.Println("Verification Key did not contain the right details")
 		return nil, nil
@@ -133,11 +131,11 @@ type otpUsecase struct {
 func (o *otpUsecase) GetOTP(company string, email string) (string, string, error) {
 	otp := GenerateOTP(6)
 	expiration_delay_minutes := 2
-	expiration_date := time.Now().Local().Add(time.Minute * time.Duration(expiration_delay_minutes))
+	expiration_date := strconv.FormatInt(time.Now().Add(time.Minute * time.Duration(expiration_delay_minutes)).Unix(), 10)
 	
-	details := map[string]string{"company": company, "expiration_date": expiration_date.String(), "email": email, "otp": string(otp)}
+	details := map[string]string{"company": company, "expiration_date": expiration_date, "email": email, "otp": string(otp)}
 
-	_, err := o.otpRepos.CreateOTP(otp, expiration_date.String())
+	_, err := o.otpRepos.CreateOTP(otp, expiration_date)
 	if err != nil {
 		return "", "Error creating key", err
 	}
@@ -163,15 +161,20 @@ func (o *otpUsecase) GetOTP(company string, email string) (string, string, error
 
 func (o *otpUsecase) VerifyOTP(verification_key string, otp string, email string) (string, string, string, string, error) {
 	details, err := Decode(verification_key)
+	log.Println(details)
 	if err != nil {
 		return "Failure", "Error processing verification key", "", email, err
 	}
 	if details == nil {
 		return "Failure", "Error getting details from verification key", "", email, nil
 	}
-	now := time.Now()
-	expiration_date, _ := time.Parse(now.String(), details["expiration_date"])
-	if details["otp"] == otp && details["email"] == email && expiration_date.After(now) {
+	now := time.Now().Unix()
+	expiration_date, err := strconv.ParseInt(details["expiration_date"], 10, 64)
+	if err != nil {
+		log.Println("Error parsing expiration: ", err)
+		return "Failure", "Error parsing expiration", "", email, nil
+	}
+	if details["otp"] == otp && details["email"] == email && expiration_date > now {
 		OTP, err := o.otpRepos.GetOTP(otp, details["expiration_date"])
 		if err != nil || OTP == nil {
 			return "Failure", "Invalid OTP", "", email, err
