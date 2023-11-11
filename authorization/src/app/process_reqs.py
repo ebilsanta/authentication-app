@@ -8,7 +8,7 @@ from typing import Union
 import jwt
 from app.authcode_service import AuthCodeService
 from app.client_assertion_service import ClientAssertionService
-from app.database import AuthCodeRecord, Database
+from app.database import AuthCodeRecord, Database, TokenRecord
 from app.dpop_service import DpopService
 from app.pkce import generate_pkce_code_challenge
 from app.jwks import update_authZ_key
@@ -165,6 +165,9 @@ async def process_token(
         algorithm="RS256",
         headers={"typ": "dpop+refresh"},  # Enforce a check
     )
+
+    await db.insert_token_record(TokenRecord(access_token, now + 3600, True))
+
     if redirect_url:
         return JSONResponse(
             content=jsonable_encoder(

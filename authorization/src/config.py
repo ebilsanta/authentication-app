@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     db_name: str
     db_collection_authcodes: str
     db_collection_users: str
+    db_collection_tokens: str
     db_region_name: str
     db_access_key_id: str = ""
     db_secret_access_key: str = ""
