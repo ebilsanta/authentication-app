@@ -355,7 +355,11 @@ func (a *authenticationUsecase) ChangePassword(valid_token string, company strin
 		return "Failure", "Invalid Token", email, nil
 	}
 
-	_, err = a.authenticationRepos.UpdateUserPassword(company, email, password)
+	cost, _ := strconv.Atoi(os.Getenv("BCRYPT_COST"))
+
+	hashed_password, _ := HashPassword(password, cost)
+
+	_, err = a.authenticationRepos.UpdateUserPassword(company, email, hashed_password)
 
 	if err != nil {
 		return "Failure", "Error updating password", email, err
