@@ -60,7 +60,5 @@ async def read_user(decoded_token: dict = Depends(verify_jwt)):
     user_details = {
         "user_id": decoded_token.get("sub"),  # 'sub' is typically used for the user ID
         "email": decoded_token.get("email"),
-        "name": decoded_token.get("name")
-        # Add other fields as needed
     }
     return user_details
