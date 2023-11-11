@@ -15,7 +15,7 @@ async function register(req, res, next) {
     eventEmitter.emit(`verificationKey:${sessionID}`, `error: ${error}`);
   }
 
-  res.json({ message: "Verification key received" });
+  res.json({ message: "Verification key for registration received" });
 }
 
 async function verifyEmail(req, res, next) {
@@ -142,14 +142,14 @@ async function otp(req, res, next) {
     console.log("otp callback", req.body);
     if (message === "OTP Sent!") {
       console.log("received otp verification key", verification_key);
-      eventEmitter.emit(`verificationKey:${sessionID}`, verification_key);
+      eventEmitter.emit(`verificationKeyOTP:${sessionID}`, verification_key);
     } else {
-      eventEmitter.emit(`verificationKey:${sessionID}`, `error: ${message}`);
+      eventEmitter.emit(`verificationKeyOTP:${sessionID}`, `error: ${message}`);
     }
   } catch (error) {
-    eventEmitter.emit(`verificationKey:${sessionID}`, `error: ${error}`);
+    eventEmitter.emit(`verificationKeyOTP:${sessionID}`, `error: ${error}`);
   }
-  res.json({ message: "Verification key received" });
+  res.json({ message: "Verification key for OTP received" });
 }
 
 async function validToken(req, res, next) {

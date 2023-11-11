@@ -152,10 +152,12 @@ async function requestOtp(req, res, next) {
   try {
     const response = await requestForOtp(company, email, sessionID);
 
-    const verificationKey = await waitForEvent("verificationKey", sessionID);
+    const verificationKey = await waitForEvent("verificationKeyOTP", sessionID);
 
     req.session.verificationKey = verificationKey;
     req.session.email = email;
+    
+    
 
     res.json({ message: "OTP Sent!" });
   } catch (error) {
