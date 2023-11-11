@@ -54,7 +54,8 @@ func Encode(details map[string]string) (string, error) {
 
 func Decode(verification_key string) (map[string]string, error) {
 	if len(verification_key) == 0 || len(verification_key) % 4 != 0 {
-		return nil, errors.New("Invalid Base64 String")
+		log.Println("Invalid Base64 String")
+		return nil, nil
 	}
 	crypt_password := os.Getenv("CRYPT_PASSWORD")
 	block, err := aes.NewCipher([]byte(crypt_password))
@@ -71,7 +72,8 @@ func Decode(verification_key string) (map[string]string, error) {
 	cfb.XORKeyStream(plainText, cipherText)
 	details := strings.Split(string(plainText), "\n")
 	if len(details) != 4 {
-		return nil, errors.New("Verification Key did not contain the right details")
+		log.Println("Verification Key did not contain the right details")
+		return nil, nil
 	}
 	return map[string]string{"company": details[0], "expiration_date": details[1], "email": details[2], "otp": details[3]}, nil
 }
@@ -152,6 +154,10 @@ func (o *otpUsecase) GetOTP(company string, email string) (string, string, error
 		return "", "Failure", err
 	}
 
+	if verification_key == nil {
+		return "", "Failure", nil
+	}
+
 	return verification_key, "Success", nil
 }
 
@@ -159,6 +165,9 @@ func (o *otpUsecase) VerifyOTP(verification_key string, otp string, email string
 	details, err := Decode(verification_key)
 	if err != nil {
 		return "Failure", "Error processing verification key", "", email, err
+	}
+	if details == nil {
+		return "Failure", "Error getting details from verification key", "", email, nil
 	}
 	now := time.Now()
 	expiration_date, _ := time.Parse(now.String(), details["expiration_date"])
@@ -172,7 +181,7 @@ func (o *otpUsecase) VerifyOTP(verification_key string, otp string, email string
 		}
 		_, err = o.otpRepos.UpdateOTP(otp, details["expiration_date"])
 		if err != nil {
-			return "Failure", "Something went wrong while verifying the OTP", "", email, err
+			return "Failure", "Something went wrong while updating the OTP", "", email, err
 		}
 		return "Success", "OTP Verified", details["company"], email, nil
 	}
