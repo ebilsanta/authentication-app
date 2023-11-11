@@ -76,7 +76,7 @@ export default function RegisterForm() {
       <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
         Password
       </label>
-      <input onChange={(e) => setPassword(e.target.value)} className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-6" id="grid-password" type="text" placeholder="Enter a Password" />
+      <input onChange={(e) => setPassword(e.target.value)} className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 mb-6" id="grid-password" type="password" placeholder="Enter a Password" />
 
       <button className="transition duration-300 bg-[#1e244d] shadow hover:bg-blue-700 w-full text-white font-semibold py-2 px-5 rounded focus:outline-none focus:shadow-outline" type="submit">
         Register Account
