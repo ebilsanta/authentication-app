@@ -53,13 +53,10 @@ func Encode(details map[string]string) (string, error) {
 }
 
 func Decode(verification_key string) (map[string]string, error) {
-	if len(verification_key) == 0 || len(verification_key) % 4 != 0 {
-		log.Println("Invalid Base64 String")
-		return nil, nil
-	}
 	crypt_password := os.Getenv("CRYPT_PASSWORD")
 	block, err := aes.NewCipher([]byte(crypt_password))
 	if err != nil {
+		log.Println("Error with crypt password: ", err)
 		return nil, err
 	}
 	cipherText, err := base64.StdEncoding.DecodeString(verification_key)
@@ -72,6 +69,8 @@ func Decode(verification_key string) (map[string]string, error) {
 	plainText := make([]byte, len(cipherText))
 	cfb.XORKeyStream(plainText, cipherText)
 	details := strings.Split(string(plainText), "\n")
+	log.Println(details)
+	log.Println(len(details))
 	if len(details) != 4 {
 		log.Println("Verification Key did not contain the right details")
 		return nil, nil

@@ -332,7 +332,8 @@ func (a *authenticationUsecase) ValidToken(verification_key string, otp string, 
 	}
 
 	valid_token, err := GenerateIdToken(key_details)
-	if err != nil || len(valid_token) == 0{
+	if err != nil || len(valid_token) == 0 {
+		log.Println("Error generating ID Token: ", err)
 		return "Error generating ID Token", "", nil
 	}
 
