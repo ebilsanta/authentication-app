@@ -1,10 +1,13 @@
 import Link from 'next/link';
-import { useState } from 'react'
+import { useState, createContext, useContext } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLogin } from '../context/context'
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const { hostedLogin, setHostedLoginContext } = useLogin();
+
 
   const router = useRouter()
 
@@ -30,6 +33,8 @@ export default function LoginForm() {
     const data = await res.json()
     console.log(data)
     if (res.status === 200) {
+      setHostedLoginContext(true)
+      console.log(hostedLogin)
       router.push("/home")
     } else {
       return

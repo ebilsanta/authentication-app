@@ -1,4 +1,5 @@
 import './globals.css'
+import {LoginProvider} from './context/context'
 import { Montserrat } from 'next/font/google'
 const montserrat = Montserrat({ subsets: ['latin'] })
 
@@ -10,9 +11,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+       <LoginProvider>
       <body className={montserrat.className + " bg-[#050a24]"}>
         {children}
       </body>
+      </LoginProvider>
     </html>
   )
 }
