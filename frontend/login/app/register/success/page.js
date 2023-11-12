@@ -1,3 +1,5 @@
+"use client"
+
 import Hero from "../../components/hero.js"
 import PasswordForm from "@/app/components/passwordForm.js"
 

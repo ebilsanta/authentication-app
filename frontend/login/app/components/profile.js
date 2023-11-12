@@ -45,26 +45,27 @@ return <div className="m-auto">
     <h1 className="block uppercase tracking-wide text-white font-bold py-5 text-xl">My Profile</h1>
       <div>
         <label className="block uppercase tracking-wide text-white text-xs font-bold mb-2">
-        Name
-      </label> 
-      <text className='p-2 text-white'>{profile.name}</text>
-      <label className="block uppercase tracking-wide text-white text-xs font-bold mt-4 mb-2">
-        birthdate
-      </label>
-      <text className='p-2 text-white'>{profile.birthdate}</text>
-      <label className="block uppercase tracking-wide text-white text-xs font-bold mt-4 mb-2">
-        Gender
-      </label>
-      <text className='p-2 text-white'>{profile.gender}</text>
-      <label className="block uppercase tracking-wide text-white text-xs font-bold mt-4 mb-2">
-        Mobile number
-      </label>
-      <text className='p-2 text-white'>{profile.phone_number}</text>
+          Name
+        </label> 
+        <text className='p-2 text-white'>{profile.name}</text>
         <label className="block uppercase tracking-wide text-white text-xs font-bold mt-4 mb-2">
-        Email
-      </label>
+          birthdate
+        </label>
+        <text className='p-2 text-white'>{profile.birthdate}</text>
+        <label className="block uppercase tracking-wide text-white text-xs font-bold mt-4 mb-2">
+          Gender
+        </label>
+        <text className='p-2 text-white'>{profile.gender}</text>
+        <label className="block uppercase tracking-wide text-white text-xs font-bold mt-4 mb-2">
+          Mobile number
+        </label>
+        <text className='p-2 text-white'>{profile.phone_number}</text>
+        <label className="block uppercase tracking-wide text-white text-xs font-bold mt-4 mb-2">
+          Email
+        </label>
         <text className='p-2 text-white'>{profile.email}</text>
       </div>
+      <Link href='/' className='bg-[#f5f5f5] shadow hover:bg-[#1e244d] hover:text-[#f5f5f5] mt-3 w-full text-[#1e244d] font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 text-center'>Change Password</Link>
     </div>
     </div>
   }

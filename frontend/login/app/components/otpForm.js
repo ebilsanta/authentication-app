@@ -26,7 +26,12 @@ export default function OtpForm() {
     const data = await res.json()
     console.log(data)
     if (res.status === 200) {
-      router.push("/login")
+      if (data["message"] === "OTP Verified") {
+        router.push("/changePassword")
+      } else {
+        router.push("/login")
+      }
+      
     } else {
       return
     }
