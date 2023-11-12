@@ -189,10 +189,11 @@ async function changePassword(req, res, next) {
   if (!errors.isEmpty()) {
     return res.status(400).send({ errors: errors.array() });
   }
-  const { password } = req.body;
-  const sessionID = req.sessionID;
-  const { email, validToken, company }  = req.session;
+  console.log("in change password handler")
   try {
+    const { password } = req.body;
+    const sessionID = req.sessionID;
+    const { email, validToken, company }  = req.session;
     const response = await requestToChangePassword(
       company,
       email,

@@ -19,6 +19,7 @@ async function checkValidToken(req, res, next) {
   if (!req.session.validToken) {
     return res.status(400).json({error: 'Missing valid token in session. OTP was not verified previously'});
   }
+  next();
 }
 
 async function checkCodeVerifierAndAuthCode(req, res, next) {
