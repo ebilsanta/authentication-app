@@ -142,12 +142,7 @@ async function user(req, res, next) {
 }
 
 async function requestOtp(req, res, next) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).send({ errors: errors.array() });
-  }
-  const { email } = req.body;
-  const company = req.session.company;
+  const { email, company } = req.session;
   const sessionID = req.sessionID;
   try {
     const response = await requestForOtp(company, email, sessionID);
@@ -157,8 +152,6 @@ async function requestOtp(req, res, next) {
     req.session.verificationKey = verificationKey;
     req.session.email = email;
     
-    
-
     res.json({ message: "OTP Sent!" });
   } catch (error) {
     res.status(500).send({ error: formatError(error) });
@@ -196,9 +189,9 @@ async function changePassword(req, res, next) {
   if (!errors.isEmpty()) {
     return res.status(400).send({ errors: errors.array() });
   }
-  const { email, password } = req.body;
+  const { password } = req.body;
   const sessionID = req.sessionID;
-  const { validToken, company }  = req.session;
+  const { email, validToken, company }  = req.session;
   try {
     const response = await requestToChangePassword(
       company,

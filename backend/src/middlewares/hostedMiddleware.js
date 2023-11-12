@@ -3,23 +3,22 @@ const { requestToRefreshToken, waitForEvent } = require('../services/hostedServi
 
 async function checkIdToken(req, res, next) {
   if (!req.session.idToken) {
-    return res.status(400).json({error: 'User is not authenticated'});
+    return res.status(400).json({error: 'No ID JWT in session. User has not been authenticated'});
   }
   next();
 }
 
 async function checkEmailAndVerificationKey(req, res, next) {
   if (!req.session.email || !req.session.verificationKey) {
-    return res.status(400).json({error: 'Missing email or verification key in session.'});
+    return res.status(400).json({error: 'Missing email or verification key in session. Please register first.'});
   }
   next();
 }
 
-async function checkVerificationKey(req, res, next) {
-  if (!req.session.verificationKey) {
-    return res.status(400).json({error: 'Missing verification key in session.'});
+async function checkValidToken(req, res, next) {
+  if (!req.session.validToken) {
+    return res.status(400).json({error: 'Missing valid token in session. OTP was not verified previously'});
   }
-  next();
 }
 
 async function checkCodeVerifierAndAuthCode(req, res, next) {
@@ -77,7 +76,7 @@ async function checkAuth(req, res, next) {
 module.exports = {
   checkIdToken,
   checkEmailAndVerificationKey,
-  checkVerificationKey, 
   checkCodeVerifierAndAuthCode,
   checkAuth, 
+  checkValidToken, 
 }
