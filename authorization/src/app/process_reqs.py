@@ -139,7 +139,9 @@ async def process_token(
         "iss": sets.audience,
         "exp": now + 3600,
         "iat": now,
-        "cnf.jkt": base64.b64encode(hashlib.sha256(base64.b64decode(jwk)).digest()).decode(),
+        "cnf.jkt": base64.b64encode(
+            hashlib.sha256(base64.b64decode(jwk)).digest()
+        ).decode(),
     }
     access_token = jwt.encode(
         payload,
@@ -153,7 +155,9 @@ async def process_token(
         "iss": sets.audience,
         "exp": now + 86400,
         "iat": now,
-        "cnf.jkt": base64.b64encode(hashlib.sha256(base64.b64decode(jwk)).digest()).decode(),
+        "cnf.jkt": base64.b64encode(
+            hashlib.sha256(base64.b64decode(jwk)).digest()
+        ).decode(),
     }
 
     refresh_token = jwt.encode(
@@ -164,7 +168,7 @@ async def process_token(
     )
 
     await db.insert_token_record(TokenRecord(access_token, now + 3600, True))
-    
+
     if redirect_url:
         return JSONResponse(
             content=jsonable_encoder(
@@ -216,7 +220,13 @@ async def process_refresh(grant_type, dpop, refresh_token):
 
     decoded_ref = jwt.decode(
         refresh_token,
-        (get_settings().authz_pub_key if get_settings().authz_pub_key else update_authZ_key()).replace("\\n", "\n").replace("\\t", "\t"),
+        (
+            get_settings().authz_pub_key
+            if get_settings().authz_pub_key
+            else update_authZ_key()
+        )
+        .replace("\\n", "\n")
+        .replace("\\t", "\t"),
         algorithms=["RS256"],
     )
 
@@ -228,9 +238,7 @@ async def process_refresh(grant_type, dpop, refresh_token):
         "exp": now + 3600,
         "iat": now,
         "cnf.jkt": base64.b64encode(
-            hashlib.sha256(
-                jwk.encode("ascii")
-            ).digest() 
+            hashlib.sha256(jwk.encode("ascii")).digest()
         ).decode(),
     }
     access_token = jwt.encode(
@@ -250,24 +258,28 @@ async def process_refresh(grant_type, dpop, refresh_token):
         ),
     )
 
+
 async def introspect(token: str):
     tkr = await db.get_token_record(token)
     if tkr:
         try:
             data = jwt.decode(
                 token,
-                (get_settings().authz_pub_key if get_settings().authz_pub_key else update_authZ_key()).replace("\\n", "\n").replace("\\t", "\t"),
+                (
+                    get_settings().authz_pub_key
+                    if get_settings().authz_pub_key
+                    else update_authZ_key()
+                )
+                .replace("\\n", "\n")
+                .replace("\\t", "\t"),
                 algorithms=["RS256"],
             )
 
             data.update(jwt.get_unverified_header(token))
-            data.update({"active": tkr['active']})
+            data.update({"active": tkr["active"]})
 
             return JSONResponse(
-                status_code=status.HTTP_200_OK,
-                content=jsonable_encoder(
-                    data
-                )
+                status_code=status.HTTP_200_OK, content=jsonable_encoder(data)
             )
         except:
             return Response(status_code=404)

@@ -16,5 +16,6 @@ class RefreshRequest(BaseModel):
     dpop: str
     refresh_token: str
 
+
 class TokenIntrospectionRequest(BaseModel):
     token: str

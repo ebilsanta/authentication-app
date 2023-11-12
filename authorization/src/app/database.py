@@ -29,7 +29,8 @@ class AuthCodeRecord:
         self.created = round(time.time())
         self.expiry = self.created + expiry_delta
 
-class TokenRecord():
+
+class TokenRecord:
     token: str
     removeAt: str
     active: bool
@@ -38,6 +39,7 @@ class TokenRecord():
         self.token = token
         self.removeAt = removeAt
         self.active = active
+
 
 class Database:
     def __init__(self):
@@ -93,11 +95,11 @@ class Database:
 
     async def insert_authcode_record(self, acr: AuthCodeRecord):
         return self.ac_table.put_item(Item=acr.__dict__)
-    
+
     async def get_token_record(self, token: str):
         response = self.token_table.get_item(Key={"token": token})
         return response.get("Item")
-    
+
     async def insert_token_record(self, tr: TokenRecord):
         return self.token_table.put_item(Item=tr.__dict__)
 

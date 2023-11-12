@@ -2,7 +2,12 @@ from typing import Union
 
 from app.jwks import update_authN_key
 from app.models import TokenRequest, TokenIntrospectionRequest, RefreshRequest
-from app.process_reqs import introspect, process_authcode, process_token, process_refresh
+from app.process_reqs import (
+    introspect,
+    process_authcode,
+    process_token,
+    process_refresh,
+)
 from app.sqs_service import SQS_Service
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
@@ -81,15 +86,18 @@ async def post_refresh(refresh_req: RefreshRequest):
         refresh_req.grant_type, refresh_req.dpop, refresh_req.refresh_token
     )
 
+
 @app.post("/introspect")
 async def post_introspect(token: TokenIntrospectionRequest):
     print(token.token)
     return await introspect(token.token)
 
+
 @app.on_event("startup")
-@repeat_every(seconds=1)
+@repeat_every(seconds=0.2)
 async def pull_from_sqs():
     await sqss.poll_sqs()
+
 
 @app.on_event("startup")
 @repeat_every(seconds=10)

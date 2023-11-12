@@ -24,7 +24,14 @@ pvk = bytes(
     sets.allowed_client_pvt_key.replace("\\n", "\n").replace("\\t", "\t"), "utf-8"
 )
 pbk = bytes(
-    (sets.allowed_client_pub_key if sets.allowed_client_pub_key else update_client_pub_key()).replace("\\n", "\n").replace("\\t", "\t"), "utf-8"
+    (
+        sets.allowed_client_pub_key
+        if sets.allowed_client_pub_key
+        else update_client_pub_key()
+    )
+    .replace("\\n", "\n")
+    .replace("\\t", "\t"),
+    "utf-8",
 )
 
 client = TestClient(app)
@@ -444,7 +451,12 @@ def test_refresh_ok():
         "exp": now + 86400,
         "iat": now,
         "cnf.jkt": base64.b64encode(
-            hashlib.sha256(update_client_pub_key().replace("\\n", "\n").replace("\\t", "\t").encode("ascii")).digest()
+            hashlib.sha256(
+                update_client_pub_key()
+                .replace("\\n", "\n")
+                .replace("\\t", "\t")
+                .encode("ascii")
+            ).digest()
         ).decode(),
         "typ": "dpop+refresh",
     }
@@ -476,6 +488,7 @@ def test_refresh_ok():
     assert response.status_code == 200
     assert response.json()["token_type"] == "DPoP"
     assert response.json()["access_token"]
+
 
 @pytest.mark.asyncio
 async def test_introspection_ok():
@@ -510,13 +523,16 @@ async def test_introspection_ok():
         assert response.json()["access_token"]
         assert response.json()["refresh_token"]
 
-        intro_res = client.post("/introspect", json={"token": response.json()["access_token"]})
+        intro_res = client.post(
+            "/introspect", json={"token": response.json()["access_token"]}
+        )
         assert intro_res.status_code == 200
-        assert intro_res.json()['sub'] == subject
-        assert intro_res.json()['iss'] == sets.audience
-        assert intro_res.json()['alg'] == 'RS256'
-        assert intro_res.json()['typ'] == 'dpop'
-        assert intro_res.json()['active'] == True
+        assert intro_res.json()["sub"] == subject
+        assert intro_res.json()["iss"] == sets.audience
+        assert intro_res.json()["alg"] == "RS256"
+        assert intro_res.json()["typ"] == "dpop"
+        assert intro_res.json()["active"] == True
+
 
 @pytest.mark.asyncio
 async def test_introspection_missing_failure():

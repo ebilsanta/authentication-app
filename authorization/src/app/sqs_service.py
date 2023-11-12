@@ -64,7 +64,6 @@ class SQS_Service:
                 QueueUrl=self.queue_url,
                 AttributeNames=["All"],
                 MaxNumberOfMessages=10,
-                WaitTimeSeconds=20,
                 MessageAttributeNames=["All"],
             ).get("Messages", [])
         except Exception as e:
@@ -73,10 +72,13 @@ class SQS_Service:
 
     async def handle_message(self, op: str, callback: str, req_body):
         if op == "authcode":
+            print("SQS Authcode Request " + callback)
             response = await self.handle_authcode(req_body)
         elif op == "token":
+            print("SQS Token Request " + callback)
             response = await self.handle_token(req_body)
         elif op == "refresh":
+            print("SQS Refresh Request " + callback)
             response = await self.handle_refresh(req_body)
 
         await self.use_callback(callback, response)

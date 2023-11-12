@@ -73,4 +73,3 @@ def generate_pkce_code_challenge(code_verifier):
 
     code_challenge = base64.urlsafe_b64encode(hash).decode("ascii").replace("=", "")
     return code_challenge
-

@@ -82,12 +82,20 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
         if at:
             decoded_at = jwt.decode(
                 at,
-                (get_settings().authz_pub_key if get_settings().authz_pub_key else update_authZ_key()).replace("\\n", "\n").replace("\\t", "\t"),
+                (
+                    get_settings().authz_pub_key
+                    if get_settings().authz_pub_key
+                    else update_authZ_key()
+                )
+                .replace("\\n", "\n")
+                .replace("\\t", "\t"),
                 algorithms=["RS256"],
             )
             if (
                 decoded_at["cnf.jkt"]
-                != base64.b64encode(hashlib.sha256(base64.b64decode(jwk)).digest()).decode()
+                != base64.b64encode(
+                    hashlib.sha256(base64.b64decode(jwk)).digest()
+                ).decode()
             ):
                 return None, "dPoP and JWT mismatch"
 

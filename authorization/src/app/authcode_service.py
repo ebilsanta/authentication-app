@@ -18,8 +18,11 @@ class AuthCodeService:
 
         self.allowed_client = sets.allowed_client
         self.allowed_issuer = sets.allowed_issuer
-        self.pub_key = sets.pub_key.replace("\\n", "\n").replace("\\t", "\t") if sets.pub_key \
+        self.pub_key = (
+            sets.pub_key.replace("\\n", "\n").replace("\\t", "\t")
+            if sets.pub_key
             else update_authN_key().replace("\\n", "\n").replace("\\t", "\t")
+        )
         self.audience = sets.audience
         self.redirect = sets.allowed_redirect
 
