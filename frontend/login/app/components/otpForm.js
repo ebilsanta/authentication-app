@@ -1,17 +1,21 @@
 "use client"
-import { useState } from "react"
+import { useState } from 'react'
+import { useLogin } from '../context/context';
 import OtpInput from 'react-otp-input';
 import { useRouter } from 'next/navigation'
 
 export default function OtpForm() {
   const [otp, setOtp] = useState('');
+  const { hostedLogin } = useLogin();
 
   const router = useRouter()
 
   async function onSubmit(event) {
     event.preventDefault()
+
+    const route = hostedLogin ? "hosted/verify-otp" : "hosted/verify-email"
  
-    const res = await fetch("https://client.itsag2t1.com/api/" + "hosted/verify-email", {
+    const res = await fetch("https://client.itsag2t1.com/api/" + route, {
       method: "POST",
       credentials: "include",
       headers : {

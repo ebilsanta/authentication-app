@@ -65,7 +65,7 @@ return <div className="m-auto">
         </label>
         <text className='p-2 text-white'>{profile.email}</text>
       </div>
-      <Link href='/mfa' className='bg-[#f5f5f5] shadow hover:bg-[#1e244d] hover:text-[#f5f5f5] mt-3 w-full text-[#1e244d] font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 text-center'>Change Password</Link>
-    </div>
+        {hostedLogin ? <Link href='/mfa' className='bg-[#f5f5f5] shadow hover:bg-[#1e244d] hover:text-[#f5f5f5] mt-3 w-full text-[#1e244d] font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 text-center'>Change Password</Link> : null}
+      </div>
     </div>
   }
