@@ -106,7 +106,9 @@ async def read_user(request: Request):
     verify_jwt(request.headers["Authorization"].split(" ")[1])
     verify_dpop_jwt(request.headers["DPoP"], request.url.path, request.method)
     user_details = {
-        "user_id": jwt.get_unverified_header(request.headers["Authorization"]).get(
+        "user_id": jwt.get_unverified_header(
+            request.headers["Authorization"].split(" ")[1]
+        ).get(
             "sub"
         ),  # 'sub' is typically used for the user ID
     }
