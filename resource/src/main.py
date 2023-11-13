@@ -113,7 +113,6 @@ async def read_user(request: Request):
     verify_dpop_jwt(request.headers["DPoP"], request.url.path, request.method)
     user_details = {
         "user_id": decoded_token.get("sub"),  # 'sub' is typically used for the user ID
-        "email": decoded_token.get("email"),
     }
     return user_details
 
