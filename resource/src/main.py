@@ -1,9 +1,11 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Request, logger
 from jose import jwt, jwk, JWTError
 import requests
 import os
 from cachetools import TTLCache
 from dotenv import load_dotenv
+import base64
+import hashlib
 
 app = FastAPI()
 
@@ -11,6 +13,8 @@ load_dotenv()
 JWKS_URL = os.getenv("JWKS_URL")
 if not JWKS_URL:
     raise Exception("JWKS_URL environment variable not set")
+
+KEY_URL = os.getenv("KEY_URL")
 
 # Cache configuration
 cache = TTLCache(maxsize=100, ttl=3600)  # Adjust maxsize and ttl as needed
@@ -34,19 +38,30 @@ def get_jwk(jwks_url: str, kid: str):
     return None
 
 
+def fetch_public_key():
+    if KEY_URL in cache:
+        return cache[KEY_URL]
+    response = requests.get(KEY_URL)
+    if response.status_code == 200:
+        cache[KEY_URL] = response.text
+        return (response.text.replace("\\n", "\n").replace("\\t", "\t"),)
+    else:
+        raise Exception("Failed to fetch public key")
+
+
 def verify_jwt(token: str):
     try:
-        unverified_header = jwt.get_unverified_header(token)
-        jwk_data = get_jwk(JWKS_URL, unverified_header["kid"])
-        if not jwk_data:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="JWK not found"
-            )
+        # unverified_header = jwt.get_unverified_header(token)
+        # jwk_data = get_jwk(JWKS_URL, unverified_header["kid"])
+        # if not jwk_data:
+        #    raise HTTPException(
+        #        status_code=status.HTTP_401_UNAUTHORIZED, detail="JWK not found"
+        #    )
 
         # Use the alg from the JWKS server
-        algorithm = jwk_data.get("alg", "ES256")  # Default to ES256 if not specified
-        key = jwk.construct(jwk_data, algorithm)
-        decoded_token = jwt.decode(token, key=key, algorithms=[algorithm])
+        # algorithm = jwk_data.get("alg", "ES256")
+        # key = jwk.construct(jwk_data, algorithm)
+        decoded_token = jwt.decode(token, key=fetch_public_key(), algorithms=["RS256"])
         return decoded_token
     except JWTError:
         raise HTTPException(
@@ -57,7 +72,7 @@ def verify_jwt(token: str):
 # Thanks matt!
 def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
     try:
-        uvh = jwt.get_unverified_header(dpop_jwt)
+        uvh = dpop_jwt
         if uvh["alg"] != "RS256":
             return None, "Invalid algorithm"
         jwk = uvh["jwk"]
@@ -80,26 +95,6 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
         ):
             return None, "Invalid access token hash"
 
-        if at:
-            decoded_at = jwt.decode(
-                at,
-                (
-                    get_settings().authz_pub_key
-                    if get_settings().authz_pub_key
-                    else update_authZ_key()
-                )
-                .replace("\\n", "\n")
-                .replace("\\t", "\t"),
-                algorithms=["RS256"],
-            )
-            if (
-                decoded_at["cnf.jkt"]
-                != base64.b64encode(
-                    hashlib.sha256(base64.b64decode(jwk)).digest()
-                ).decode()
-            ):
-                return None, "dPoP and JWT mismatch"
-
         return jwk, None
 
     except jwt.ExpiredSignatureError:
@@ -113,8 +108,9 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
 
 
 @app.get("/user")
-async def read_user(request: Request, decoded_token: dict = Depends(verify_jwt)):
-    await verify_dpop_jwt(request, request.url.path, request.method)
+async def read_user(request: Request):
+    # await verify_jwt(request.headers["Authorization"].split(" ")[1])
+    verify_dpop_jwt(request.headers["DPoP"], request.url.path, request.method)
     user_details = {
         "user_id": decoded_token.get("sub"),  # 'sub' is typically used for the user ID
         "email": decoded_token.get("email"),
