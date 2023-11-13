@@ -222,7 +222,7 @@ async function requestToChangePassword(company, email, validToken, password, ses
 }
 
 async function requestForUserData(ephemeralKeyPair, accessToken) {
-  const userDataEndpoint = process.env.API_URL + 'user';
+  const userDataEndpoint = process.env.RESOURCE_URL + 'user';
   const dPoP = await generateDpop(userDataEndpoint, accessToken, 'GET', ephemeralKeyPair);
   const headers = {
     "Authorization": `Bearer ${accessToken}`,

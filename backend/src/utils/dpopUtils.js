@@ -40,7 +40,6 @@ async function generateDpop(url, ath, method, ephemeralKeyPair) {
   }
 
   let privateKey = await jose.JWK.asKey(ephemeralKeyPair.privateKey, "pem");
-  let jwk = await jose.JWK.asKey(ephemeralKeyPair.publicKey, "pem");
   const asciiEncodedPublicKey = Buffer.from(ephemeralKeyPair.publicKey).toString('base64').toString('ascii');
   let DPoP = await jose.JWS.createSign(
     { format: "compact", fields: { alg: 'RS256', typ: "dpop+jwt", jwk: asciiEncodedPublicKey } },
