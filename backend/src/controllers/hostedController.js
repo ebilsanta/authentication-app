@@ -133,8 +133,8 @@ async function user(req, res, next) {
   const privateKey = req.session.privateKey;
   const ephemeralKeyPair = { publicKey, privateKey };
   try {
-    const userData = await requestForUserData(ephemeralKeyPair, accessToken, sessionID);
-
+    const userData = await requestForUserData(ephemeralKeyPair, accessToken);
+    
     res.json({ userData });
   } catch (error) {
     res.status(500).send({ error: formatError(error) });

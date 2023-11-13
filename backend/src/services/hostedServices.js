@@ -221,10 +221,22 @@ async function requestToChangePassword(company, email, validToken, password, ses
   }
 }
 
-async function requestForUserData(ephemeralKeyPair, accessToken, sessionID) {
+async function requestForUserData(ephemeralKeyPair, accessToken) {
   const userDataEndpoint = process.env.API_URL + 'user';
   const dPoP = await generateDpop(userDataEndpoint, accessToken, 'GET', ephemeralKeyPair);
-  
+  const headers = {
+    "Authorization": `Bearer ${accessToken}`,
+    "DPoP": dPoP,
+  }
+  console.log("request user data headers", headers);
+  console.log("access token", accessToken);
+  console.log("dpop", dPoP)
+  const response = await axios({
+    url: userDataEndpoint,
+    method: 'get',
+    headers: headers
+  });
+  return response.data;
 }
 
 function formatError(error) {
