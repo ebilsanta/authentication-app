@@ -23,7 +23,7 @@ jobs:
       run: |
         cd otp
         echo "${{ secrets.OTP_TEST_ENV }}" > otp.env
-        go test
+        go test ./...
 
   build:
     name: Build Image
