@@ -97,22 +97,18 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
 
         return jwk, None
 
-    except jwt.ExpiredSignatureError:
-        return None, "JWT has expired"
-    except jwt.InvalidTokenError:
-        return None, "Invalid JWT"
     except Exception as e:
-        return None, "An error occurred during dpop JWT decoding:" + str(e) + str(
-            dpop_jwt
-        )
+        return None, "Invalid JWT"
 
 
 @app.get("/user")
 async def read_user(request: Request):
-    # await verify_jwt(request.headers["Authorization"].split(" ")[1])
+    verify_jwt(request.headers["Authorization"].split(" ")[1])
     verify_dpop_jwt(request.headers["DPoP"], request.url.path, request.method)
     user_details = {
-        "user_id": decoded_token.get("sub"),  # 'sub' is typically used for the user ID
+        "user_id": jwt.get_unverified_header(request.headers["Authorization"]).get(
+            "sub"
+        ),  # 'sub' is typically used for the user ID
     }
     return user_details
 
