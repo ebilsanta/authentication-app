@@ -1,10 +1,12 @@
 FROM python:3.11
 
-WORKDIR /resource
+WORKDIR /app
 
-COPY . .
+COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /resource/src
+COPY . .
 
-CMD ["uvicorn", "main:app"] 
+WORKDIR /app/src
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
