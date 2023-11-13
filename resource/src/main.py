@@ -72,7 +72,7 @@ def verify_jwt(token: str):
 # Thanks matt!
 def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
     try:
-        uvh = dpop_jwt
+        uvh = jwt.get_unverified_header(dpop_jwt)
         if uvh["alg"] != "RS256":
             return None, "Invalid algorithm"
         jwk = uvh["jwk"]
