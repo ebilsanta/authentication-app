@@ -19,8 +19,12 @@ func main() {
 	defer glog.Flush()
 
 	db := utils.ConnectDB()
+	sesService := utils.ConnectSES()
 	if db == nil {
 		log.Fatalf("cannot connect to DB")
+	}
+	if sesService == nil {
+		log.Fatalf("cannot connect to SES")
 	}
 
 	ctx := context.Background()
@@ -34,7 +38,7 @@ func main() {
 
 	serverRegistrar := grpc.NewServer()
 	repo := otpRepo.NewDynamoDBOTPRepository(db)
-	usecase := otpUsecase.NewOTPUsecase(repo)
+	usecase := otpUsecase.NewOTPUsecase(repo, sesService)
 	handler.NewOTPServer(serverRegistrar, usecase)
 
 	err = serverRegistrar.Serve(lis)

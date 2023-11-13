@@ -4,6 +4,7 @@ go 1.21.1
 
 require (
 	github.com/aws/aws-sdk-go v1.45.25
+	github.com/go-kit/kit v0.13.0
 	github.com/golang/glog v1.1.0
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/grpc v1.58.3
@@ -11,6 +12,8 @@ require (
 )
 
 require (
+	github.com/go-kit/log v0.2.0 // indirect
+	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	golang.org/x/net v0.15.0 // indirect

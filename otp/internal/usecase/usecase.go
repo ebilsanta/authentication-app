@@ -18,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 
 	"github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp/internal/repository"
-	"github.com/cs301-itsa/project-2023-24t1-project-2023-24t1-g2-t1/otp/internal/utils"
 )
 
 
@@ -76,7 +75,7 @@ func Decode(verification_key string) (map[string]string, error) {
 	return map[string]string{"company": details[0], "expiration_date": details[1], "email": details[2], "otp": details[3]}, nil
 }
 
-func SendOTPEmail(email string, otp string) error {
+func SendOTPEmail(email string, otp string, sesService ses.SES) error {
 	delete_otp_link := "https://google.com/"
 	Sender := os.Getenv("AWS_SENDER_EMAIL")
 	Subject := "Your OTP for Email Verification for Ascenda"
@@ -84,8 +83,6 @@ func SendOTPEmail(email string, otp string) error {
                 "\n\nIf you did not request for an OTP please click <a href='" + delete_otp_link + "'>this link</a>.</p>"
     TextBody := "Your OTP is: " + otp + "\n\nIf you did not request for an OTP please click this link: " + delete_otp_link
     CharSet := "UTF-8"
-
-	svc := utils.ConnectSES()
 
 	input := &ses.SendEmailInput{
         Destination: &ses.Destination{
@@ -114,7 +111,7 @@ func SendOTPEmail(email string, otp string) error {
         Source: aws.String(Sender),
     }
 
-	_, err := svc.SendEmail(input)
+	_, err := sesService.SendEmail(input)
 
 	return err
 }
@@ -126,6 +123,7 @@ type OTPUsecase interface {
 
 type otpUsecase struct {
 	otpRepos repository.OTPRepository
+	sesService *ses.SES
 }
 
 func (o *otpUsecase) GetOTP(company string, email string) (string, string, error) {
@@ -140,7 +138,7 @@ func (o *otpUsecase) GetOTP(company string, email string) (string, string, error
 		return "", "Error creating key", err
 	}
 
-	err = SendOTPEmail(email, otp)
+	err = SendOTPEmail(email, otp, *o.sesService)
 
 	if err != nil {
 		return "", "Error Sending OTP", err
@@ -161,7 +159,6 @@ func (o *otpUsecase) GetOTP(company string, email string) (string, string, error
 
 func (o *otpUsecase) VerifyOTP(verification_key string, otp string, email string) (string, string, string, string, error) {
 	details, err := Decode(verification_key)
-	log.Println(details)
 	if err != nil {
 		return "Failure", "Error processing verification key", "", email, err
 	}
@@ -191,6 +188,6 @@ func (o *otpUsecase) VerifyOTP(verification_key string, otp string, email string
 	return "Failure", "Some details did not match", "", email, nil
 }
 
-func NewOTPUsecase(o repository.OTPRepository) OTPUsecase {
-	return &otpUsecase{o}
+func NewOTPUsecase(o repository.OTPRepository, sesService *ses.SES) OTPUsecase {
+	return &otpUsecase{o, sesService}
 }
