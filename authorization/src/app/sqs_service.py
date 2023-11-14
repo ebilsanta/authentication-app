@@ -38,6 +38,7 @@ class SQS_Service:
             return {"message": "No messages in the queue"}
 
         # Process the received messages
+        print('Polled ', str(len(messages)), ' messages')
         for message in messages:
             try:
                 message_body = message["Body"]
