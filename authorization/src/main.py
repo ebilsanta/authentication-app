@@ -94,7 +94,7 @@ async def post_introspect(token: TokenIntrospectionRequest):
 
 
 @app.on_event("startup")
-@repeat_every(seconds=0.2)
+@repeat_every(seconds=0.08)
 async def pull_from_sqs():
     await sqss.poll_sqs()
 

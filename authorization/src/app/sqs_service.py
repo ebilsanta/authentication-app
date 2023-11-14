@@ -37,8 +37,6 @@ class SQS_Service:
         if not messages:
             return {"message": "No messages in the queue"}
 
-        print(len(messages))
-
         # Process the received messages
         for message in messages:
             try:
