@@ -1,3 +1,5 @@
+name: Dependency Check
+
 on: [push]
 
 jobs:
