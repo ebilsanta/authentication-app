@@ -37,7 +37,7 @@ class SQS_Service:
         if not messages:
             return {"message": "No messages in the queue"}
 
-        # Process the received messages
+        # Process the polled messages
         print('Polled ', str(len(messages)), ' messages')
         for message in messages:
             try:
