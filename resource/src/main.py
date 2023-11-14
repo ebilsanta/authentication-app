@@ -103,16 +103,21 @@ def verify_dpop_jwt(dpop_jwt, htu, htm, at=None):
 
 @app.get("/user")
 async def read_user(request: Request):
-    verify_jwt(request.headers["Authorization"].split(" ")[1])
-    verify_dpop_jwt(request.headers["DPoP"], request.url.path, request.method)
-    user_details = {
-        "user_id": jwt.get_unverified_header(
-            request.headers["Authorization"].split(" ")[1]
-        ).get(
-            "sub"
-        ),  # 'sub' is typically used for the user ID
-    }
-    return user_details
+    try:
+        verify_jwt(request.headers["Authorization"].split(" ")[1])
+        verify_dpop_jwt(request.headers["DPoP"], request.url.path, request.method)
+        user_details = {
+            "user_id": jwt.get_unverified_header(
+                request.headers["Authorization"].split(" ")[1]
+            ).get(
+                "sub"
+            ),  # 'sub' is typically used for the user ID
+        }
+        return user_details
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
 
 
 @app.get("/health")
