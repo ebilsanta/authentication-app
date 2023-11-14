@@ -126,11 +126,7 @@ async function token(req, res, next) {
 }
 
 async function user(req, res, next) {
-  const sessionID = req.sessionID;
-  const accessToken = req.session.accessToken;
-  const email = req.session.email;
-  const publicKey = req.session.publicKey;
-  const privateKey = req.session.privateKey;
+  const { accessToken, publicKey, privateKey } = req.session;
   const ephemeralKeyPair = { publicKey, privateKey };
   try {
     const userData = await requestForUserData(ephemeralKeyPair, accessToken);
@@ -158,10 +154,8 @@ async function requestOtp(req, res, next) {
   }
 }
 
-async function requestOtpForgotPassword(req, res, next) {
+async function requestOtpUnauthenticated(req, res, next) {
   const { email, company } = req.body;
-  req.session.company = company;
-  req.session.email = email;
   const sessionID = req.sessionID;
   try {
     const response = await requestForOtp(company, email, sessionID);
@@ -170,6 +164,7 @@ async function requestOtpForgotPassword(req, res, next) {
 
     req.session.verificationKey = verificationKey;
     req.session.email = email;
+    req.session.company = company;
     
     res.json({ message: "OTP Sent!" });
   } catch (error) {
@@ -240,7 +235,7 @@ module.exports = {
   token,
   user,
   requestOtp,
-  requestOtpForgotPassword, 
+  requestOtpUnauthenticated, 
   verifyOtp, 
   changePassword,
 };
