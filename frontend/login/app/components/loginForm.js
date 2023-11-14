@@ -59,6 +59,8 @@ export default function LoginForm() {
       <a href="https://client.itsag2t1.com/api/bankSSO/login" type="button" className="bg-[#f5f5f5] shadow hover:bg-[#1e244d] hover:text-[#f5f5f5] mt-3 w-full text-[#1e244d] font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 text-center">Login with BankSSO</a>
       <text className="block uppercase tracking-wide text-gray-400 text-xs mb-2 text-center pt-5">
         Don&apos;t have an account? <Link href="/register" className="font-bold text-gray-500">Register</Link> instead
+        <br></br>
+        Yet to verify your email? <Link href="/verifyEmail" className="font-bold text-gray-500">Verify it Now!</Link>
       </text>
     </form>
   </div>;

@@ -82,7 +82,7 @@ export default function RegisterForm() {
         Register Account
       </button>
       <text className="block uppercase tracking-wide text-gray-400 text-xs mb-2 text-center pt-5">
-        Already have an account? <Link href="/login" className="font-bold text-gray-500">Login</Link> instead
+        Already have an account? <Link href="/verifyEmail" className="font-bold text-gray-500">Verify your Email</Link> or <Link href="/login" className="font-bold text-gray-500">Login</Link> instead
       </text>
     </form>
   </div>

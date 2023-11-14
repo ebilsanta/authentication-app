@@ -52,7 +52,7 @@ export default function OtpForm() {
       inputStyle="border border-black rounded-md m-2 text-3xl w-full block"
     />
     <button onClick={(e) => onSubmit(e)} className="transition duration-300 bg-[#1e244d] mt-3 shadow hover:bg-blue-700 w-full text-white font-semibold py-2 px-5 rounded focus:outline-none focus:shadow-outline" type="button">
-      Register Account
+      {hostedLogin ? "Verify Email" : "Register Account"}
     </button>
   </div>
 }

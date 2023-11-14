@@ -231,6 +231,9 @@ func (a *authenticationUsecase) Login(company string, email string, password str
 	if user == nil {
 		return "You are not an enrolled user!", "", nil
 	}
+	if user.Status == "pending" {
+		return "Your account is not verified yet!", "", nil
+	}
 
 	credential, err := a.authenticationRepos.GetCredentialByEmail(company, email)
 	if err != nil {
