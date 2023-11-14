@@ -11,7 +11,7 @@ export default function VerifyEmailForm() {
 
     const company = "ascenda"
  
-    const res = await fetch("https://client.itsag2t1.com/api/" + "hosted/otp", {
+    const res = await fetch("https://client.itsag2t1.com/api/" + "hosted/otp-unauthenticated", {
       method: "POST",
       credentials: "include",
       headers : {
