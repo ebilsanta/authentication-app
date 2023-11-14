@@ -66,7 +66,7 @@ export default function RegisterForm() {
     }
   }
 
-  return <div className="bg-white m-auto rounded-md shadow p-5">
+  return <div className="bg-white m-auto rounded-md shadow p-5 w-1/3">
     <h1 className="text-black font-semibold py-5 text-xl">Register for an account</h1>
     {!isPasswordValid && <p className='text-red-300 py-2'>{errMsg}</p>}
     <form onSubmit={(e) => {onSubmit(e)}} className="">
