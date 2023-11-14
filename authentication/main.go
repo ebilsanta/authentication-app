@@ -50,7 +50,7 @@ func pollSQS() {
         for _, message := range messages.Messages {
 			log.Print(message)
             // Forward message as gRPC request
-            handleMessage(message)
+            go handleMessage(message)
         }
     }
 }
