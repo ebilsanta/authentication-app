@@ -1,19 +1,47 @@
 .gradientani {
-  background: rgb(16,30,92);
+  background: rgb(16, 30, 92);
   background: radial-gradient(circle, #2f334a 1%, #050a24 100%);
   animation: gradient ease 10s infinite;
-	height: 100vh;
+  height: 100vh;
   background-position: center center;
 }
 
 @keyframes gradient {
-	0% {
+  0% {
     background-size: 100% 100%
-	}
-	50% {
+  }
+
+  50% {
     background-size: 120% 120%
-	}
-	100% {
+  }
+
+  100% {
     background-size: 100% 100%
-	}
+  }
+}
+
+.bg {
+  background:
+    radial-gradient(farthest-side at bottom left,
+      #3c4055,
+      transparent 500px),
+    radial-gradient(farthest-corner at top right,
+      #3c4055,
+      transparent 500px);
+
+  animation: shimmer 10s ease infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-size: 100% 100%;
+  }
+
+  50% {
+    background-size: 120% 120%;
+  }
+
+  100% {
+    background-size: 100% 100%;
+  }
 }

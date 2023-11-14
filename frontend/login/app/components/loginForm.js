@@ -45,7 +45,7 @@ export default function LoginForm() {
     }
   }
 
-  return <div className="bg-white flex flex-col lg:w-1/3 w-4/5 -mt-20 mx-auto rounded-md shadow">
+  return <div className="bg-white flex flex-col lg:w-1/3 w-4/5 m-auto rounded-md shadow">
     <h1 className="text-black font-semibold p-5 text-center text-xl">Log in to your account</h1>
     {errMsg !== "" && <p className="text-red-500 text-center">{errMsg}</p>}
     <form onSubmit={(e) => {onSubmit(e)}} className="px-8 pb-8 mb-4">
