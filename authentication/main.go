@@ -38,7 +38,7 @@ func pollSQS() {
         messages, err := queue.ReceiveMessage(&sqs.ReceiveMessageInput{
             QueueUrl:            aws.String(os.Getenv("SQS_REQUEST_QUEUE_URL")),
             MaxNumberOfMessages: aws.Int64(10),
-            WaitTimeSeconds:     aws.Int64(20),
+            WaitTimeSeconds:     aws.Int64(0),
 			MessageAttributeNames: []*string{aws.String("All")},
         })
         if err != nil {
@@ -262,7 +262,9 @@ func main() {
 	serverRegistrar := grpc.NewServer()
 	handler.NewAuthenticationServer(serverRegistrar, usecase)
 
-	go pollSQS()
+	for i := 1; i <= 6; i++ {
+		go pollSQS()
+	}
 
 	func() {
 		log.Fatalln(serverRegistrar.Serve(lis))
