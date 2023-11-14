@@ -262,7 +262,7 @@ func main() {
 	serverRegistrar := grpc.NewServer()
 	handler.NewAuthenticationServer(serverRegistrar, usecase)
 
-	for i := 1; i <= 5; i++ {
+	for i := 1; i <= 6; i++ {
 		go pollSQS()
 	}
 
