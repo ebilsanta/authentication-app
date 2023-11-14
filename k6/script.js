@@ -71,10 +71,12 @@ export function testFunction () {
     const payload = JSON.stringify({
         email: 'auyeongweibin@gmail.com',
         password: 'password',
+        company: 'ascenda',
     });
 
     const params = {
         headers: {
+            'Accept': 'application/json',
             'Content-Type': 'application/json',
         },
     };
