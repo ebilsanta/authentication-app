@@ -192,7 +192,7 @@ async function verifyOtp(req, res, next) {
     const validToken = await waitForEvent("valid-token", sessionID);
     req.session.validToken = validToken;
 
-    res.json({ message: "OTP Verified" });
+    res.json({ message: "OTP has been Verified!" });
   } catch (error) {
     res.status(500).json({ error: formatError(error) });
   }
