@@ -43,7 +43,7 @@ def fetch_public_key():
         return cache[KEY_URL]
     response = requests.get(KEY_URL)
     if response.status_code == 200:
-        cache[KEY_URL] = response.text
+        cache[KEY_URL] = response.text.replace("\\n", "\n").replace("\\t", "\t")
         return (response.text.replace("\\n", "\n").replace("\\t", "\t"),)
     else:
         raise Exception("Failed to fetch public key")
@@ -107,17 +107,16 @@ async def read_user(request: Request):
         verify_jwt(request.headers["Authorization"].split(" ")[1])
         verify_dpop_jwt(request.headers["DPoP"], request.url.path, request.method)
         user_details = {
-            "user_id": jwt.get_unverified_header(
+            "user_id": jwt.get_unverified_claims(
                 request.headers["Authorization"].split(" ")[1]
             ).get(
                 "sub"
             ),  # 'sub' is typically used for the user ID
         }
         return user_details
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
 
 @app.get("/health")
