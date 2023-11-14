@@ -15,8 +15,6 @@ import (
 
 	"github.com/golang/glog"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 
@@ -266,32 +264,7 @@ func main() {
 
 	go pollSQS()
 
-	go func() {
+	func() {
 		log.Fatalln(serverRegistrar.Serve(lis))
 	}()
-
-	conn, err := grpc.DialContext(
-		context.Background(),
-		"0.0.0.0:8089",
-		grpc.WithBlock(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		log.Fatalln("Failed to dial server:", err)
-	}
-
-	gwmux := runtime.NewServeMux()
-	// Register Greeter
-	err = authentication.RegisterAuthenticationHandler(context.Background(), gwmux, conn)
-
-	if err != nil {
-		log.Fatalln("Failed to register gateway:", err)
-	}
-
-	gwServer := &http.Server{
-		Addr:    ":8080",
-		Handler: gwmux,
-	}
-
-	log.Fatalln(gwServer.ListenAndServe())
 }

@@ -8,5 +8,5 @@ FROM alpine:3.17
 COPY --from=builder /service_executable /service_executable
 COPY *.env .
 
-EXPOSE 8089 8080
+EXPOSE 8089
 CMD ["/service_executable"]
