@@ -7,7 +7,7 @@ type AuthenticationRepository interface {
 	UpdateUserByEmail(company string, email string) (*models.User, error)
 	GetCredentialByEmail(company string, email string) (*models.Credential, error)
 	GetUserByEmail(company string, email string) (*models.User, error)
-	DeleteCredentialByEmail(company string, email string) (string, error)
+	UpdateCredentialByEmail(company string, email string) (string, error)
 	RegisterUser(company string, email string, password string) (*models.Credential, error)
 	UpdateUserPassword(company string, email string, password string) (*models.Credential, error)
 }

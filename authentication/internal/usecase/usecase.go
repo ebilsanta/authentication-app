@@ -216,31 +216,29 @@ func (a *authenticationUsecase) VerifyEmail(verification_key string, otp string,
 		return response.Status, response.Details, email, err
 	}
 	_, err = a.authenticationRepos.UpdateUserByEmail(response.Company, response.Email)
-
 	if err != nil {
 		return "Failure", "Error updating verification status of user", email, err
 	}
+
+	_, err = a.authenticationRepos.UpdateCredentialByEmail(response.Company, response.Email)
+	if err != nil {
+		return "Failure", "Error updating verification status of user", email, err
+	}
+
+	
 	return "Success", "Your email is verified, please proceed to login!", email, nil
 }
 
 func (a *authenticationUsecase) Login(company string, email string, password string) (string, string, error) {
-	user, err := a.authenticationRepos.GetUserByEmail(company, email)
-	if err != nil {
-		return "Error", "", err
-	}
-	if user == nil {
-		return "You are not an enrolled user!", "", nil
-	}
-	if user.Status == "pending" {
-		return "Your account is not verified yet!", "", nil
-	}
-
 	credential, err := a.authenticationRepos.GetCredentialByEmail(company, email)
 	if err != nil {
 		return "Error", "", err
 	}
 	if credential == nil {
 		return "You are not a registered user, please proceed to register!", "", nil
+	}
+	if credential.Verified == "pending" {
+		return "Your account is not verified yet!", "", nil
 	}
 
 	password_match := CheckPasswordHash(password, credential.Password)

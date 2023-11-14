@@ -14,4 +14,5 @@ type Credential struct {
 	Company		string	`json:"company"`
 	Email		string	`json:"email"`
 	Password	string	`json:"password"`
+	Verified	string	`json:"verified"`
 }

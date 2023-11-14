@@ -161,12 +161,49 @@ func (d *DynamoDBAuthenticationRepository) GetUserByEmail(company string, email 
 	return &user, nil
 }
 
-func (d *DynamoDBAuthenticationRepository) DeleteCredentialByEmail(company string, email string) (string, error) {
-	return "User Deleted", nil
+func (d *DynamoDBAuthenticationRepository) UpdateCredentialByEmail(company string, email string) (string, error) {
+	verified := "verified"
+	
+	input := &dynamodb.UpdateItemInput{
+		TableName: aws.String(os.Getenv("CREDENTIAL_TABLE")),
+		Key: map[string]*dynamodb.AttributeValue{
+			"company": {
+				S: aws.String(company),
+			},
+			"email": {
+				S: aws.String(email),
+			},
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":verified": {
+				S: aws.String("active"),
+			},
+		},
+		ExpressionAttributeNames: map[string]*string{
+			"#verified": &verified,
+		},
+		ReturnValues:     aws.String("UPDATED_NEW"),
+		UpdateExpression: aws.String("set #verified = :verified"),
+	}
+	
+	output, err := d.DB.UpdateItem(input)
+	if err != nil {
+		log.Fatalf("Got error calling UpdateItem: %s", err)
+		return "Got error calling UpdateItem", nil
+	}
+
+	var updated models.Credential
+
+	err = dynamodbattribute.UnmarshalMap(output.Attributes, &updated)
+	if err != nil {
+		log.Printf("Couldn't unmarshall update response. Here's why: %v\n", err)
+	}
+
+	return "Success", nil
 }
 
 func (d *DynamoDBAuthenticationRepository) RegisterUser(company string, email string, password string) (*models.Credential, error) {
-	credential := &models.Credential{company, email, password}
+	credential := &models.Credential{company, email, password, "pending"}
 
 	av, err := dynamodbattribute.MarshalMap(credential)
 	if err != nil {
