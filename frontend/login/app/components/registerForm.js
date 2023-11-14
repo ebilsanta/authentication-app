@@ -9,12 +9,34 @@ export default function RegisterForm() {
   const [lastName, setLastName] = useState("")
   const [birthdate, setBirthdate] = useState("")
   const [password, setPassword] = useState("")
-
+  const [errMsg, setErrMsg] = useState("")
   const router = useRouter()
+
+  const validatePassword = (password) => {
+    const minLength = 12;
+    const upperCasePattern = /[A-Z]/;
+    const lowerCasePattern = /[a-z]/;
+    const numberPattern = /[0-9]/;
+    const specialCharPattern = /[^A-Za-z0-9]/;
+
+    return (
+        password.length >= minLength &&
+        upperCasePattern.test(password) &&
+        lowerCasePattern.test(password) &&
+        numberPattern.test(password) &&
+        specialCharPattern.test(password)
+    );
+  };
+
+  const isPasswordValid = validatePassword(password);
 
   async function onSubmit(event) {
     event.preventDefault()
 
+    if (!isPasswordValid) {
+      setErrMsg("Password must be at least 12 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character")
+      setPassword("")
+    }
     const company = "ascenda"
  
     const res = await fetch("https://client.itsag2t1.com/api/" + "hosted/register", {
@@ -45,6 +67,7 @@ export default function RegisterForm() {
 
   return <div className="bg-white m-auto rounded-md shadow p-5">
     <h1 className="text-black font-semibold py-5 text-xl">Register for an account</h1>
+    {!isPasswordValid && <p className='text-red-300 py-2'>{errMsg}</p>}
     <form onSubmit={(e) => {onSubmit(e)}} className="">
       <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
         Email
