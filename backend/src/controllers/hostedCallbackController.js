@@ -42,7 +42,7 @@ async function login(req, res, next) {
     const { status, idToken } = req.body;
     console.log("login callback", req.body);
     if (status === "User verified") {
-      console.log("received id token", idToken);
+      console.log(`received id token ${sessionID}`, idToken);
       eventEmitter.emit(`idToken:${sessionID}`, idToken);
     } else {
       eventEmitter.emit(`idToken:${sessionID}`, `error: ${status}`);

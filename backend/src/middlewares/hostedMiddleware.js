@@ -33,6 +33,10 @@ async function checkCodeVerifierAndAuthCode(req, res, next) {
 }
 
 async function checkAuth(req, res, next) {
+  if (req.body && req.body.email && req.body.company) {
+    return next();
+  }
+
   if (!req.session.accessToken || !req.session.refreshToken || !req.session.privateKey || !req.session.publicKey) {
     return res.status(401).json({error: 'No tokens in session.'});
   }

@@ -231,12 +231,18 @@ async function requestForUserData(ephemeralKeyPair, accessToken) {
   console.log("request user data headers", headers);
   console.log("access token", accessToken);
   console.log("dpop", dPoP)
-  const response = await axios({
-    url: userDataEndpoint,
-    method: 'get',
-    headers: headers
-  });
-  return response.data;
+  try {
+    const response = await axios({
+      url: userDataEndpoint,
+      method: 'get',
+      headers: headers
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error requesting user data:', error);
+    throw new Error('Error requesting user data: ' + error.message);
+  }
+  
 }
 
 function formatError(error) {

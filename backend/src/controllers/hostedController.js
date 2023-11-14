@@ -142,7 +142,18 @@ async function user(req, res, next) {
 }
 
 async function requestOtp(req, res, next) {
-  const { email, company } = req.session;
+  let email;
+  let company; 
+  if (req.body && req.body.email && req.body.company) {
+    email = req.body.email;
+    company = req.body.company;
+  } else if (req.session.email && req.session.company) {
+    email = req.session.email;
+    company = req.session.company;
+  } else {
+    return res.status(500).send({ error: "No email and company in session or request body." });
+  }
+
   const sessionID = req.sessionID;
   try {
     const response = await requestForOtp(company, email, sessionID);
