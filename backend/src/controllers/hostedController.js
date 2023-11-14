@@ -142,18 +142,26 @@ async function user(req, res, next) {
 }
 
 async function requestOtp(req, res, next) {
-  let email;
-  let company; 
-  if (req.body && req.body.email && req.body.company) {
-    email = req.body.email;
-    company = req.body.company;
-  } else if (req.session.email && req.session.company) {
-    email = req.session.email;
-    company = req.session.company;
-  } else {
-    return res.status(500).send({ error: "No email and company in session or request body." });
-  }
+  const { email, company } = req.session;
+  const sessionID = req.sessionID;
+  try {
+    const response = await requestForOtp(company, email, sessionID);
 
+    const verificationKey = await waitForEvent("verificationKeyOTP", sessionID);
+
+    req.session.verificationKey = verificationKey;
+    req.session.email = email;
+    
+    res.json({ message: "OTP Sent!" });
+  } catch (error) {
+    res.status(500).send({ error: formatError(error) });
+  }
+}
+
+async function requestOtpForgotPassword(req, res, next) {
+  const { email, company } = req.body;
+  req.session.company = company;
+  req.session.email = email;
   const sessionID = req.sessionID;
   try {
     const response = await requestForOtp(company, email, sessionID);
@@ -232,6 +240,7 @@ module.exports = {
   token,
   user,
   requestOtp,
+  requestOtpForgotPassword, 
   verifyOtp, 
   changePassword,
 };
