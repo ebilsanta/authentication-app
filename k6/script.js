@@ -45,24 +45,24 @@ export let options = {
             startTime: '15m',
             tags: { test_type: 'spike' },
         },
-        breakpointTest: {
-            executor: 'ramping-vus',
-            exec: 'testFunction',
-            startVUs: 1,
-            stages: [
-                { duration: '10m', target: 20000 }, // Gradually ramp up
-            ],
-            startTime: '18m',
-            tags: { test_type: 'breakpoint' },
-        },
-        //soakTest: {
+        // breakpointTest: {
+        //     executor: 'ramping-vus',
+        //     exec: 'testFunction',
+        //     startVUs: 1,
+        //     stages: [
+        //         { duration: '10m', target: 20000 }, // Gradually ramp up
+        //     ],
+        //     startTime: '18m',
+        //     tags: { test_type: 'breakpoint' },
+        // },
+        // soakTest: {
         //    executor: 'constant-vus',
         //    exec: 'testFunction',
         //    vus: 100,
         //   duration: '60m', // Long duration
-        //    startTime: '29m',
+        //    startTime: '0m',
         //    tags: { test_type: 'soak' },
-        //}
+        // }
     },
 };
 
