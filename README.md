@@ -7,7 +7,7 @@ This project is an Authentication (AuthN) service that allows a company's partne
 ## Live Website
 
 We have deployed a frontend to demonstrate the end-to-end flow of our features.  
-You can check it out at https://www.itsag2t1.com/
+It was deployed on https://www.itsag2t1.com/ 
 
 ## Solution Architecture
 
